@@ -40,7 +40,7 @@ __C.LEARNING_RATE = 0.001
 __C.EPOCHS = 50
 
 # Batch size
-__C.BATCH_SIZE = 512
+__C.BATCH_SIZE = 128
 
 
 # ===========================================
@@ -141,11 +141,11 @@ __C.DISPLAY_STEP = None  # batches
 
 # Save summary step
 # Set None to not save summaries
-__C.SAVE_LOG_STEP = 20  # batches
+__C.SAVE_LOG_STEP = 100  # batches
 
 # Save reconstructed images
 # Set None to not save images
-__C.SAVE_IMAGE_STEP = 50  # batches
+__C.SAVE_IMAGE_STEP = 100  # batches
 
 # Maximum images number in a col
 __C.MAX_IMAGE_IN_COL = 20
@@ -153,9 +153,9 @@ __C.MAX_IMAGE_IN_COL = 20
 # Calculate train loss and valid loss using full data set
 # 'per_epoch': evaluate on full set when n epochs finished
 # 'per_batch': evaluate on full set when n batches finished
-__C.FULL_SET_EVAL_MODE = 'per_batch'
+__C.FULL_SET_EVAL_MODE = 'per_epoch'
 # None: not evaluate
-__C.FULL_SET_EVAL_STEP = 50
+__C.FULL_SET_EVAL_STEP = 1
 
 # Save models
 # 'per_epoch': save models when n epochs finished
