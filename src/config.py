@@ -109,7 +109,7 @@ __C.MOMENTUM = 0.9
 # Reconstruction
 
 # Training with reconstruction
-__C.WITH_RECONSTRUCTION = True
+__C.WITH_RECONSTRUCTION = False
 
 # Type of decoder of reconstruction:
 # 'fc': full_connected layers
