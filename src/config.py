@@ -16,6 +16,7 @@ def _auto_version(c):
     _version += '_tav'
   return _version
 
+
 __C = EasyDict()
 
 # ===========================================
@@ -23,9 +24,10 @@ __C = EasyDict()
 # ===========================================
 
 # Database name
+# 'radical': Oracle Radicals
 # 'mnist': MNIST
 # 'cifar10' CIFAR-10
-__C.DATABASE_NAME = 'cifar10'
+__C.DATABASE_NAME = 'radical'
 
 # Training version
 # Set None to auto generate version
@@ -40,8 +42,28 @@ __C.EPOCHS = 50
 # Batch size
 __C.BATCH_SIZE = 512
 
+
+# ===========================================
+# #               Preprocessing             #
+# ===========================================
+
 # Setting test set as validation when preprocessing data
 __C.DPP_TEST_AS_VALID = True
+
+# Rate of train-test split
+__C.TEST_SIZE = 0.2
+
+# Rate of train-validation split
+__C.VALID_SIZE = 0.1
+
+# Oracle Parameters
+# Number of radicals to use for training
+# If None, use all radicals (NUM_RADICALS=148)
+__C.NUM_RADICALS = None
+# Using data augment
+__C.USE_DATA_AUG = True
+# The max number of images if use data augment
+__C.MAX_IMAGE_NUM = 2000
 
 # ===========================================
 # #            Model Architecture           #
@@ -98,7 +120,7 @@ __C.DECODER_TYPE = 'conv_t'
 __C.RECONSTRUCTION_LOSS = 'ce'
 
 # Scaling for reconstruction loss
-__C.RECONSTRUCT_LOSS_SCALE = 0.392  # 0.0005*784=0.392
+__C.RECONSTRUCT_LOSS_SCALE = 8.192  # 0.0005*128*128=8.192
 
 # -------------------------------------------
 # Test
@@ -135,7 +157,8 @@ __C.FULL_SET_EVAL_STEP = 50
 # Save models
 # 'per_epoch': save models when n epochs finished
 # 'per_batch': save models when n batches finished
-__C.SAVE_MODEL_MODE = 'per_epoch'
+__C.SAVE_MODEL_MODE = None
+# __C.SAVE_MODEL_MODE = 'per_epoch'
 # None: not save models
 __C.SAVE_MODEL_STEP = 10
 # Maximum number of recent checkpoints to keep.
@@ -152,7 +175,7 @@ __C.SHOW_TRAINING_DETAILS = False
 # ===========================================
 
 # Testing version name
-__C.TEST_VERSION = 'fc_rec_mse'
+__C.TEST_VERSION = 'conv_rec_mse'
 
 # Testing checkpoint index
 __C.TEST_CKP_IDX = 29

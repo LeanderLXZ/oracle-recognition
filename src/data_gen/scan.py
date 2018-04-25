@@ -1,4 +1,4 @@
-from skimage.filters import threshold_local
+from skimage import filters
 import numpy as np
 import cv2
 import imutils
@@ -10,9 +10,9 @@ class Scan(object):
     pass
 
   @staticmethod
-  def _detect_edge(image, save_img=False, show_img=False):
+  def _detect_edge(image, show_img=False):
     print("STEP 1: Edge Detection")
-    # convert the image to grayscale, blur it, and find edges
+    # convert the image to gray scale, blur it, and find edges
     # in the image
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     gray = cv2.GaussianBlur(gray, (5, 5), 0)
@@ -34,7 +34,7 @@ class Scan(object):
     cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:5]
 
     # loop over the contours
-    screenCnt = None
+    screen_cnt = None
     for c in cnts:
       # approximate the contour
       peri = cv2.arcLength(c, True)
@@ -43,17 +43,17 @@ class Scan(object):
       # if our approximated contour has four points, then we
       # can assume that we have found our screen
       if len(approx) == 4:
-        screenCnt = approx
+        screen_cnt = approx
         break
 
     # show the contour (outline) of the piece of paper
-    cv2.drawContours(image, [screenCnt], -1, (0, 255, 0), 2)
+    cv2.drawContours(image, [screen_cnt], -1, (0, 255, 0), 2)
     if save_img:
       cv2.imwrite("../data/outline.jpg", image)
     if show_img:
       cv2.imshow("Outline", imutils.resize(image, height=650))
 
-    return screenCnt
+    return screen_cnt
 
   def _transform(self, image, contours,
                  ratio=1., save_img=False, show_img=False):
@@ -63,11 +63,11 @@ class Scan(object):
     # view of the original image
     warped = self._four_point_transform(image, contours.reshape(4, 2) * ratio)
 
-    # convert the warped image to grayscale, then threshold it
+    # convert the warped image to gray scale, then threshold it
     # to give it that 'black and white' paper effect
     warped = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY)
-    T = threshold_local(warped, 11, offset=10, method="gaussian")
-    warped = (warped > T).astype("uint8") * 255
+    t = filters.threshold_local(warped, 11, offset=10, method="gaussian")
+    warped = np.array((warped > t)).astype("uint8") * 255
 
     # show the original and scanned images
     if save_img:
@@ -110,16 +110,16 @@ class Scan(object):
     # Compute the width of the new image, which will be the
     # maximum distance between bottom-right and bottom-left
     # x-coordinates or the top-right and top-left x-coordinates
-    widthA = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
-    widthB = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
-    maxWidth = max(int(widthA), int(widthB))
+    width_a = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
+    width_b = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
+    max_width = max(int(width_a), int(width_b))
 
     # compute the height of the new image, which will be the
     # maximum distance between the top-right and bottom-right
     # y-coordinates or the top-left and bottom-left y-coordinates
-    heightA = np.sqrt(((tr[0] - br[0]) ** 2) + ((tr[1] - br[1]) ** 2))
-    heightB = np.sqrt(((tl[0] - bl[0]) ** 2) + ((tl[1] - bl[1]) ** 2))
-    maxHeight = max(int(heightA), int(heightB))
+    height_a = np.sqrt(((tr[0] - br[0]) ** 2) + ((tr[1] - br[1]) ** 2))
+    height_b = np.sqrt(((tl[0] - bl[0]) ** 2) + ((tl[1] - bl[1]) ** 2))
+    max_height = max(int(height_a), int(height_b))
 
     # Now that we have the dimensions of the new image, construct
     # the set of destination points to obtain a "birds eye view",
@@ -128,13 +128,13 @@ class Scan(object):
     # order
     dst = np.array([
       [0, 0],
-      [maxWidth - 1, 0],
-      [maxWidth - 1, maxHeight - 1],
-      [0, maxHeight - 1]], dtype="float32")
+      [max_width - 1, 0],
+      [max_width - 1, max_height - 1],
+      [0, max_height - 1]], dtype="float32")
 
     # Compute the perspective transform matrix and then apply it
-    M = cv2.getPerspectiveTransform(rect, dst)
-    warped = cv2.warpPerspective(image, M, (maxWidth, maxHeight))
+    m = cv2.getPerspectiveTransform(rect, dst)
+    warped = cv2.warpPerspective(image, m, (max_width, max_height))
 
     # Return the warped image
     return warped

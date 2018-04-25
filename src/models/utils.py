@@ -26,12 +26,13 @@ def save_data_to_pkl(data, data_path):
     pickle.dump(data, f)
 
 
-def load_data_from_pkl(data_path):
+def load_data_from_pkl(data_path, verbose=True):
   """
   Load data from pickle file.
   """
   with open(data_path, 'rb') as f:
-    print('Loading {}...'.format(f.name))
+    if verbose:
+      print('Loading {}...'.format(f.name))
     return pickle.load(f)
 
 

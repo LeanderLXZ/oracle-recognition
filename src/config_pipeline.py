@@ -25,9 +25,10 @@ __C = EasyDict()
 # ===========================================
 
 # Database name
+# 'radical': Oracle Radicals
 # 'mnist': MNIST
 # 'cifar10' CIFAR-10
-__C.DATABASE_NAME = 'cifar10'
+__C.DATABASE_NAME = 'radical'
 
 # Training version
 # Set None to auto generate version
@@ -42,8 +43,27 @@ __C.EPOCHS = 50
 # Batch size
 __C.BATCH_SIZE = 256
 
+# ===========================================
+# #               Preprocessing             #
+# ===========================================
+
 # Setting test set as validation when preprocessing data
-__C.DPP_TEST_AS_VALID = False
+__C.DPP_TEST_AS_VALID = True
+
+# Rate of train-test split
+__C.TEST_SIZE = 0.2
+
+# Rate of train-validation split
+__C.VALID_SIZE = 0.1
+
+# Oracle Parameters
+# Number of radicals to use for training
+# If None, use all radicals (NUM_RADICALS=148)
+__C.NUM_RADICALS = None
+# Using data augment
+__C.USE_DATA_AUG = True
+# The max number of images if use data augment
+__C.MAX_IMAGE_NUM = 2000
 
 # ===========================================
 # #            Model Architecture           #

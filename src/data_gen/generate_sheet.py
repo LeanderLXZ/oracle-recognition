@@ -12,7 +12,7 @@ class GenerateSheet(object):
 
   def __init__(self):
 
-    self.source_data_dir = '../data/source'
+    self.source_data_dir = '../data/radicals/source'
     self.sheet_dir = '../data/sheet_canvas.jpg'
     self.save_img_dir = '../data/sheet'
     self.canvas_size = (1240, 1754)
@@ -112,6 +112,7 @@ class GenerateSheet(object):
           ))
 
     canvas.save(path.join(self.save_img_dir, str(idx) + '.jpg'))
+
 
 if __name__ == '__main__':
 

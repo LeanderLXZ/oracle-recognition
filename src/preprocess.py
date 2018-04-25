@@ -3,19 +3,28 @@ from __future__ import division
 from __future__ import print_function
 
 import time
+import os
 import numpy as np
+from copy import copy
+from tqdm import tqdm
 from os.path import join
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle
+from sklearn.model_selection import train_test_split
 
 from models import utils
 from config import config as cfg_1
 from config_pipeline import config as cfg_2
 
+from keras.preprocessing.image import ImageDataGenerator
+import keras.backend.tensorflow_backend as KTF
+import tensorflow as tf
+KTF.set_session(tf.Session(config=tf.ConfigProto(device_count={'gpu': 0})))
+
 
 class DataPreProcess(object):
 
-  def __init__(self, cfg):
+  def __init__(self, cfg, seed=None):
     """
     Preprocess data and save as pickle files.
 
@@ -23,6 +32,7 @@ class DataPreProcess(object):
       cfg: configuration
     """
     self.cfg = cfg
+    self.seed = seed
     self.data_base_name = None
     self.preprocessed_path = None
     self.source_data_path = None
@@ -43,11 +53,60 @@ class DataPreProcess(object):
     self.y_test = utils.load_data_from_pkl(
         join(self.source_data_path, 'test_labels.p'))
 
-  def _augment_data(self):
+  def _load_oracle_radicals(self, data_aug_param=None):
+    """
+    Load oracle data set from files.
+    """
+    utils.thin_line()
+    print('Loading {} data set...'.format(self.data_base_name))
+    classes = os.listdir(self.source_data_path)
+
+    self.x = []
+    self.y = []
+    for class_name in tqdm(
+          classes[:self.cfg.NUM_RADICALS], ncols=100, unit='class'):
+      x_tensor = utils.load_data_from_pkl(
+          join(self.source_data_path, class_name), verbose=False)
+      if self.cfg.USE_DATA_AUG:
+        x_tensor = self._augment_data(
+            x_tensor, self.cfg.MAX_IMAGE_NUM, data_aug_param)
+      y_tensor = [int(class_name[:-2]) for _ in range(len(x_tensor))]
+      self.x.append(x_tensor)
+      self.y.extend(y_tensor)
+
+    self.x = np.array(
+        self.x, dtype=np.float32).reshape((-1, *self.x[0].shape[1:]))
+    self.y = np.array(self.y, dtype=np.int)
+    print('X shape: {} y shape: {}'.format(self.x.shape, self.y.shape))
+    assert len(self.x) == len(self.y)
+
+  @staticmethod
+  def _augment_data(images_tensors, max_img_num, data_aug_param):
     """
     Augment data set and add noises.
     """
-    pass
+    data_generator = ImageDataGenerator(**data_aug_param)
+    new_x_tensors = list(copy(images_tensors))
+    while True:
+      for i in range(len(images_tensors)):
+        if len(new_x_tensors) >= max_img_num:
+          return new_x_tensors
+        augmented = data_generator.random_transform(images_tensors[i])
+        new_x_tensors.append(augmented)
+
+  def _train_test_split(self):
+    """
+    Split data set for training and testing.
+    """
+    utils.thin_line()
+    print('Splitting train/test set...')
+    self.x, self.x_test, self.y, self.y_test = train_test_split(
+        self.x,
+        self.y,
+        test_size=self.cfg.TEST_SIZE,
+        shuffle=True,
+        random_state=self.seed
+    )
 
   def _shuffle(self):
     """
@@ -56,9 +115,9 @@ class DataPreProcess(object):
     utils.thin_line()
     print('Shuffling images and labels...')
     self.x, self.y = shuffle(
-        self.x, self.y, random_state=0)
+        self.x, self.y, random_state=self.seed)
     self.x_test, self.y_test = shuffle(
-        self.x_test, self.y_test, random_state=0)
+        self.x_test, self.y_test, random_state=self.seed)
 
   def _scaling(self):
     """
@@ -82,20 +141,14 @@ class DataPreProcess(object):
     self.y = encoder.transform(self.y)
     self.y_test = encoder.transform(self.y_test)
 
-  def _split_data(self):
+  def _train_valid_split(self):
     """
-    Split data set for training, validation and testing.
+    Split data set for training and validation
     """
     utils.thin_line()
-    print('Splitting train/valid/test set...')
-    
-    if self.data_base_name == 'mnist':
-      train_stop = 55000
-    elif self.data_base_name == 'cifar10':
-      train_stop = 45000
-    else:
-      raise ValueError('Wrong database name!')
+    print('Splitting train/valid set...')
 
+    train_stop = int(len(self.x) * self.cfg.VALID_SIZE)
     if self.cfg.DPP_TEST_AS_VALID:
       self.x_train = self.x
       self.y_train = self.y
@@ -125,6 +178,22 @@ class DataPreProcess(object):
     assert self.x_test.min() >= 0, self.x_test.min()
     assert self.y_test.min() >= 0, self.y_test.min()
 
+    def _check_oracle_data():
+      n_classes = \
+        148 if self.cfg.NUM_RADICALS is None else self.cfg.NUM_RADICALS
+      assert self.x_train.shape == \
+          (len(self.x_train), 128, 128, 1), self.x_train.shape
+      assert self.y_train.shape == \
+          (len(self.y_train), n_classes), self.y_train.shape
+      assert self.x_valid.shape == \
+          (len(self.x_valid), 128, 128, 1), self.x_valid.shape
+      assert self.y_valid.shape == \
+          (len(self.y_valid), n_classes), self.y_valid.shape
+      assert self.x_test.shape == \
+          (len(self.x_test), 128, 128, 1), self.x_test.shape
+      assert self.y_test.shape == \
+          (len(self.y_test), n_classes), self.y_test.shape
+
     if self.cfg.DPP_TEST_AS_VALID:
       if self.data_base_name == 'mnist':
         assert self.x_train.shape == (60000, 28, 28, 1), self.x_train.shape
@@ -140,15 +209,17 @@ class DataPreProcess(object):
         assert self.y_valid.shape == (10000, 10), self.y_valid.shape
         assert self.x_test.shape == (10000, 32, 32, 3), self.x_test.shape
         assert self.y_test.shape == (10000, 10), self.y_test.shape
+      elif self.data_base_name == 'radical':
+        _check_oracle_data()
       else:
         raise ValueError('Wrong database name!')
 
     else:
       if self.data_base_name == 'mnist':
-        assert self.x_train.shape == (55000, 28, 28, 1), self.x_train.shape
-        assert self.y_train.shape == (55000, 10), self.y_train.shape
-        assert self.x_valid.shape == (5000, 28, 28, 1), self.x_valid.shape
-        assert self.y_valid.shape == (5000, 10), self.y_valid.shape
+        assert self.x_train.shape == (54000, 28, 28, 1), self.x_train.shape
+        assert self.y_train.shape == (54000, 10), self.y_train.shape
+        assert self.x_valid.shape == (6000, 28, 28, 1), self.x_valid.shape
+        assert self.y_valid.shape == (6000, 10), self.y_valid.shape
         assert self.x_test.shape == (10000, 28, 28, 1), self.x_test.shape
         assert self.y_test.shape == (10000, 10), self.y_test.shape
       elif self.data_base_name == 'cifar10':
@@ -158,6 +229,8 @@ class DataPreProcess(object):
         assert self.y_valid.shape == (5000, 10), self.y_valid.shape
         assert self.x_test.shape == (10000, 32, 32, 3), self.x_test.shape
         assert self.y_test.shape == (10000, 10), self.y_test.shape
+      elif self.data_base_name == 'radical':
+        _check_oracle_data()
       else:
         raise ValueError('Wrong database name!')
 
@@ -200,13 +273,23 @@ class DataPreProcess(object):
     self.source_data_path = join(self.cfg.SOURCE_DATA_PATH, data_base_name)
 
     # Load data
-    self._load_data()
-
-    # Augment data
-    self._augment_data()
+    if self.data_base_name == 'mnist' or self.data_base_name == 'cifar10':
+      self._load_data()
+    elif self.data_base_name == 'radical':
+      data_aug_parameters = dict(
+          rotation_range=40,
+          width_shift_range=0.1,
+          height_shift_range=0.1,
+          shear_range=0.2,
+          zoom_range=0.1,
+          horizontal_flip=True,
+          fill_mode='nearest'
+      )
+      self._load_oracle_radicals(data_aug_parameters)
+      self._train_test_split()
 
     # Shuffle data set
-    # self._shuffle()
+    self._shuffle()
 
     # Scaling images to (0, 1)
     self._scaling()
@@ -214,8 +297,8 @@ class DataPreProcess(object):
     # One-hot-encoding labels
     self._one_hot_encoding()
 
-    # Split data set into train/valid/test
-    self._split_data()
+    # Split data set into train/valid
+    self._train_valid_split()
 
     # Check data format.
     self._check_data()
@@ -230,10 +313,13 @@ class DataPreProcess(object):
 
 if __name__ == '__main__':
 
+  global_seed = None
+
   utils.thick_line()
-  print('Input [ 1 ] to preprocess the MNIST database.')
-  print('Input [ 2 ] to preprocess the CIFAR-10 database.')
-  print("Input [ 3 ] to preprocess the MNIST and CIFAR-10 database.")
+  print('Input [ 1 ] to preprocess the Oracle Radicals database.')
+  print('Input [ 2 ] to preprocess the MNIST database.')
+  print('Input [ 3 ] to preprocess the CIFAR-10 database.')
+  print("Input [ 4 ] to preprocess the MNIST and CIFAR-10 database.")
   utils.thin_line()
   input_mode = input('Input: ')
 
@@ -244,17 +330,19 @@ if __name__ == '__main__':
   input_cfg = input('Input: ')
 
   if input_cfg == '1':
-    DPP = DataPreProcess(cfg_1)
+    DPP = DataPreProcess(cfg_1, global_seed)
   elif input_cfg == '2':
-    DPP = DataPreProcess(cfg_2)
+    DPP = DataPreProcess(cfg_2, global_seed)
   else:
     raise ValueError('Wrong config input! Found: {}'.format(input_cfg))
 
   if input_mode == '1':
-    DPP.pipeline('mnist')
+    DPP.pipeline('radical')
   elif input_mode == '2':
-    DPP.pipeline('cifar10')
+    DPP.pipeline('mnist')
   elif input_mode == '3':
+    DPP.pipeline('cifar10')
+  elif input_mode == '4':
     DPP.pipeline('mnist')
     DPP.pipeline('cifar10')
   else:
