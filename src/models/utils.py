@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import print_function
 
 import os
+import sys
 import csv
 import time
 import gzip
@@ -49,7 +50,8 @@ def save_large_data_to_pkl(data, data_path, n_parts=2, verbose=True):
       data_part = data[i * len_part:(i + 1) * len_part]
     with open(data_path + '_{}.p'.format(i), 'wb') as f:
       if verbose:
-        print('Saving {}...'.format(f.name))
+        file_size = sys.getsizeof(data_part)
+        print('Saving {}... Size: {}Mb'.format(f.name, file_size // 1048576))
       pickle.dump(data_part, f)
 
 

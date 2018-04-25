@@ -248,8 +248,6 @@ class DataPreProcess(object):
 
     utils.check_dir([self.preprocessed_path])
     if self.data_base_name == 'radical':
-      import sys
-      print(sys.getsizeof(self.x_train))
       utils.save_large_data_to_pkl(
           self.x_train, join(self.preprocessed_path, 'x_train.p'),
           n_parts=self.cfg.LARGE_DATA_PART_NUM)
