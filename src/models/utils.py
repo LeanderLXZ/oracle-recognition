@@ -24,7 +24,8 @@ def save_data_to_pkl(data, data_path, verbose=True):
   """
   with open(data_path, 'wb') as f:
     if verbose:
-      print('Saving {}...'.format(f.name))
+      file_size = sys.getsizeof(data)
+      print('Saving {}... Size: {:.2}Mb'.format(f.name, file_size / 1048576))
     pickle.dump(data, f)
 
 
