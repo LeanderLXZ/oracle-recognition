@@ -25,7 +25,7 @@ def save_data_to_pkl(data, data_path, verbose=True):
   with open(data_path, 'wb') as f:
     if verbose:
       file_size = sys.getsizeof(data)
-      print('Saving {}... Size: {:.2}Mb'.format(f.name, file_size / 1048576))
+      print('Saving {}... Size: {:.4}Mb'.format(f.name, file_size / 1048576))
     pickle.dump(data, f)
 
 
@@ -52,7 +52,7 @@ def save_large_data_to_pkl(data, data_path, n_parts=2, verbose=True):
     with open(data_path + '_{}.p'.format(i), 'wb') as f:
       if verbose:
         file_size = sys.getsizeof(data_part)
-        print('Saving {}... Size: {:.2}Mb'.format(f.name, file_size / 1048576))
+        print('Saving {}... Size: {:.4}Mb'.format(f.name, file_size / 1048576))
       pickle.dump(data_part, f)
 
 

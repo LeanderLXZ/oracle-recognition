@@ -11,33 +11,54 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
   model = Sequential(inputs)
   model.add(ConvLayer(
       cfg,
-      kernel_size=5,
+      kernel_size=3,
       stride=1,
-      n_kernel=64,
-      padding='VALID',
+      n_kernel=16,
+      padding='same',
       act_fn=None,
+      idx=0
+  ))
+  model.add(MaxPool(
+      cfg,
+      pool_size=(2, 2),
+      strides=(2, 2),
+      padding='valid',
       idx=0
   ))
   model.add(BatchNorm(
       cfg, is_training, momentum=0.99, act_fn='relu', idx=0))
   model.add(ConvLayer(
       cfg,
-      kernel_size=5,
+      kernel_size=3,
       stride=1,
-      n_kernel=128,
-      padding='VALID',
+      n_kernel=32,
+      padding='same',
       act_fn=None,
+      idx=1
+  ))
+  model.add(MaxPool(
+      cfg,
+      pool_size=(2, 2),
+      strides=(2, 2),
+      padding='valid',
       idx=1
   ))
   model.add(BatchNorm(
       cfg, is_training, momentum=0.99, act_fn='relu', idx=1))
   # model.add(ConvLayer(
   #     cfg,
-  #     kernel_size=5,
+  #     kernel_size=3,
   #     stride=1,
-  #     n_kernel=256,
+  #     n_kernel=64,
   #     padding='VALID',
   #     act_fn=None,
+  #     idx=2
+  # ))
+  # model.add(MaxPool(
+  #     cfg,
+  #     pool_size=(2, 2),
+  #     strides=(2, 2),
+  #     padding='valid',
   #     idx=2
   # ))
   # model.add(BatchNorm(
@@ -52,9 +73,9 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
   # ))
   model.add(Conv2CapsLayer(
       cfg,
-      kernel_size=5,
+      kernel_size=3,
       stride=2,
-      n_kernel=16,
+      n_kernel=32,
       vec_dim=16,
       padding='VALID',
       batch_size=batch_size
@@ -70,7 +91,7 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
   model.add(CapsLayer(
       cfg,
       num_caps=148,
-      vec_dim=32,
+      vec_dim=16,
       route_epoch=3,
       batch_size=batch_size,
       idx=1

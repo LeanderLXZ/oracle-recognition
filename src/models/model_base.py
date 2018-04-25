@@ -161,7 +161,7 @@ class ConvLayer(object):
                kernel_size=None,
                stride=None,
                n_kernel=None,
-               padding='SAME',
+               padding='valid',
                act_fn='relu',
                w_init_fn=tf.contrib.layers.xavier_initializer(),
                resize=None,
@@ -233,7 +233,7 @@ class ConvLayer(object):
         pad_end = pad - pad_beg
         inputs = tf.pad(
             inputs, [[0, 0], [pad_beg, pad_end], [pad_beg, pad_end], [0, 0]])
-        self.padding = 'VALID'
+        self.padding = 'valid'
 
       activation_fn = get_act_fn(self.act_fn)
 
@@ -282,7 +282,7 @@ class ConvTLayer(object):
                kernel_size=None,
                stride=None,
                n_kernel=None,
-               padding='SAME',
+               padding='valid',
                act_fn='relu',
                output_shape=None,
                w_init_fn=tf.contrib.layers.xavier_initializer(),
@@ -380,6 +380,59 @@ class ConvTLayer(object):
       return conv_t
 
 
+class MaxPool(object):
+
+  def __init__(self,
+               cfg,
+               pool_size=None,
+               strides=None,
+               padding='valid',
+               idx=None):
+    """
+    Max Pooling layer.
+
+    Args:
+      cfg: configuration
+      pool_size: specifying the size of the pooling window
+      strides: specifying the strides of the pooling operation
+      padding: the padding method, either 'valid' or 'same'
+      idx: index of layer
+    """
+    self.cfg = cfg
+    self.pool_size = pool_size
+    self.strides = strides
+    self.padding = padding
+    self.idx = idx
+
+  @property
+  def params(self):
+    """Parameters of this layer."""
+    return {
+      'cfg': self.cfg,
+      'pool_size': self.pool_size,
+      'strides': self.strides,
+      'padding': self.padding,
+      'idx': self.idx
+    }
+
+  def __call__(self, inputs):
+    """
+    Batch normalization layer.
+
+    Args:
+      inputs: input tensor
+    Returns:
+      max pooling tensor
+    """
+    with tf.variable_scope('max_pool_{}'.format(self.idx)):
+      return tf.layers.max_pooling2d(
+          inputs=inputs,
+          pool_size=self.pool_size,
+          strides=self.strides,
+          padding=self.padding
+      )
+
+
 class BatchNorm(object):
 
   def __init__(self,
@@ -432,7 +485,7 @@ class BatchNorm(object):
     Args:
       inputs: input tensor
     Returns:
-      reshaped tensor
+      batch normalization tensor
     """
     with tf.variable_scope('batch_norm_{}'.format(self.idx)):
       bn = tf.layers.batch_normalization(
