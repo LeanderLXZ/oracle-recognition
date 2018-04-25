@@ -6,14 +6,9 @@ import os
 import pickle
 import gc
 import numpy as np
-from PIL import Image, ImageFile
+from PIL import Image
 from os.path import isdir, join
 from tqdm import tqdm
-
-import keras.backend.tensorflow_backend as KTF
-import tensorflow as tf
-KTF.set_session(tf.Session(config=tf.ConfigProto(device_count={'gpu': 0})))
-ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
 def save_data_to_pkl(data, data_path):
@@ -84,6 +79,9 @@ class GenerateDataSet(object):
 
 
 if __name__ == '__main__':
+
+  if not isdir('../../data/source_data'):
+    os.mkdir('../../data/source_data')
 
   GDS = GenerateDataSet(
       raw_data_dir='../../data/raw_data/radicals/total',
