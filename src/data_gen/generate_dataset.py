@@ -4,7 +4,6 @@ from __future__ import print_function
 
 import os
 import pickle
-import gc
 import numpy as np
 from PIL import Image
 from os.path import isdir, join
@@ -73,9 +72,6 @@ class GenerateDataSet(object):
       save_data_to_pkl(
           np.array(images_tensors, dtype=np.float32),
           join(self.save_data_dir, class_ + '.p'))
-
-      del images_tensors
-      gc.collect()
 
 
 if __name__ == '__main__':

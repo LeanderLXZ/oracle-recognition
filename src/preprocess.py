@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import time
 import os
+import gc
 import numpy as np
 import sklearn.utils
 from copy import copy
@@ -73,6 +74,8 @@ class DataPreProcess(object):
       y_tensor = [int(class_name[:-2]) for _ in range(len(x_tensor))]
       self.x.append(x_tensor)
       self.y.extend(y_tensor)
+      del x_tensor
+      gc.collect()
 
     self.x = np.array(
         self.x, dtype=np.float32).reshape((-1, *self.x[0][0].shape))
@@ -244,9 +247,13 @@ class DataPreProcess(object):
     print('Saving pickle files...')
 
     utils.check_dir([self.preprocessed_path])
-    
-    utils.save_data_to_pkl(
-        self.x_train, join(self.preprocessed_path, 'x_train.p'))
+    if self.data_base_name == 'radical':
+      utils.save_large_data_to_pkl(
+          self.x_train, join(self.preprocessed_path, 'x_train.p'),
+          n_parts=self.cfg.LARGE_DATA_PART_NUM)
+    else:
+      utils.save_data_to_pkl(
+          self.x_train, join(self.preprocessed_path, 'x_train.p'))
     utils.save_data_to_pkl(
         self.y_train, join(self.preprocessed_path, 'y_train.p'))
     utils.save_data_to_pkl(

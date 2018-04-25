@@ -17,12 +17,13 @@ from tqdm import tqdm
 from urllib.request import urlretrieve
 
 
-def save_data_to_pkl(data, data_path):
+def save_data_to_pkl(data, data_path, verbose=True):
   """
   Save data to pickle file.
   """
   with open(data_path, 'wb') as f:
-    print('Saving {}...'.format(f.name))
+    if verbose:
+      print('Saving {}...'.format(f.name))
     pickle.dump(data, f)
 
 
@@ -34,6 +35,37 @@ def load_data_from_pkl(data_path, verbose=True):
     if verbose:
       print('Loading {}...'.format(f.name))
     return pickle.load(f)
+
+
+def save_large_data_to_pkl(data, data_path, n_parts=2, verbose=True):
+  """
+  Save large data to pickle file.
+  """
+  len_part = len(data) // n_parts
+  for i in range(n_parts):
+    if i == n_parts - 1:
+      data_part = data[(i + 1) * len_part:]
+    else:
+      data_part = data[i * len_part:(i + 1) * len_part]
+    with open(data_path + '_{}.p'.format(i), 'wb') as f:
+      if verbose:
+        print('Saving {}...'.format(f.name))
+      pickle.dump(data_part, f)
+
+
+def load_large_data_to_pkl(data_path, n_parts=2, verbose=True):
+  """
+  Save large data to pickle file.
+  """
+  data = []
+  for i in range(n_parts):
+    with open(data_path + '_{}.p'.format(i), 'rb') as f:
+      if verbose:
+        print('Loading {}...'.format(f.name))
+      data.append(pickle.load(f))
+  concat = np.array(data, dtype=np.float32).reshape((-1, *data[0].shape[1:]))
+  assert concat.shape[1:] == data[0].shape[1:]
+  return concat
 
 
 def get_vec_length(vec, batch_size, epsilon):

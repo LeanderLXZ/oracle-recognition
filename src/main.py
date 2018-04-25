@@ -72,14 +72,22 @@ class Main(object):
     utils.thick_line()
     print('Loading data...')
     utils.thin_line()
-    self.x_train = utils.load_data_from_pkl(
-        join(self.preprocessed_path, 'x_train.p'))
+    if self.cfg.DATABASE_NAME == 'radical':
+      self.x_train = utils.load_large_data_to_pkl(
+          join(self.preprocessed_path, 'x_train'),
+          n_parts=self.cfg.LARGE_DATA_PART_NUM)
+    else:
+      self.x_train = utils.load_data_from_pkl(
+          join(self.preprocessed_path, 'x_train.p'))
     self.y_train = utils.load_data_from_pkl(
         join(self.preprocessed_path, 'y_train.p'))
     self.x_valid = utils.load_data_from_pkl(
         join(self.preprocessed_path, 'x_valid.p'))
     self.y_valid = utils.load_data_from_pkl(
         join(self.preprocessed_path, 'y_valid.p'))
+
+    if self.cfg.DATABASE_NAME == 'radical':
+      assert len(self.x_train) == len(self.y_train)
 
     # Calculate number of batches
     self.n_batch_train = len(self.y_train) // cfg.BATCH_SIZE
