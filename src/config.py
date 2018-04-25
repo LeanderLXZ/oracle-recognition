@@ -66,7 +66,7 @@ __C.USE_DATA_AUG = True
 __C.MAX_IMAGE_NUM = 2000
 
 # Number of parts for saving large pickle files
-__C.LARGE_DATA_PART_NUM = 2
+__C.LARGE_DATA_PART_NUM = 1
 
 # ===========================================
 # #            Model Architecture           #
