@@ -45,7 +45,7 @@ def save_large_data_to_pkl(data, data_path, n_parts=2, verbose=True):
   len_part = len(data) // n_parts
   for i in range(n_parts):
     if i == n_parts - 1:
-      data_part = data[(i + 1) * len_part:]
+      data_part = data[i * len_part:]
     else:
       data_part = data[i * len_part:(i + 1) * len_part]
     with open(data_path + '_{}.p'.format(i), 'wb') as f:
