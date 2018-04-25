@@ -633,7 +633,7 @@ class Main(object):
     """
     Training models
     """
-    session_cfg = tf.ConfigProto()
+    session_cfg = tf.ConfigProto(allow_soft_placement=True)
     session_cfg.gpu_options.allow_growth = True
 
     if self.cfg.VAR_ON_CPU:
