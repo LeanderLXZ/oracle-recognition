@@ -14,7 +14,7 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
       kernel_size=3,
       stride=1,
       n_kernel=16,
-      padding='same',
+      padding='VALID',
       act_fn=None,
       idx=0
   ))
@@ -32,7 +32,7 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
       kernel_size=3,
       stride=1,
       n_kernel=32,
-      padding='same',
+      padding='VALID',
       act_fn=None,
       idx=1
   ))
