@@ -45,24 +45,24 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
   ))
   model.add(BatchNorm(
       cfg, is_training, momentum=0.99, act_fn='relu', idx=1))
-  # model.add(ConvLayer(
-  #     cfg,
-  #     kernel_size=3,
-  #     stride=1,
-  #     n_kernel=64,
-  #     padding='VALID',
-  #     act_fn=None,
-  #     idx=2
-  # ))
-  # model.add(MaxPool(
-  #     cfg,
-  #     pool_size=(2, 2),
-  #     strides=(2, 2),
-  #     padding='valid',
-  #     idx=2
-  # ))
-  # model.add(BatchNorm(
-  #     cfg, is_training, momentum=0.99, act_fn='relu', idx=2))
+  model.add(ConvLayer(
+      cfg,
+      kernel_size=3,
+      stride=1,
+      n_kernel=64,
+      padding='VALID',
+      act_fn=None,
+      idx=2
+  ))
+  model.add(MaxPool(
+      cfg,
+      pool_size=(2, 2),
+      strides=(2, 2),
+      padding='valid',
+      idx=2
+  ))
+  model.add(BatchNorm(
+      cfg, is_training, momentum=0.99, act_fn='relu', idx=2))
   # models.add(Dense2Capsule(
   #     cfg,
   #     identity_map=True,
@@ -73,10 +73,10 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
   # ))
   model.add(Conv2CapsLayer(
       cfg,
-      kernel_size=3,
-      stride=2,
+      kernel_size=5,
+      stride=3,
       n_kernel=32,
-      vec_dim=16,
+      vec_dim=8,
       padding='VALID',
       batch_size=batch_size
   ))
