@@ -51,7 +51,7 @@ def save_large_data_to_pkl(data, data_path, n_parts=2, verbose=True):
     with open(data_path + '_{}.p'.format(i), 'wb') as f:
       if verbose:
         file_size = sys.getsizeof(data_part)
-        print('Saving {}... Size: {}Mb'.format(f.name, file_size // 1048576))
+        print('Saving {}... Size: {:.2}Mb'.format(f.name, file_size / 1048576))
       pickle.dump(data_part, f)
 
 
@@ -65,7 +65,7 @@ def load_large_data_to_pkl(data_path, n_parts=2, verbose=True):
       if verbose:
         print('Loading {}...'.format(f.name))
       data.append(pickle.load(f))
-  concat = np.array(data, dtype=np.float32).reshape((-1, *data[0].shape[1:]))
+  concat = np.array(data, dtype=np.float32).reshape((-1, *(data[0].shape[1:])))
   assert concat.shape[1:] == data[0].shape[1:]
   return concat
 

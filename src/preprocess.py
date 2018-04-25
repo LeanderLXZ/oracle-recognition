@@ -249,7 +249,7 @@ class DataPreProcess(object):
     utils.check_dir([self.preprocessed_path])
     if self.data_base_name == 'radical':
       utils.save_large_data_to_pkl(
-          self.x_train, join(self.preprocessed_path, 'x_train.p'),
+          self.x_train, join(self.preprocessed_path, 'x_train'),
           n_parts=self.cfg.LARGE_DATA_PART_NUM)
     else:
       utils.save_data_to_pkl(
@@ -316,7 +316,7 @@ class DataPreProcess(object):
     self._save_data()
 
     utils.thin_line()
-    print('Done! Using {:.3}s'.format(time.time() - start_time))
+    print('Done! Using {:.4}s'.format(time.time() - start_time))
     utils.thick_line()
 
 
