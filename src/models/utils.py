@@ -65,7 +65,7 @@ def load_large_data_to_pkl(data_path, n_parts=2, verbose=True):
       if verbose:
         print('Loading {}...'.format(f.name))
       data.append(pickle.load(f))
-  concat = np.array(data, dtype=np.float32).reshape((-1, *(data[0].shape[1:])))
+  concat = np.array(data, dtype=np.float32).reshape((-1, ) + data[0].shape[1:])
   assert concat.shape[1:] == data[0].shape[1:]
   return concat
 
