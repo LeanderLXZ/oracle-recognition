@@ -5,11 +5,11 @@ from __future__ import print_function
 import time
 import os
 import numpy as np
+import sklearn.utils
 from copy import copy
 from tqdm import tqdm
 from os.path import join
 from sklearn.preprocessing import LabelBinarizer
-from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
 
 from models import utils
@@ -75,9 +75,11 @@ class DataPreProcess(object):
       self.y.extend(y_tensor)
 
     self.x = np.array(
-        self.x, dtype=np.float32).reshape((-1, *self.x[0].shape[1:]))
+        self.x, dtype=np.float32).reshape((-1, *self.x[0][0].shape))
     self.y = np.array(self.y, dtype=np.int)
-    print('X shape: {} y shape: {}'.format(self.x.shape, self.y.shape))
+
+    print('Images shape: {}\nLabels shape: {}'.format(
+        self.x.shape, self.y.shape))
     assert len(self.x) == len(self.y)
 
   @staticmethod
@@ -114,9 +116,9 @@ class DataPreProcess(object):
     """
     utils.thin_line()
     print('Shuffling images and labels...')
-    self.x, self.y = shuffle(
+    self.x, self.y = sklearn.utils.shuffle(
         self.x, self.y, random_state=self.seed)
-    self.x_test, self.y_test = shuffle(
+    self.x_test, self.y_test = sklearn.utils.shuffle(
         self.x_test, self.y_test, random_state=self.seed)
 
   def _scaling(self):
@@ -280,7 +282,7 @@ class DataPreProcess(object):
           rotation_range=40,
           width_shift_range=0.1,
           height_shift_range=0.1,
-          shear_range=0.2,
+          shear_range=0.1,
           zoom_range=0.1,
           horizontal_flip=True,
           fill_mode='nearest'
