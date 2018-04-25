@@ -74,24 +74,24 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
   model.add(Conv2CapsLayer(
       cfg,
       kernel_size=5,
-      stride=3,
+      stride=5,
       n_kernel=32,
       vec_dim=8,
       padding='VALID',
       batch_size=batch_size
   ))
-  # model.add(CapsLayer(
-  #     cfg,
-  #     num_caps=256,
-  #     vec_dim=16,
-  #     route_epoch=3,
-  #     batch_size=batch_size,
-  #     idx=0
-  # ))
+  model.add(CapsLayer(
+      cfg,
+      num_caps=256,
+      vec_dim=8,
+      route_epoch=3,
+      batch_size=batch_size,
+      idx=0
+  ))
   model.add(CapsLayer(
       cfg,
       num_caps=148,
-      vec_dim=16,
+      vec_dim=8,
       route_epoch=3,
       batch_size=batch_size,
       idx=1
