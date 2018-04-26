@@ -83,6 +83,7 @@ class DataPreProcess(object):
       # Data augment
       if self.cfg.USE_DATA_AUG:
         x_tensor = self._augment_data(x_tensor, data_aug_param)
+      assert len(x_tensor) == self.cfg.MAX_IMAGE_NUM
 
       self.x.append(x_tensor)
       self.y.extend([int(cls_name) for _ in range(len(x_tensor))])

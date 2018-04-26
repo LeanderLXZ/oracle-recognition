@@ -37,7 +37,7 @@ __C.VERSION = None
 __C.LEARNING_RATE = 0.001
 
 # Epochs
-__C.EPOCHS = 50
+__C.EPOCHS = 10
 
 # Batch size
 __C.BATCH_SIZE = 128
@@ -65,7 +65,7 @@ __C.NUM_RADICALS = None
 # Using data augment
 __C.USE_DATA_AUG = True
 # The max number of images if use data augment
-__C.MAX_IMAGE_NUM = 1000
+__C.MAX_IMAGE_NUM = 2000
 
 # Number of parts for saving large pickle files
 __C.LARGE_DATA_PART_NUM = 4
