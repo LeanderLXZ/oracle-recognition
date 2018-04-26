@@ -352,7 +352,7 @@ class Main(object):
         real_images_[: save_row_size * save_col_size],
         (save_row_size, save_col_size, *img_shape)).astype(np.uint8)
 
-    if self.cfg.DATABASE_NAME == 'mnist' or self.cfg.DATABASE_NAME == 'oracle':
+    if self.cfg.DATABASE_NAME == 'mnist' or self.cfg.DATABASE_NAME == 'radical':
       mode = 'L'
       rec_images_in_square = np.squeeze(rec_images_in_square, 4)
       real_images_in_square = np.squeeze(real_images_in_square, 4)

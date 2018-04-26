@@ -65,7 +65,7 @@ __C.NUM_RADICALS = None
 # Using data augment
 __C.USE_DATA_AUG = True
 # The max number of images if use data augment
-__C.MAX_IMAGE_NUM = 5000
+__C.MAX_IMAGE_NUM = 1000
 
 # Number of parts for saving large pickle files
 __C.LARGE_DATA_PART_NUM = 4
@@ -150,7 +150,7 @@ __C.SAVE_LOG_STEP = 100  # batches
 __C.SAVE_IMAGE_STEP = 100  # batches
 
 # Maximum images number in a col
-__C.MAX_IMAGE_IN_COL = 20
+__C.MAX_IMAGE_IN_COL = 10
 
 # Calculate train loss and valid loss using full data set
 # 'per_epoch': evaluate on full set when n epochs finished
