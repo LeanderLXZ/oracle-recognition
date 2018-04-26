@@ -137,41 +137,36 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
     elif cfg.DECODER_TYPE == 'conv':
       model.add(Reshape(      # (b, 4, 4, 1)
           (batch_size, 4, 4, -1), name='reshape'))
-      model.add(ConvLayer(    # (b, 8, 8, 16)
+      model.add(ConvLayer(    # (b, 8, 8, 32)
           cfg,
           kernel_size=3,
           stride=1,
           n_kernel=16,
+          resize=8,
+          act_fn=None,
           idx=0))
       model.add(BatchNorm(
           cfg, is_training, momentum=0.99, act_fn='relu', idx=0))
-      model.add(ConvLayer(    # (b, 16, 16, 32)
-          cfg,
-          kernel_size=3,
-          stride=1,
-          n_kernel=32,
-          resize=16,
-          idx=1))
-      model.add(BatchNorm(
-          cfg, is_training, momentum=0.99, act_fn='relu', idx=1))
-      model.add(ConvLayer(    # (b, 32, 32, 16)
+      model.add(ConvLayer(    # (b, 16, 16, 16)
           cfg,
           kernel_size=3,
           stride=1,
           n_kernel=16,
-          resize=32,
-          idx=2))
+          resize=16,
+          act_fn=None,
+          idx=1))
       model.add(BatchNorm(
-          cfg, is_training, momentum=0.99, act_fn='relu', idx=2))
+          cfg, is_training, momentum=0.99, act_fn='relu', idx=1))
       model.add(ConvLayer(    # (b, 32, 32, 1)
           cfg,
           kernel_size=3,
           stride=1,
           n_kernel=1,
-          act_fn=act_fn_last,
-          idx=3))
+          resize=32,
+          act_fn=None,
+          idx=2))
       model.add(BatchNorm(
-          cfg, is_training, momentum=0.99, act_fn='relu', idx=3))
+          cfg, is_training, momentum=0.99, act_fn=act_fn_last, idx=2))
 
     elif cfg.DECODER_TYPE == 'conv_t':
       model.add(Reshape(
@@ -227,10 +222,10 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
           n_kernel=1,
           output_shape=[batch_size, 32, 32, 1],
           padding='VALID',
-          act_fn=act_fn_last,
+          act_fn=None,
           idx=4))
       model.add(BatchNorm(
-          cfg, is_training, momentum=0.99, act_fn='relu', idx=4))
+          cfg, is_training, momentum=0.99, act_fn=act_fn_last, idx=4))
 
     else:
       raise ValueError('Wrong decoder type!')
