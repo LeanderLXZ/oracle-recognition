@@ -69,7 +69,7 @@ class DataPreProcess(object):
           classes[:self.cfg.NUM_RADICALS], ncols=100, unit='class'):
 
       # Load images from raw data pictures
-      class_dir = join(self.cfg.RAW_DATA_PATH, cls_name)
+      class_dir = join(self.source_data_path, cls_name)
       images = os.listdir(class_dir)
       x_tensor = []
       for img_name in images:
