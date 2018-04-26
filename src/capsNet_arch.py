@@ -88,11 +88,11 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
       cfg,
       kernel_size=5,
       stride=1,
-      n_kernel=32,
+      n_kernel=24,
       vec_dim=8,
       padding='VALID',
       batch_size=batch_size
-  ))                               # (b, 3, 3, 32) -> (b, 288, 148, 16, 8)
+  ))                               # (b, 3, 3, 32) -> (b, 216, 148, 16, 8)
   # model.add(CapsLayer(
   #     cfg,
   #     num_caps=256,

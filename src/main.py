@@ -84,6 +84,7 @@ class Main(object):
         join(self.preprocessed_path, 'x_valid.p'))
     self.y_valid = utils.load_data_from_pkl(
         join(self.preprocessed_path, 'y_valid.p'))
+    utils.thin_line()
     print('Data info:')
     utils.thin_line()
     print('x_train: {}\ny_train: {}\nx_valid: {}\ny_valid: {}'.format(
@@ -92,7 +93,6 @@ class Main(object):
         self.x_valid.shape,
         self.y_valid.shape
     ))
-    utils.thin_line()
 
     # Calculate number of batches
     self.n_batch_train = len(self.y_train) // cfg.BATCH_SIZE
