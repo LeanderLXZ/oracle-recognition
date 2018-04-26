@@ -137,7 +137,7 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
     elif cfg.DECODER_TYPE == 'conv':
       model.add(Reshape(      # (b, 4, 4, 1)
           (batch_size, 4, 4, -1), name='reshape'))
-      model.add(ConvLayer(    # (b, 8, 8, 32)
+      model.add(ConvLayer(    # (b, 8, 8, 16)
           cfg,
           kernel_size=3,
           stride=1,
@@ -147,26 +147,37 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
           idx=0))
       model.add(BatchNorm(
           cfg, is_training, momentum=0.99, act_fn='relu', idx=0))
-      model.add(ConvLayer(    # (b, 16, 16, 16)
+      model.add(ConvLayer(    # (b, 16, 16, 32)
           cfg,
           kernel_size=3,
           stride=1,
-          n_kernel=16,
+          n_kernel=32,
           resize=16,
           act_fn=None,
           idx=1))
       model.add(BatchNorm(
           cfg, is_training, momentum=0.99, act_fn='relu', idx=1))
+      model.add(ConvLayer(    # (b, 32, 32, 16)
+          cfg,
+          kernel_size=3,
+          stride=1,
+          n_kernel=16,
+          resize=32,
+          act_fn=None,
+          idx=2))
+      model.add(BatchNorm(
+          cfg, is_training, momentum=0.99, act_fn='relu', idx=2))
       model.add(ConvLayer(    # (b, 32, 32, 1)
           cfg,
           kernel_size=3,
           stride=1,
           n_kernel=1,
           resize=32,
+          padding='SAME',
           act_fn=None,
-          idx=2))
+          idx=3))
       model.add(BatchNorm(
-          cfg, is_training, momentum=0.99, act_fn=act_fn_last, idx=2))
+          cfg, is_training, momentum=0.99, act_fn=act_fn_last, idx=3))
 
     elif cfg.DECODER_TYPE == 'conv_t':
       model.add(Reshape(
