@@ -120,7 +120,7 @@ def get_batches(x, y, batch_size):
   """
   Split features and labels into batches.
   """
-  for start in range(0, len(x) - batch_size, batch_size):
+  for start in range(0, len(x) - batch_size + 1, batch_size):
     end = start + batch_size
     yield x[start:end], y[start:end]
 
