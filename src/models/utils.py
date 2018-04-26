@@ -196,13 +196,15 @@ def save_config_log(file_path, cfg, clf_arch_info=None, rec_arch_info=None):
     if clf_arch_info is not None:
       f.write('-' * 55 + '\n')
       f.write('Classifier Architecture:\n')
-      for i, (clf_name, clf_params) in enumerate(clf_arch_info):
-        f.write('\t[{}] {}: {}\n'.format(i, clf_name, clf_params))
+      for i, (clf_name, clf_params, clf_shape) in enumerate(clf_arch_info):
+        f.write('\t[{}] {}: {}\n\tOutput tensor shape:{}\n'.format(
+            i, clf_name, clf_params, clf_shape))
     if rec_arch_info is not None:
       f.write('-' * 55 + '\n')
       f.write('Reconstruction Architecture:\n')
-      for j, (rec_name, rec_params) in enumerate(rec_arch_info):
-        f.write('\t[{}] {}: {}\n'.format(j, rec_name, rec_params))
+      for j, (rec_name, rec_params, rec_shape) in enumerate(rec_arch_info):
+        f.write('\t[{}] {}: {}\n\tOutput tensor shape:{}\n'.format(
+            j, rec_name, rec_params, rec_shape))
     f.write('=' * 55)
 
 

@@ -75,7 +75,7 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
   #     use_batch_norm=True,
   #     is_training=is_training,
   #     idx=2
-  # )                               # (b, 3, 3, 32)
+  # )                               # (b, 4, 4, 32)
   # models.add(Dense2Capsule(
   #     cfg,
   #     identity_map=True,
@@ -92,7 +92,7 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
       vec_dim=8,
       padding='VALID',
       batch_size=batch_size
-  ))                               # (b, 3, 3, 32) -> (b, 216, 148, 16, 8)
+  ))                               # (b, 4, 4, 32) -> (b, 216, 148, 16, 8)
   # model.add(CapsLayer(
   #     cfg,
   #     num_caps=256,

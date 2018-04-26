@@ -98,6 +98,7 @@ class DenseLayer(object):
     self.act_fn = act_fn
     self.use_bias = use_bias
     self.idx = idx
+    self.tensor_shape = None
 
   @property
   def params(self):
@@ -151,6 +152,7 @@ class DenseLayer(object):
             weights_initializer=weights_initializer,
             biases_initializer=biases_initializer)
 
+      self.tensor_shape = fc.get_shape().as_list()
       return fc
 
 
@@ -195,6 +197,7 @@ class ConvLayer(object):
     self.use_bias = use_bias
     self.atrous = atrous
     self.idx = idx
+    self.tensor_shape = None
 
   @property
   def params(self):
@@ -272,6 +275,7 @@ class ConvLayer(object):
             weights_initializer=self.w_init_fn,
             biases_initializer=biases_initializer)
 
+      self.tensor_shape = conv.get_shape().as_list()
       return conv
 
 
@@ -313,6 +317,7 @@ class ConvTLayer(object):
     self.w_init_fn = w_init_fn
     self.use_bias = use_bias
     self.idx = idx
+    self.tensor_shape = None
 
   @property
   def params(self):
@@ -377,6 +382,7 @@ class ConvTLayer(object):
             weights_initializer=self.w_init_fn,
             biases_initializer=biases_initializer)
 
+      self.tensor_shape = conv_t.get_shape().as_list()
       return conv_t
 
 
@@ -403,6 +409,7 @@ class MaxPool(object):
     self.strides = strides
     self.padding = padding
     self.idx = idx
+    self.tensor_shape = None
 
   @property
   def params(self):
@@ -425,12 +432,15 @@ class MaxPool(object):
       max pooling tensor
     """
     with tf.variable_scope('max_pool_{}'.format(self.idx)):
-      return tf.layers.max_pooling2d(
+      mp = tf.layers.max_pooling2d(
           inputs=inputs,
           pool_size=self.pool_size,
           strides=self.strides,
           padding=self.padding
       )
+
+    self.tensor_shape = mp.get_shape().as_list()
+    return mp
 
 
 class BatchNorm(object):
@@ -467,6 +477,7 @@ class BatchNorm(object):
     self.epsilon = epsilon
     self.act_fn = act_fn
     self.idx = idx
+    self.tensor_shape = None
 
   @property
   def params(self):
@@ -498,9 +509,10 @@ class BatchNorm(object):
 
       if self.act_fn is not None:
         activation_fn = get_act_fn(self.act_fn)
-        return activation_fn(bn)
-      else:
-        return bn
+        bn = activation_fn(bn)
+
+    self.tensor_shape = bn.get_shape().as_list()
+    return bn
 
 
 class Reshape(object):
@@ -510,11 +522,12 @@ class Reshape(object):
     Reshape a tensor.
 
     Args:
-      shape:shape of output tensor
+      shape: shape of output tensor
       name: name of output tensor
     """
     self.shape = shape
     self.name = name
+    self.tensor_shape = None
 
   @property
   def params(self):
@@ -531,7 +544,9 @@ class Reshape(object):
     Returns:
       reshaped tensor
     """
-    return tf.reshape(inputs, shape=self.shape, name=self.name)
+    rs = tf.reshape(inputs, shape=self.shape, name=self.name)
+    self.tensor_shape = rs.get_shape().as_list()
+    return rs
 
 
 class Sequential(object):
@@ -552,7 +567,8 @@ class Sequential(object):
     self._top = layer(self._top)
     layer_name_ = layer.__class__.__name__
     layer_params_ = layer.params
-    self._info.append((layer_name_, layer_params_))
+    layer_shape_ = layer.tensor_shape
+    self._info.append((layer_name_, layer_params_, layer_shape_))
 
   @property
   def top_layer(self):

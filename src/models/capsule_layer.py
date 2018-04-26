@@ -35,6 +35,7 @@ class CapsLayer(object):
     self.route_epoch = route_epoch
     self.batch_size = batch_size
     self.idx = idx
+    self.tensor_shape = None
 
   @property
   def params(self):
@@ -61,6 +62,7 @@ class CapsLayer(object):
           inputs, self.num_caps, self.vec_dim,
           self.route_epoch, self.batch_size)
 
+    self.tensor_shape = self.v_j.get_shape().as_list()
     return self.v_j
 
   def dynamic_routing(self, inputs, num_caps_j,
@@ -266,6 +268,7 @@ class Conv2CapsLayer(object):
     self.w_init_fn = w_init_fn
     self.use_bias = use_bias
     self.batch_size = batch_size
+    self.tensor_shape = None
 
   @property
   def params(self):
@@ -347,6 +350,7 @@ class Conv2CapsLayer(object):
       assert caps_activated.get_shape() == (
         self.batch_size, num_capsule, self.vec_dim, 1)
 
+      self.tensor_shape = caps_activated.get_shape().as_list()
       return caps_activated
 
 
@@ -377,6 +381,7 @@ class Dense2CapsLayer(object):
     self.act_fn = act_fn
     self.vec_dim = vec_dim
     self.batch_size = batch_size
+    self.tensor_shape = None
 
   @property
   def params(self):
@@ -483,4 +488,5 @@ class Dense2CapsLayer(object):
       assert caps_activated.get_shape() == (
         self.batch_size, self.num_caps, self.vec_dim, 1)
 
+      self.tensor_shape = caps_activated.get_shape().as_list()
       return caps_activated
