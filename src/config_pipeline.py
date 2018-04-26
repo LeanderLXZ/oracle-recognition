@@ -202,9 +202,6 @@ __C.TEST_BATCH_SIZE = 256
 if __C.VERSION is None:
   __C.VERSION = _auto_version(__C)
 
-# Raw data directory path
-__C.RAW_DATA_PATH = '../data/raw_data/radicals/total'
-
 # Source data directory path
 __C.SOURCE_DATA_PATH = '../data/source_data'
 
