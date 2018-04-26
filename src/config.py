@@ -40,7 +40,7 @@ __C.LEARNING_RATE = 0.001
 __C.EPOCHS = 50
 
 # Batch size
-__C.BATCH_SIZE = 512
+__C.BATCH_SIZE = 128
 
 
 # ===========================================
@@ -111,7 +111,7 @@ __C.MOMENTUM = 0.9
 # Reconstruction
 
 # Training with reconstruction
-__C.WITH_RECONSTRUCTION = False
+__C.WITH_RECONSTRUCTION = True
 
 # Type of decoder of reconstruction:
 # 'fc': full_connected layers
@@ -125,7 +125,7 @@ __C.DECODER_TYPE = 'conv_t'
 __C.RECONSTRUCTION_LOSS = 'ce'
 
 # Scaling for reconstruction loss
-__C.RECONSTRUCT_LOSS_SCALE = 8.192  # 0.0005*128*128=8.192
+__C.RECONSTRUCT_LOSS_SCALE = 0.512  # 0.0005*128*128=8.192
 
 # -------------------------------------------
 # Test

@@ -89,22 +89,22 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
       kernel_size=5,
       stride=2,
       n_kernel=32,
-      vec_dim=16,
+      vec_dim=8,
       padding='VALID',
       batch_size=batch_size
   ))
+  # model.add(CapsLayer(
+  #     cfg,
+  #     num_caps=256,
+  #     vec_dim=8,
+  #     route_epoch=3,
+  #     batch_size=batch_size,
+  #     idx=0
+  # ))
   model.add(CapsLayer(
       cfg,
-      num_caps=128,
-      vec_dim=32,
-      route_epoch=3,
-      batch_size=batch_size,
-      idx=0
-  ))
-  model.add(CapsLayer(
-      cfg,
-      num_caps=10,
-      vec_dim=64,
+      num_caps=148,
+      vec_dim=16,
       route_epoch=3,
       batch_size=batch_size,
       idx=1
