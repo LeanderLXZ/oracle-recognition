@@ -233,7 +233,7 @@ class ConvLayer(object):
         pad_end = pad - pad_beg
         inputs = tf.pad(
             inputs, [[0, 0], [pad_beg, pad_end], [pad_beg, pad_end], [0, 0]])
-        self.padding = 'valid'
+        self.padding = 'VALID'
 
       activation_fn = get_act_fn(self.act_fn)
 
