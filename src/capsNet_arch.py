@@ -39,43 +39,43 @@ def conv_block(model, cfg, conv_size, conv_stride, conv_depth,
 
 def classifier(inputs, cfg, batch_size=None, is_training=None):
 
-  model = Sequential(inputs)
+  model = Sequential(inputs)      # (b, 32, 32, 1)
   conv_block(
       model,
       cfg,
-      conv_size=5,
-      conv_stride=1,
-      conv_depth=64,
+      conv_size=3,
+      conv_stride=2,
+      conv_depth=8,
       conv_padding='VALID',
       act_fn='relu',
       use_batch_norm=True,
       is_training=is_training,
       idx=0
-  )
+  )                               # (b, 15, 15, 8)
   conv_block(
       model,
       cfg,
-      conv_size=5,
-      conv_stride=1,
-      conv_depth=128,
+      conv_size=3,
+      conv_stride=2,
+      conv_depth=16,
       conv_padding='VALID',
       act_fn='relu',
       use_batch_norm=True,
       is_training=is_training,
       idx=1
-  )
-  conv_block(
-      model,
-      cfg,
-      conv_size=5,
-      conv_stride=1,
-      conv_depth=256,
-      conv_padding='VALID',
-      act_fn='relu',
-      use_batch_norm=True,
-      is_training=is_training,
-      idx=2
-  )
+  )                               # (b, 7, 7, 16)
+  # conv_block(
+  #     model,
+  #     cfg,
+  #     conv_size=3,
+  #     conv_stride=2,
+  #     conv_depth=32,
+  #     conv_padding='VALID',
+  #     act_fn='relu',
+  #     use_batch_norm=True,
+  #     is_training=is_training,
+  #     idx=2
+  # )                               # (b, 3, 3, 32)
   # models.add(Dense2Capsule(
   #     cfg,
   #     identity_map=True,
@@ -87,20 +87,20 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
   model.add(Conv2CapsLayer(
       cfg,
       kernel_size=5,
-      stride=2,
+      stride=1,
       n_kernel=32,
       vec_dim=8,
       padding='VALID',
       batch_size=batch_size
+  ))                               # (b, 3, 3, 32) -> (b, 228, 256, 16, 12)
+  model.add(CapsLayer(
+      cfg,
+      num_caps=256,
+      vec_dim=12,
+      route_epoch=3,
+      batch_size=batch_size,
+      idx=0
   ))
-  # model.add(CapsLayer(
-  #     cfg,
-  #     num_caps=256,
-  #     vec_dim=8,
-  #     route_epoch=3,
-  #     batch_size=batch_size,
-  #     idx=0
-  # ))
   model.add(CapsLayer(
       cfg,
       num_caps=148,
@@ -143,6 +143,8 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
           stride=1,
           n_kernel=16,
           idx=0))
+      model.add(BatchNorm(
+          cfg, is_training, momentum=0.99, act_fn='relu', idx=0))
       model.add(ConvLayer(    # (b, 16, 16, 32)
           cfg,
           kernel_size=3,
@@ -150,6 +152,8 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
           n_kernel=32,
           resize=16,
           idx=1))
+      model.add(BatchNorm(
+          cfg, is_training, momentum=0.99, act_fn='relu', idx=1))
       model.add(ConvLayer(    # (b, 32, 32, 16)
           cfg,
           kernel_size=3,
@@ -157,6 +161,8 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
           n_kernel=16,
           resize=32,
           idx=2))
+      model.add(BatchNorm(
+          cfg, is_training, momentum=0.99, act_fn='relu', idx=2))
       model.add(ConvLayer(    # (b, 32, 32, 1)
           cfg,
           kernel_size=3,
@@ -164,6 +170,8 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
           n_kernel=1,
           act_fn=act_fn_last,
           idx=3))
+      model.add(BatchNorm(
+          cfg, is_training, momentum=0.99, act_fn='relu', idx=3))
 
     elif cfg.DECODER_TYPE == 'conv_t':
       model.add(Reshape(
@@ -221,6 +229,8 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
           padding='VALID',
           act_fn=act_fn_last,
           idx=4))
+      model.add(BatchNorm(
+          cfg, is_training, momentum=0.99, act_fn='relu', idx=4))
 
     else:
       raise ValueError('Wrong decoder type!')
