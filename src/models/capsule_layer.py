@@ -40,11 +40,13 @@ class CapsLayer(object):
   @property
   def params(self):
     """Parameters of this layer."""
-    return {'num_caps': self.num_caps,
-            'vec_dim': self.vec_dim,
-            'route_epoch': self.route_epoch,
-            'batch_size': self.batch_size,
-            'idx': self.idx}
+    return {
+      'num_caps': self.num_caps,
+      'vec_dim': self.vec_dim,
+      'route_epoch': self.route_epoch,
+      'batch_size': self.batch_size,
+      'idx': self.idx
+    }
 
   def __call__(self, inputs):
     """
@@ -273,15 +275,17 @@ class Conv2CapsLayer(object):
   @property
   def params(self):
     """Parameters of this layer."""
-    return {'kernel_size': self.kernel_size,
-            'stride': self.stride,
-            'n_kernel': self.n_kernel,
-            'padding': self.padding,
-            'act_fn': self.act_fn,
-            'vec_dim': self.vec_dim,
-            'w_init_fn': self.w_init_fn,
-            'use_bias': self.use_bias,
-            'batch_size': self.batch_size}
+    return {
+      'kernel_size': self.kernel_size,
+      'stride': self.stride,
+      'n_kernel': self.n_kernel,
+      'padding': self.padding,
+      'act_fn': self.act_fn,
+      'vec_dim': self.vec_dim,
+      'w_init_fn': self.w_init_fn,
+      'use_bias': self.use_bias,
+      'batch_size': self.batch_size
+    }
 
   def __call__(self, inputs):
     """
@@ -386,11 +390,13 @@ class Dense2CapsLayer(object):
   @property
   def params(self):
     """Parameters of this layer."""
-    return {'identity_map': self.identity_map,
-            'num_caps': self.num_caps,
-            'act_fn': self.act_fn,
-            'vec_dim': self.vec_dim,
-            'batch_size': self.batch_size}
+    return {
+      'identity_map': self.identity_map,
+      'num_caps': self.num_caps,
+      'act_fn': self.act_fn,
+      'vec_dim': self.vec_dim,
+      'batch_size': self.batch_size
+    }
 
   def _fc_layer(self,
                 x,

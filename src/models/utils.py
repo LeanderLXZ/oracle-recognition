@@ -190,20 +190,22 @@ def save_config_log(file_path, cfg, clf_arch_info=None, rec_arch_info=None):
     local_time = time.strftime('%Y/%m/%d-%H:%M:%S', time.localtime(time.time()))
     f.write('=' * 55 + '\n')
     f.write('Time: {}\n'.format(local_time))
-    f.write('-' * 55 + '\n')
+    f.write('=' * 55 + '\n')
     for key in cfg.keys():
       f.write('{}: {}\n'.format(key, cfg[key]))
     if clf_arch_info is not None:
-      f.write('-' * 55 + '\n')
+      f.write('=' * 55 + '\n')
       f.write('Classifier Architecture:\n')
+      f.write('-' * 55 + '\n')
       for i, (clf_name, clf_params, clf_shape) in enumerate(clf_arch_info):
-        f.write('\t[{}] {}: {}\n\tOutput tensor shape:{}\n'.format(
+        f.write('[{}] {}\n\tParameters: {}\n\tOutput tensor shape: {}\n'.format(
             i, clf_name, clf_params, clf_shape))
     if rec_arch_info is not None:
-      f.write('-' * 55 + '\n')
+      f.write('=' * 55 + '\n')
       f.write('Reconstruction Architecture:\n')
+      f.write('-' * 55 + '\n')
       for j, (rec_name, rec_params, rec_shape) in enumerate(rec_arch_info):
-        f.write('\t[{}] {}: {}\n\tOutput tensor shape:{}\n'.format(
+        f.write('[{}] {}\n\tParameters: {}\n\tOutput tensor shape: {}\n'.format(
             j, rec_name, rec_params, rec_shape))
     f.write('=' * 55)
 

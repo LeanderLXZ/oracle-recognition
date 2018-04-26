@@ -105,10 +105,12 @@ class DenseLayer(object):
     """
     Parameters of this layer.
     """
-    return {'out_dim': self.out_dim,
-            'act_fn': self.act_fn,
-            'use_bias': self.use_bias,
-            'idx': self.idx}
+    return {
+      'out_dim': self.out_dim,
+      'act_fn': self.act_fn,
+      'use_bias': self.use_bias,
+      'idx': self.idx
+    }
 
   def __call__(self, inputs):
     """
@@ -202,16 +204,18 @@ class ConvLayer(object):
   @property
   def params(self):
     """Parameters of this layer."""
-    return {'kernel_size': self.kernel_size,
-            'stride': self.stride,
-            'n_kernel': self.n_kernel,
-            'padding': self.padding,
-            'act_fn': self.act_fn,
-            'w_init_fn': self.w_init_fn,
-            'resize': self.resize,
-            'use_bias': self.use_bias,
-            'atrous': self.atrous,
-            'idx': self.idx}
+    return {
+      'kernel_size': self.kernel_size,
+      'stride': self.stride,
+      'n_kernel': self.n_kernel,
+      'padding': self.padding,
+      'act_fn': self.act_fn,
+      'w_init_fn': self.w_init_fn,
+      'resize': self.resize,
+      'use_bias': self.use_bias,
+      'atrous': self.atrous,
+      'idx': self.idx
+    }
 
   def __call__(self, inputs):
     """
@@ -322,15 +326,17 @@ class ConvTLayer(object):
   @property
   def params(self):
     """Parameters of this layer."""
-    return {'kernel_size': self.kernel_size,
-            'stride': self.stride,
-            'n_kernel': self.n_kernel,
-            'padding': self.padding,
-            'act_fn': self.act_fn,
-            'output_shape': self.output_shape,
-            'w_init_fn': self.w_init_fn,
-            'use_bias': self.use_bias,
-            'idx': self.idx}
+    return {
+      'kernel_size': self.kernel_size,
+      'stride': self.stride,
+      'n_kernel': self.n_kernel,
+      'padding': self.padding,
+      'act_fn': self.act_fn,
+      'output_shape': self.output_shape,
+      'w_init_fn': self.w_init_fn,
+      'use_bias': self.use_bias,
+      'idx': self.idx
+    }
 
   def __call__(self, inputs):
     """
@@ -415,7 +421,6 @@ class MaxPool(object):
   def params(self):
     """Parameters of this layer."""
     return {
-      'cfg': self.cfg,
       'pool_size': self.pool_size,
       'strides': self.strides,
       'padding': self.padding,
@@ -482,12 +487,12 @@ class BatchNorm(object):
   @property
   def params(self):
     """Parameters of this layer."""
-    return {'cfg': self.cfg,
-            'momentum': self.momentum,
-            'center': self.center,
-            'scale': self.scale,
-            'epsilon': self.epsilon,
-            'act_fn': self.act_fn}
+    return {
+      'momentum': self.momentum,
+      'center': self.center,
+      'scale': self.scale,
+      'epsilon': self.epsilon,
+    }
 
   def __call__(self, inputs):
     """
