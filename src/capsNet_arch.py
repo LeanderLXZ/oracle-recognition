@@ -157,11 +157,11 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
           n_kernel=16,
           resize=32,
           idx=2))
-      model.add(ConvLayer(    # (b, 32, 32, 3)
+      model.add(ConvLayer(    # (b, 32, 32, 1)
           cfg,
           kernel_size=3,
           stride=1,
-          n_kernel=3,
+          n_kernel=1,
           act_fn=act_fn_last,
           idx=3))
 
@@ -216,14 +216,17 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
           cfg,
           kernel_size=5,
           stride=1,
-          n_kernel=3,
-          output_shape=[batch_size, 32, 32, 3],
+          n_kernel=1,
+          output_shape=[batch_size, 32, 32, 1],
           padding='VALID',
           act_fn=act_fn_last,
           idx=4))
 
     else:
       raise ValueError('Wrong decoder type!')
+
+    assert model.top_layer.get_shape().as_list() == (
+      batch_size, *cfg.ORACLE_IMAGE_SIZE, 1), model.top_layer.get_shape()
 
   elif cfg.DATABASE_NAME == 'mnist':
     if cfg.DECODER_TYPE == 'fc':
