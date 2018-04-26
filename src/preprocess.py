@@ -5,6 +5,7 @@ from __future__ import print_function
 import time
 import os
 import gc
+from PIL import Image
 import numpy as np
 import sklearn.utils
 from copy import copy
@@ -37,6 +38,7 @@ class DataPreProcess(object):
     self.data_base_name = None
     self.preprocessed_path = None
     self.source_data_path = None
+    self.img_size = self.cfg.ORACLE_IMAGE_SIZE
 
   def _load_data(self):
     """
@@ -66,11 +68,23 @@ class DataPreProcess(object):
     self.y = []
     for class_name in tqdm(
           classes[:self.cfg.NUM_RADICALS], ncols=100, unit='class'):
-      x_tensor = utils.load_data_from_pkl(
-          join(self.source_data_path, class_name), verbose=False)
+
+      # Load images from raw data pictures
+      class_dir = join(self.cfg.RAW_DATA_PATH, class_name)
+      images = os.listdir(class_dir)
+      x_tensor = []
+      for img_name in images:
+        # Load image
+        img = Image.open(join(class_dir, img_name)).convert('L')
+        # Reshape image
+        reshaped_img = self._reshape_img(img)
+        # Save image to array
+        x_tensor.append(reshaped_img)
+
+      # Data augment
       if self.cfg.USE_DATA_AUG:
-        x_tensor = self._augment_data(
-            x_tensor, self.cfg.MAX_IMAGE_NUM, data_aug_param)
+        x_tensor = self._augment_data(x_tensor, data_aug_param)
+
       y_tensor = [int(class_name[:-2]) for _ in range(len(x_tensor))]
       self.x.append(x_tensor)
       self.y.extend(y_tensor)
@@ -85,18 +99,40 @@ class DataPreProcess(object):
         self.x.shape, self.y.shape))
     assert len(self.x) == len(self.y)
 
-  @staticmethod
-  def _augment_data(images_tensors, max_img_num, data_aug_param):
+  def _reshape_img(self, img):
+    """
+    Reshaping an image to a ORACLE_IMAGE_SIZE
+    """
+    reshaped_image = Image.new('L', self.img_size, 'white')
+    img_width, img_height = img.size
+
+    if img_width > img_height:
+      w_s = self.img_size[0]
+      h_s = int(w_s * img_height // img_width)
+      img = img.resize((w_s, h_s), Image.ANTIALIAS)
+      reshaped_image.paste(img, (0, int((self.img_size[1] - h_s) // 2)))
+    else:
+      h_s = self.img_size[1]
+      w_s = int(h_s * img_width // img_height)
+      img = img.resize((w_s, h_s), Image.ANTIALIAS)
+      reshaped_image.paste(img, (int((self.img_size[0] - w_s) // 2), 0))
+
+    reshaped_image = np.array(reshaped_image, dtype=np.float32)
+    reshaped_image = reshaped_image.reshape((*reshaped_image.shape, 1))
+    assert reshaped_image.shape == (*self.img_size, 1)
+    return reshaped_image
+
+  def _augment_data(self, tensor, data_aug_param):
     """
     Augment data set and add noises.
     """
     data_generator = ImageDataGenerator(**data_aug_param)
-    new_x_tensors = list(copy(images_tensors))
+    new_x_tensors = copy(tensor)
     while True:
-      for i in range(len(images_tensors)):
-        if len(new_x_tensors) >= max_img_num:
+      for i in range(len(tensor)):
+        if len(new_x_tensors) >= self.cfg.MAX_IMAGE_NUM:
           return new_x_tensors
-        augmented = data_generator.random_transform(images_tensors[i])
+        augmented = data_generator.random_transform(tensor[i])
         new_x_tensors.append(augmented)
 
   def _train_test_split(self):
@@ -186,18 +222,18 @@ class DataPreProcess(object):
     def _check_oracle_data():
       n_classes = \
         148 if self.cfg.NUM_RADICALS is None else self.cfg.NUM_RADICALS
-      assert self.x_train.shape == \
-          (len(self.x_train), 128, 128, 1), self.x_train.shape
-      assert self.y_train.shape == \
-          (len(self.y_train), n_classes), self.y_train.shape
-      assert self.x_valid.shape == \
-          (len(self.x_valid), 128, 128, 1), self.x_valid.shape
-      assert self.y_valid.shape == \
-          (len(self.y_valid), n_classes), self.y_valid.shape
-      assert self.x_test.shape == \
-          (len(self.x_test), 128, 128, 1), self.x_test.shape
-      assert self.y_test.shape == \
-          (len(self.y_test), n_classes), self.y_test.shape
+      assert self.x_train.shape == (
+        len(self.x_train), *self.img_size, 1), self.x_train.shape
+      assert self.y_train.shape == (
+        len(self.y_train), n_classes), self.y_train.shape
+      assert self.x_valid.shape == (
+        len(self.x_valid), *self.img_size, 1), self.x_valid.shape
+      assert self.y_valid.shape == (
+        len(self.y_valid), n_classes), self.y_valid.shape
+      assert self.x_test.shape == (
+        len(self.x_test), *self.img_size, 1), self.x_test.shape
+      assert self.y_test.shape == (
+        len(self.y_test), n_classes), self.y_test.shape
 
     if self.cfg.DPP_TEST_AS_VALID:
       if self.data_base_name == 'mnist':

@@ -2,10 +2,9 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import getopt
 import math
-import sys
 import time
+import argparse
 from os import environ
 from os.path import join, isdir
 
@@ -85,9 +84,15 @@ class Main(object):
         join(self.preprocessed_path, 'x_valid.p'))
     self.y_valid = utils.load_data_from_pkl(
         join(self.preprocessed_path, 'y_valid.p'))
-
-    if self.cfg.DATABASE_NAME == 'radical':
-      assert len(self.x_train) == len(self.y_train)
+    print('Data info:')
+    utils.thin_line()
+    print('x_train: {}\ny_train: {}\nx_valid: {}\ny_valid: {}'.format(
+        self.x_train.shape,
+        self.y_train.shape,
+        self.x_valid.shape,
+        self.y_valid.shape
+    ))
+    utils.thin_line()
 
     # Calculate number of batches
     self.n_batch_train = len(self.y_train) // cfg.BATCH_SIZE
@@ -647,24 +652,38 @@ class Main(object):
 
 if __name__ == '__main__':
 
-  opts, args = getopt.getopt(sys.argv[1:], "g", ['gpu-id'])
-  for op, value in opts:
-    if op == "-g":
-      print('Using /gpu: %d' % value)
-      environ["CUDA_VISIBLE_DEVICES"] = str(value)
+  parser = argparse.ArgumentParser(
+    description="Training the model."
+  )
+  parser.add_argument('-g', '--gpu', nargs="+",
+                      choices=[0, 1], type=int, metavar='',
+                      help="Run single-gpu version."
+                           "Choose the GPU from: {!s}".format([0, 1]))
+  parser.add_argument('-m', '--multi', action="store_true",
+                      help="Run multi-gpu version.")
+  args = parser.parse_args()
 
-  utils.thick_line()
-  print('Input [ 1 ] to run normal version.')
-  print('Input [ 2 ] to run multi-gpu version.')
-  utils.thin_line()
-  input_ = input('Input: ')
-
-  if input_ == '1':
+  if args.gpu:
+    utils.thick_line()
+    print('Using /gpu: %d' % args.gpu)
+    environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
     CapsNet_ = CapsNet(config)
-  elif input_ == '2':
+  elif args.multi:
+    utils.thick_line()
+    print('Run multi-gpu version.')
     CapsNet_ = CapsNetDistribute(config)
   else:
-    raise ValueError('Wrong input! Found: ', input_)
+    utils.thick_line()
+    print('Input [ 1 ] to run normal version.')
+    print('Input [ 2 ] to run multi-gpu version.')
+    utils.thin_line()
+    input_ = input('Input: ')
+    if input_ == '1':
+      CapsNet_ = CapsNet(config)
+    elif input_ == '2':
+      CapsNet_ = CapsNetDistribute(config)
+    else:
+      raise ValueError('Wrong input! Found: ', input_)
 
   Main_ = Main(CapsNet_, config)
   Main_.train()
