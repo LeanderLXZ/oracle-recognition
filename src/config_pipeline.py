@@ -41,7 +41,7 @@ __C.LEARNING_RATE = 0.001
 __C.EPOCHS = 50
 
 # Batch size
-__C.BATCH_SIZE = 256
+__C.BATCH_SIZE = 512
 
 # ===========================================
 # #               Preprocessing             #
@@ -57,6 +57,8 @@ __C.TEST_SIZE = 0.2
 __C.VALID_SIZE = 0.1
 
 # Oracle Parameters
+#  Image size
+__C.ORACLE_IMAGE_SIZE = (32, 32)
 # Number of radicals to use for training
 # If None, use all radicals (NUM_RADICALS=148)
 __C.NUM_RADICALS = None
@@ -64,6 +66,9 @@ __C.NUM_RADICALS = None
 __C.USE_DATA_AUG = True
 # The max number of images if use data augment
 __C.MAX_IMAGE_NUM = 2000
+
+# Number of parts for saving large pickle files
+__C.LARGE_DATA_PART_NUM = 4
 
 # ===========================================
 # #            Model Architecture           #
@@ -196,6 +201,9 @@ __C.TEST_BATCH_SIZE = 256
 
 if __C.VERSION is None:
   __C.VERSION = _auto_version(__C)
+
+# Raw data directory path
+__C.RAW_DATA_PATH = '../data/raw_data/radicals/total'
 
 # Source data directory path
 __C.SOURCE_DATA_PATH = '../data/source_data'

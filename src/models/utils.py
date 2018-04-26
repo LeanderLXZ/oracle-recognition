@@ -22,11 +22,18 @@ def save_data_to_pkl(data, data_path, verbose=True):
   """
   Save data to pickle file.
   """
-  with open(data_path, 'wb') as f:
+  file_size = sys.getsizeof(data)
+  if file_size / (10**9) > 4:
     if verbose:
-      file_size = sys.getsizeof(data)
-      print('Saving {}... Size: {:.4}Mb'.format(f.name, file_size / 1048576))
-    pickle.dump(data, f)
+      print('File is too large for pickle to save: {:.4}Gb'.format(
+          file_size / (10**9)))
+    n_parts = int(((file_size / (10**9)) // 4) + 1)
+    save_large_data_to_pkl(data, data_path[:-2], n_parts, verbose)
+  else:
+    with open(data_path, 'wb') as f:
+      if verbose:
+        print('Saving {}... Size: {:.4}Mb'.format(f.name, file_size / (10**6)))
+      pickle.dump(data, f)
 
 
 def load_data_from_pkl(data_path, verbose=True):
@@ -43,6 +50,8 @@ def save_large_data_to_pkl(data, data_path, n_parts=2, verbose=True):
   """
   Save large data to pickle file.
   """
+  if verbose:
+    print('Saving large file into {} parts...'.format(n_parts))
   len_part = len(data) // n_parts
   for i in range(n_parts):
     if i == n_parts - 1:
@@ -52,7 +61,7 @@ def save_large_data_to_pkl(data, data_path, n_parts=2, verbose=True):
     with open(data_path + '_{}.p'.format(i), 'wb') as f:
       if verbose:
         file_size = sys.getsizeof(data_part)
-        print('Saving {}... Size: {:.4}Mb'.format(f.name, file_size / 1048576))
+        print('Saving {}... Size: {:.4}Mb'.format(f.name, file_size / (10**6)))
       pickle.dump(data_part, f)
 
 

@@ -4,7 +4,6 @@ from __future__ import print_function
 
 import time
 import os
-import gc
 from PIL import Image
 import numpy as np
 import sklearn.utils
@@ -62,15 +61,15 @@ class DataPreProcess(object):
     """
     utils.thin_line()
     print('Loading {} data set...'.format(self.data_base_name))
-    classes = os.listdir(self.source_data_path)
+    classes = sorted(os.listdir(self.source_data_path))
 
     self.x = []
     self.y = []
-    for class_name in tqdm(
+    for cls_name in tqdm(
           classes[:self.cfg.NUM_RADICALS], ncols=100, unit='class'):
 
       # Load images from raw data pictures
-      class_dir = join(self.cfg.RAW_DATA_PATH, class_name)
+      class_dir = join(self.cfg.RAW_DATA_PATH, cls_name)
       images = os.listdir(class_dir)
       x_tensor = []
       for img_name in images:
@@ -85,11 +84,8 @@ class DataPreProcess(object):
       if self.cfg.USE_DATA_AUG:
         x_tensor = self._augment_data(x_tensor, data_aug_param)
 
-      y_tensor = [int(class_name[:-2]) for _ in range(len(x_tensor))]
       self.x.append(x_tensor)
-      self.y.extend(y_tensor)
-      del x_tensor
-      gc.collect()
+      self.y.extend([int(cls_name) for _ in range(len(x_tensor))])
 
     self.x = np.array(
         self.x, dtype=np.float32).reshape((-1, *self.x[0][0].shape))
@@ -283,12 +279,7 @@ class DataPreProcess(object):
     print('Saving pickle files...')
 
     utils.check_dir([self.preprocessed_path])
-    if self.data_base_name == 'radical':
-      utils.save_large_data_to_pkl(
-          self.x_train, join(self.preprocessed_path, 'x_train'),
-          n_parts=self.cfg.LARGE_DATA_PART_NUM)
-    else:
-      utils.save_data_to_pkl(
+    utils.save_data_to_pkl(
           self.x_train, join(self.preprocessed_path, 'x_train.p'))
     utils.save_data_to_pkl(
         self.y_train, join(self.preprocessed_path, 'y_train.p'))
