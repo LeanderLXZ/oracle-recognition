@@ -51,7 +51,7 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
       use_batch_norm=True,
       is_training=is_training,
       idx=0
-  )                               # (b, 15, 15, 8)
+  )                               # (b, 16, 16, 8)
   conv_block(
       model,
       cfg,
@@ -63,7 +63,7 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
       use_batch_norm=True,
       is_training=is_training,
       idx=1
-  )                               # (b, 7, 7, 16)
+  )                               # (b, 8, 8, 16)
   # conv_block(
   #     model,
   #     cfg,
@@ -88,7 +88,7 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
       cfg,
       kernel_size=5,
       stride=1,
-      n_kernel=24,
+      n_kernel=32,
       vec_dim=8,
       padding='VALID',
       batch_size=batch_size
@@ -474,3 +474,33 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
     raise ValueError('Wrong database name!')
 
   return model.top_layer, model.info
+
+
+if __name__ == '__main__':
+  
+  from config import config
+  from models.capsNet import CapsNet
+  from models import utils
+
+  CapsNet_ = CapsNet(config)
+  CapsNet_.build_graph(
+      image_size=(*config.ORACLE_IMAGE_SIZE, 1),
+      num_class=config.NUM_RADICALS)
+  
+  utils.thick_line()
+  print('Classifier Architecture:\n')
+  utils.thin_line()
+  for i, (clf_name, clf_params, clf_shape) in enumerate(CapsNet_.clf_arch_info):
+    print('[{}] {}'
+          '\n\tParameters: {}'
+          '\n\tOutput tensor shape: {}\n'.format(i, clf_name,
+                                                 clf_params, clf_shape))
+  utils.thick_line()
+  print('Reconstruction Architecture:\n')
+  utils.thin_line()
+  for j, (rec_name, rec_params, rec_shape) in enumerate(CapsNet_.rec_arch_info):
+    print('[{}] {}'
+          '\n\tParameters: {}'
+          '\n\tOutput tensor shape: {}\n'.format(j, rec_name,
+                                                 rec_params, rec_shape))
+  utils.thick_line()
