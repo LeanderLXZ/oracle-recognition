@@ -44,26 +44,46 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
       model,
       cfg,
       conv_size=3,
-      conv_stride=2,
+      conv_stride=1,
       conv_depth=16,
-      conv_padding='VALID',
+      conv_padding='SAME',
       act_fn='relu',
       use_batch_norm=True,
       is_training=is_training,
+      use_max_pool=True,
+      pool_size=2,
+      pool_strides=(2, 2),
+      pool_padding='VALID',
       idx=0
   )                               # (b, 16, 16, 8)
   conv_block(
       model,
       cfg,
       conv_size=3,
-      conv_stride=2,
+      conv_stride=1,
+      conv_depth=32,
+      conv_padding='SAME',
+      act_fn='relu',
+      use_batch_norm=True,
+      is_training=is_training,
+      use_max_pool=True,
+      pool_size=2,
+      pool_strides=(2, 2),
+      pool_padding='VALID',
+      idx=1
+  )                               # (b, 8, 8, 16)
+  conv_block(
+      model,
+      cfg,
+      conv_size=3,
+      conv_stride=1,
       conv_depth=32,
       conv_padding='VALID',
       act_fn='relu',
       use_batch_norm=True,
       is_training=is_training,
-      idx=1
-  )                               # (b, 8, 8, 16)
+      idx=2
+  )                               # (b, 6, 6, 16)
   # conv_block(
   #     model,
   #     cfg,
@@ -86,25 +106,25 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
   # ))
   model.add(Conv2CapsLayer(
       cfg,
-      kernel_size=5,
+      kernel_size=3,
       stride=1,
-      n_kernel=32,
-      vec_dim=16,
+      n_kernel=48,
+      vec_dim=8,
       padding='VALID',
       batch_size=batch_size
   ))                               # (b, 4, 4, 32) -> (b, 216, 148, 16, 8)
-  # model.add(CapsLayer(
-  #     cfg,
-  #     num_caps=256,
-  #     vec_dim=12,
-  #     route_epoch=3,
-  #     batch_size=batch_size,
-  #     idx=0
-  # ))
+  model.add(CapsLayer(
+      cfg,
+      num_caps=192,
+      vec_dim=16,
+      route_epoch=3,
+      batch_size=batch_size,
+      idx=0
+  ))
   model.add(CapsLayer(
       cfg,
       num_caps=148,
-      vec_dim=16,
+      vec_dim=32,
       route_epoch=3,
       batch_size=batch_size,
       idx=1
@@ -154,30 +174,30 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
           stride=1,
           n_kernel=16,
           resize=8,
-          act_fn='relu',
+          act_fn=None,
           idx=0))
-      # model.add(BatchNorm(
-      #     cfg, is_training, momentum=0.99, act_fn='relu', idx=0))
+      model.add(BatchNorm(
+          cfg, is_training, momentum=0.99, act_fn='relu', idx=0))
       model.add(ConvLayer(    # (b, 16, 16, 32)
           cfg,
           kernel_size=3,
           stride=1,
           n_kernel=32,
           resize=16,
-          act_fn='relu',
+          act_fn=None,
           idx=1))
-      # model.add(BatchNorm(
-      #     cfg, is_training, momentum=0.99, act_fn='relu', idx=1))
+      model.add(BatchNorm(
+          cfg, is_training, momentum=0.99, act_fn='relu', idx=1))
       model.add(ConvLayer(    # (b, 32, 32, 16)
           cfg,
           kernel_size=3,
           stride=1,
           n_kernel=16,
           resize=32,
-          act_fn='relu',
+          act_fn=None,
           idx=2))
-      # model.add(BatchNorm(
-      #     cfg, is_training, momentum=0.99, act_fn='relu', idx=2))
+      model.add(BatchNorm(
+          cfg, is_training, momentum=0.99, act_fn='relu', idx=2))
       model.add(ConvLayer(    # (b, 32, 32, 1)
           cfg,
           kernel_size=3,
@@ -185,10 +205,10 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
           n_kernel=1,
           resize=32,
           padding='SAME',
-          act_fn=act_fn_last,
+          act_fn=None,
           idx=3))
-      # model.add(BatchNorm(
-      #     cfg, is_training, momentum=0.99, act_fn=act_fn_last, idx=3))
+      model.add(BatchNorm(
+          cfg, is_training, momentum=0.99, act_fn=act_fn_last, idx=3))
       assert model.top_layer.get_shape() == (
         batch_size, *cfg.ORACLE_IMAGE_SIZE, 1), model.top_layer.get_shape()
 
@@ -480,9 +500,11 @@ if __name__ == '__main__':
   
   from config import config
   from models.capsNet import CapsNet
+  from models.capsNet_distribute import CapsNetDistribute
   from models import utils
 
-  CapsNet_ = CapsNet(config)
+  # CapsNet_ = CapsNet(config)
+  CapsNet_ = CapsNetDistribute(config)
   CapsNet_.build_graph(
       image_size=(*config.ORACLE_IMAGE_SIZE, 1),
       num_class=config.NUM_RADICALS)
