@@ -117,12 +117,12 @@ __C.WITH_RECONSTRUCTION = True
 # 'fc': full_connected layers
 # 'conv': convolution layers
 # 'conv_t': transpose convolution layers
-__C.DECODER_TYPE = 'conv'
+__C.DECODER_TYPE = 'fc'
 
 # Reconstruction loss
 # 'mse': Mean Square Error
 # 'ce' : sigmoid_cross_entropy_with_logits
-__C.RECONSTRUCTION_LOSS = 'ce'
+__C.RECONSTRUCTION_LOSS = 'mse'
 
 # Scaling for reconstruction loss
 __C.RECONSTRUCT_LOSS_SCALE = 0.512  # 0.0005*128*128=8.192

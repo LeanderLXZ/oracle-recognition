@@ -122,17 +122,25 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
     if cfg.DECODER_TYPE == 'fc':
       model.add(DenseLayer(
           cfg,
-          out_dim=2048,
+          out_dim=64,
+          act_fn=None,
           idx=0))
+      model.add(BatchNorm(
+          cfg, is_training, momentum=0.99, act_fn='relu', idx=0))
       model.add(DenseLayer(
           cfg,
-          out_dim=4096,
+          out_dim=256,
+          act_fn=None,
           idx=1))
+      model.add(BatchNorm(
+          cfg, is_training, momentum=0.99, act_fn='relu', idx=1))
       model.add(DenseLayer(
           cfg,
-          out_dim=3072,
-          act_fn=act_fn_last,
+          out_dim=1024,
+          act_fn=None,
           idx=2))
+      model.add(BatchNorm(
+          cfg, is_training, momentum=0.99, act_fn=act_fn_last, idx=2))
 
     elif cfg.DECODER_TYPE == 'conv':
       model.add(Reshape(      # (b, 4, 4, 1)
