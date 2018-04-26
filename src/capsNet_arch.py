@@ -118,7 +118,7 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
   model = Sequential(inputs)
   act_fn_last = None if cfg.RECONSTRUCTION_LOSS == 'ce' else 'relu'
 
-  if cfg.DATABASE_NAME == 'oracle':
+  if cfg.DATABASE_NAME == 'radical':
     if cfg.DECODER_TYPE == 'fc':
       model.add(DenseLayer(
           cfg,
@@ -441,5 +441,8 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
 
     else:
       raise ValueError('Wrong decoder type!')
+
+  else:
+    raise ValueError('Wrong database name!')
 
   return model.top_layer, model.info
