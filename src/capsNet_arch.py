@@ -45,7 +45,7 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
       cfg,
       conv_size=3,
       conv_stride=2,
-      conv_depth=8,
+      conv_depth=16,
       conv_padding='VALID',
       act_fn='relu',
       use_batch_norm=True,
@@ -57,7 +57,7 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
       cfg,
       conv_size=3,
       conv_stride=2,
-      conv_depth=16,
+      conv_depth=32,
       conv_padding='VALID',
       act_fn='relu',
       use_batch_norm=True,
@@ -89,7 +89,7 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
       kernel_size=5,
       stride=1,
       n_kernel=32,
-      vec_dim=8,
+      vec_dim=16,
       padding='VALID',
       batch_size=batch_size
   ))                               # (b, 4, 4, 32) -> (b, 216, 148, 16, 8)
@@ -123,24 +123,24 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
       model.add(DenseLayer(
           cfg,
           out_dim=64,
-          act_fn=None,
+          act_fn='relu',
           idx=0))
-      model.add(BatchNorm(
-          cfg, is_training, momentum=0.99, act_fn='relu', idx=0))
+      # model.add(BatchNorm(
+      #     cfg, is_training, momentum=0.99, act_fn='relu', idx=0))
       model.add(DenseLayer(
           cfg,
           out_dim=256,
-          act_fn=None,
+          act_fn='relu',
           idx=1))
-      model.add(BatchNorm(
-          cfg, is_training, momentum=0.99, act_fn='relu', idx=1))
+      # model.add(BatchNorm(
+      #     cfg, is_training, momentum=0.99, act_fn='relu', idx=1))
       model.add(DenseLayer(
           cfg,
           out_dim=1024,
-          act_fn=None,
+          act_fn=act_fn_last,
           idx=2))
-      model.add(BatchNorm(
-          cfg, is_training, momentum=0.99, act_fn=act_fn_last, idx=2))
+      # model.add(BatchNorm(
+      #     cfg, is_training, momentum=0.99, act_fn=act_fn_last, idx=2))
       assert model.top_layer.get_shape() == (
         batch_size, cfg.ORACLE_IMAGE_SIZE[0]*cfg.ORACLE_IMAGE_SIZE[1]
       ), model.top_layer.get_shape()
@@ -154,30 +154,30 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
           stride=1,
           n_kernel=16,
           resize=8,
-          act_fn=None,
+          act_fn='relu',
           idx=0))
-      model.add(BatchNorm(
-          cfg, is_training, momentum=0.99, act_fn='relu', idx=0))
+      # model.add(BatchNorm(
+      #     cfg, is_training, momentum=0.99, act_fn='relu', idx=0))
       model.add(ConvLayer(    # (b, 16, 16, 32)
           cfg,
           kernel_size=3,
           stride=1,
           n_kernel=32,
           resize=16,
-          act_fn=None,
+          act_fn='relu',
           idx=1))
-      model.add(BatchNorm(
-          cfg, is_training, momentum=0.99, act_fn='relu', idx=1))
+      # model.add(BatchNorm(
+      #     cfg, is_training, momentum=0.99, act_fn='relu', idx=1))
       model.add(ConvLayer(    # (b, 32, 32, 16)
           cfg,
           kernel_size=3,
           stride=1,
           n_kernel=16,
           resize=32,
-          act_fn=None,
+          act_fn='relu',
           idx=2))
-      model.add(BatchNorm(
-          cfg, is_training, momentum=0.99, act_fn='relu', idx=2))
+      # model.add(BatchNorm(
+      #     cfg, is_training, momentum=0.99, act_fn='relu', idx=2))
       model.add(ConvLayer(    # (b, 32, 32, 1)
           cfg,
           kernel_size=3,
@@ -185,10 +185,10 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
           n_kernel=1,
           resize=32,
           padding='SAME',
-          act_fn=None,
+          act_fn=act_fn_last,
           idx=3))
-      model.add(BatchNorm(
-          cfg, is_training, momentum=0.99, act_fn=act_fn_last, idx=3))
+      # model.add(BatchNorm(
+      #     cfg, is_training, momentum=0.99, act_fn=act_fn_last, idx=3))
       assert model.top_layer.get_shape() == (
         batch_size, *cfg.ORACLE_IMAGE_SIZE, 1), model.top_layer.get_shape()
 
