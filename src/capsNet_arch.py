@@ -225,7 +225,7 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
     else:
       raise ValueError('Wrong decoder type!')
 
-    assert model.top_layer.get_shape().as_list() == (
+    assert model.top_layer.get_shape() == (
       batch_size, *cfg.ORACLE_IMAGE_SIZE, 1), model.top_layer.get_shape()
 
   elif cfg.DATABASE_NAME == 'mnist':
