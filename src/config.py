@@ -61,7 +61,7 @@ __C.VALID_SIZE = 0.1
 __C.ORACLE_IMAGE_SIZE = (32, 32)
 # Number of radicals to use for training
 # If None, use all radicals (NUM_RADICALS=148)
-__C.NUM_RADICALS = None
+__C.NUM_RADICALS = 20
 # Using data augment
 __C.USE_DATA_AUG = True
 # The max number of images if use data augment
