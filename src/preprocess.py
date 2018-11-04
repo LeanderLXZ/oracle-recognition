@@ -132,6 +132,35 @@ class DataPreProcess(object):
         augmented = data_generator.random_transform(tensor[i])
         new_x_tensors.append(augmented)
 
+  def _shuffle(self):
+    """
+    Shuffle data sets.
+    """
+    utils.thin_line()
+    print('Shuffling images and labels...')
+    self.x, self.y = sklearn.utils.shuffle(
+        self.x, self.y, random_state=self.seed)
+
+  def _scaling(self):
+    """
+    Scaling input images to (0, 1).
+    """
+    utils.thin_line()
+    print('Scaling features...')
+    
+    self.x = np.divide(self.x, 255.)
+
+  def _one_hot_encoding(self):
+    """
+    Scaling images to (0, 1).
+    """
+    utils.thin_line()
+    print('One-hot-encoding labels...')
+    
+    encoder = LabelBinarizer()
+    encoder.fit(self.y)
+    self.y = encoder.transform(self.y)
+
   def _train_test_split(self):
     """
     Split data set for training and testing.
@@ -146,38 +175,26 @@ class DataPreProcess(object):
         random_state=self.seed
     )
 
-  def _shuffle(self):
+  def _generate_multi_objects_images(self):
     """
-    Shuffle data sets.
+    Generate images of superpositions of multi-objects
     """
-    utils.thin_line()
-    print('Shuffling images and labels...')
-    self.x, self.y = sklearn.utils.shuffle(
-        self.x, self.y, random_state=self.seed)
-    self.x_test, self.y_test = sklearn.utils.shuffle(
-        self.x_test, self.y_test, random_state=self.seed)
+    self.x_test_mul = []
+    self.y_test_mul = []
 
-  def _scaling(self):
-    """
-    Scaling input images to (0, 1).
-    """
-    utils.thin_line()
-    print('Scaling features...')
-    
-    self.x = np.divide(self.x, 255.)
-    self.x_test = np.divide(self.x_test, 255.)
+    for i in range(self.cfg.NUM_MULTI_OBJECTS):
+      # generate superposition images
+      img_idx_ = np.random.choice(self.cfg.TEST_SIZE,
+                                  self.cfg.MULTI_OBJECTS)
+      mul_img = np.max(self.x_test[img_idx_], axis=0)
+      self.x_test_mul.append(mul_img)
 
-  def _one_hot_encoding(self):
-    """
-    Scaling images to (0, 1).
-    """
-    utils.thin_line()
-    print('One-hot-encoding labels...')
-    
-    encoder = LabelBinarizer()
-    encoder.fit(self.y)
-    self.y = encoder.transform(self.y)
-    self.y_test = encoder.transform(self.y_test)
+      # labels
+      mul_y = [i if y_ >= 1 else 0 for y_ in np.sum(self.y[img_idx_], axis=0)]
+      self.y_test_mul.append(mul_y)
+
+    self.x_test_mul = np.array(self.x_test_mul)
+    self.y_test_mul = np.array(self.y_test_mul)
 
   def _train_valid_split(self):
     """
@@ -216,6 +233,12 @@ class DataPreProcess(object):
     assert self.x_test.min() >= 0, self.x_test.min()
     assert self.y_test.min() >= 0, self.y_test.min()
 
+    if self.cfg.MULTI_OBJECTS:
+      assert self.x_test_mul.max() <= 1, self.x_test_mul.max()
+      assert self.y_test_mul.max() <= 1, self.y_test_mul.max()
+      assert self.x_test_mul.min() >= 0, self.x_test_mul.min()
+      assert self.y_test_mul.min() >= 0, self.y_test_mul.min()
+
     def _check_oracle_data():
       n_classes = \
         148 if self.cfg.NUM_RADICALS is None else self.cfg.NUM_RADICALS
@@ -231,6 +254,11 @@ class DataPreProcess(object):
         len(self.x_test), *self.img_size, 1), self.x_test.shape
       assert self.y_test.shape == (
         len(self.y_test), n_classes), self.y_test.shape
+      if self.cfg.MULTI_OBJECTS:
+        assert self.x_test_mul.shape == (
+          self.cfg.NUM_MULTI_OBJECTS, *self.img_size, 1), self.x_test_mul.shape
+        assert self.y_test_mul.shape == (
+          self.cfg.NUM_MULTI_OBJECTS, n_classes), self.y_test_mul.shape
 
     if self.cfg.DPP_TEST_AS_VALID:
       if self.data_base_name == 'mnist':
@@ -293,6 +321,12 @@ class DataPreProcess(object):
     utils.save_data_to_pkl(
         self.y_test, join(self.preprocessed_path, 'y_test.p'))
 
+    if self.cfg.MULTI_OBJECTS:
+      utils.save_data_to_pkl(
+          self.x_test_mul, join(self.preprocessed_path, 'x_test_mul.p'))
+      utils.save_data_to_pkl(
+          self.y_test_mul, join(self.preprocessed_path, 'y_test_mul.p'))
+
   def pipeline(self, data_base_name):
     """
     Pipeline of preprocessing data.
@@ -309,21 +343,21 @@ class DataPreProcess(object):
     self.preprocessed_path = join(self.cfg.DPP_DATA_PATH, data_base_name)
     self.source_data_path = join(self.cfg.SOURCE_DATA_PATH, data_base_name)
 
+    data_aug_parameters = dict(
+        rotation_range=40,
+        width_shift_range=0.1,
+        height_shift_range=0.1,
+        shear_range=0.1,
+        zoom_range=0.1,
+        horizontal_flip=True,
+        fill_mode='nearest'
+    )
+
     # Load data
     if self.data_base_name == 'mnist' or self.data_base_name == 'cifar10':
       self._load_data()
     elif self.data_base_name == 'radical':
-      data_aug_parameters = dict(
-          rotation_range=40,
-          width_shift_range=0.1,
-          height_shift_range=0.1,
-          shear_range=0.1,
-          zoom_range=0.1,
-          horizontal_flip=True,
-          fill_mode='nearest'
-      )
       self._load_oracle_radicals(data_aug_parameters)
-      self._train_test_split()
 
     # Shuffle data set
     self._shuffle()
@@ -333,6 +367,12 @@ class DataPreProcess(object):
 
     # One-hot-encoding labels
     self._one_hot_encoding()
+
+    # Split data set into train/test
+    if self.data_base_name == 'radical':
+      self._train_test_split()
+      if self.cfg.MULTI_OBJECTS:
+        self._generate_multi_objects_images()
 
     # Split data set into train/valid
     self._train_valid_split()

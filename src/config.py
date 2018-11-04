@@ -67,6 +67,14 @@ __C.USE_DATA_AUG = True
 # The max number of images if use data augment
 __C.MAX_IMAGE_NUM = 2000
 
+# Preprocessing images of superpositions of multi-objects
+# If None, one image only shows one object.
+# If n, one image includes a superposition of n objects, the positions of
+# those objects are random.
+__C.MULTI_OBJECTS = None
+# The number of multi-objects images
+__C.NUM_MULTI_OBJECTS = 10000
+
 # Number of parts for saving large pickle files
 __C.LARGE_DATA_PART_NUM = 4
 
