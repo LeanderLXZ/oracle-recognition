@@ -60,8 +60,8 @@ __C.VALID_SIZE = 0.1
 # Image size
 __C.ORACLE_IMAGE_SIZE = (32, 32)
 # Number of radicals to use for training
-# If None, use all radicals (NUM_RADICALS=148)
-__C.NUM_RADICALS = None
+# Max = 148
+__C.NUM_RADICALS = 20
 # Using data augment
 __C.USE_DATA_AUG = True
 # The max number of images if use data augment
@@ -76,7 +76,7 @@ __C.MULTI_OBJECTS = None
 __C.NUM_MULTI_OBJECTS = 10000
 
 # Number of parts for saving large pickle files
-__C.LARGE_DATA_PART_NUM = 4
+__C.LARGE_DATA_PART_NUM = 1
 
 # ===========================================
 # #            Model Architecture           #

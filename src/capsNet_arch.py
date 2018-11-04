@@ -123,7 +123,7 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
   ))
   model.add(CapsLayer(
       cfg,
-      num_caps=148,
+      num_caps=cfg.NUM_RADICALS,
       vec_dim=32,
       route_epoch=10,
       batch_size=batch_size,
@@ -497,7 +497,7 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
 
 
 if __name__ == '__main__':
-  
+
   from config import config
   from models.capsNet import CapsNet
   from models.capsNet_distribute import CapsNetDistribute
@@ -508,7 +508,7 @@ if __name__ == '__main__':
   CapsNet_.build_graph(
       image_size=(*config.ORACLE_IMAGE_SIZE, 1),
       num_class=config.NUM_RADICALS)
-  
+
   utils.thick_line()
   print('Classifier Architecture:\n')
   utils.thin_line()
