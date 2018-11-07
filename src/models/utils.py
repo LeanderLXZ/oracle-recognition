@@ -5,6 +5,7 @@ from __future__ import print_function
 import os
 import sys
 import csv
+import math
 import time
 import gzip
 import shutil
@@ -15,6 +16,8 @@ import numpy as np
 import tensorflow as tf
 from os.path import isdir
 from tqdm import tqdm
+from PIL import Image
+from matplotlib import pyplot as plt
 from urllib.request import urlretrieve
 
 
@@ -420,6 +423,43 @@ def download_and_extract_cifar10(url, save_path, file_name, extract_path):
   # Remove compressed data
   os.remove(archive_save_path)
   shutil.rmtree(extracted_dir_path)
+
+
+def square_grid_show_imgs(images, mode):
+  """
+  Save images as a square grid
+  """
+  # Get maximum size for square grid of images
+  save_size = math.floor(np.sqrt(images.shape[0]))
+
+  # Scale to 0-255
+  images = (
+        ((images - images.min()) * 255) / (images.max() - images.min())).astype(
+    np.uint8)
+
+  # Put images in a square arrangement
+  images_in_square = np.reshape(
+      images[:save_size * save_size],
+      (save_size, save_size, images.shape[1], images.shape[2], images.shape[3]))
+
+  # images_in_square.shape = (5, 5, 28, 28, 1)
+
+  if mode == 'L':
+    camp = 'gray'
+    images_in_square = np.squeeze(images_in_square, 4)
+  else:
+    camp = 'RGB'
+
+  # Combine images to grid image
+  new_im = Image.new(mode,
+                     (images.shape[1] * save_size, images.shape[2] * save_size))
+  for row_i, row_images in enumerate(images_in_square):
+    for col_i, image in enumerate(row_images):
+      im = Image.fromarray(image, mode)
+      new_im.paste(im, (col_i * images.shape[1], row_i * images.shape[2]))
+
+  plt.imshow(np.array(new_im), cmap=camp)
+  plt.show()
 
 
 class DLProgress(tqdm):
