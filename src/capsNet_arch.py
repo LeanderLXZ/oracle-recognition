@@ -39,6 +39,11 @@ def conv_block(model, cfg, conv_size, conv_stride, conv_depth,
 
 def classifier(inputs, cfg, batch_size=None, is_training=None):
 
+  if cfg.DATABASE_NAME == 'radical':
+    num_classes = cfg.NUM_RADICALS
+  else:
+    num_classes = 10
+
   model = Sequential(inputs)      # (b, 32, 32, 1)
   conv_block(
       model,
@@ -93,7 +98,8 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
   #     conv_padding='VALID',
   #     act_fn='relu',
   #     use_batch_norm=True,
-  #     is_training=is_training,
+  #     route_epoch=10,
+  #     kraining=is_training,
   #     idx=2
   # )                               # (b, 4, 4, 32)
   # models.add(Dense2Capsule(
@@ -123,7 +129,7 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
   ))
   model.add(CapsLayer(
       cfg,
-      num_caps=cfg.NUM_RADICALS,
+      num_caps=num_classes,
       vec_dim=32,
       route_epoch=10,
       batch_size=batch_size,

@@ -27,7 +27,8 @@ __C = EasyDict()
 # 'radical': Oracle Radicals
 # 'mnist': MNIST
 # 'cifar10' CIFAR-10
-__C.DATABASE_NAME = 'radical'
+#  __C.DATABASE_NAME = 'radical'
+__C.DATABASE_NAME = 'cifar10'
 
 # Training version
 # Set None to auto generate version
@@ -40,7 +41,7 @@ __C.LEARNING_RATE = 0.001
 __C.EPOCHS = 10
 
 # Batch size
-__C.BATCH_SIZE = 64
+__C.BATCH_SIZE = 512
 
 
 # ===========================================
@@ -71,9 +72,9 @@ __C.MAX_IMAGE_NUM = 2000
 # If None, one image only shows one object.
 # If n, one image includes a superposition of n objects, the positions of
 # those objects are random.
-__C.NUM_MULTI_OBJECT = 2
+__C.NUM_MULTI_OBJECT = None
 # The number of multi-objects images
-__C.NUM_MULTI_IMG = 25
+__C.NUM_MULTI_IMG = 100
 
 # Number of parts for saving large pickle files
 __C.LARGE_DATA_PART_NUM = 1
@@ -125,12 +126,12 @@ __C.WITH_RECONSTRUCTION = True
 # 'fc': full_connected layers
 # 'conv': convolution layers
 # 'conv_t': transpose convolution layers
-__C.DECODER_TYPE = 'conv'
+__C.DECODER_TYPE = 'fc'
 
 # Reconstruction loss
 # 'mse': Mean Square Error
 # 'ce' : sigmoid_cross_entropy_with_logits
-__C.RECONSTRUCTION_LOSS = 'ce'
+__C.RECONSTRUCTION_LOSS = 'mse'
 
 # Scaling for reconstruction loss
 __C.RECONSTRUCT_LOSS_SCALE = 0.512  # 0.0005*128*128=8.192
@@ -237,7 +238,7 @@ __C.TEST_LOG_PATH = '../test_logs'
 __C.VAR_ON_CPU = True
 
 # Number of GPUs
-__C.GPU_NUMBER = 2
+__C.GPU_NUMBER = 8
 
 # Batch size on a single GPU
 __C.GPU_BATCH_SIZE = __C.BATCH_SIZE // __C.GPU_NUMBER
