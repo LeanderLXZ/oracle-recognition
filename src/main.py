@@ -605,7 +605,7 @@ class Main(object):
               self._save_model(sess, self.saver, step, silent=True)
 
           # Evaluate on full set
-          if self.cfg.FULL_SET_EVAL_FULL_SET_EVAL_MODE == 'per_batch':
+          if self.cfg.FULL_SET_EVAL_MODE == 'per_batch':
             if step % self.cfg.FULL_SET_EVAL_STEP == 0:
               self._eval_on_full_set(sess, epoch_i, step, silent=True)
 
