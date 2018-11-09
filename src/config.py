@@ -38,10 +38,10 @@ __C.VERSION = None
 __C.LEARNING_RATE = 0.001
 
 # Epochs
-__C.EPOCHS = 10
+__C.EPOCHS = 1
 
 # Batch size
-__C.BATCH_SIZE = 512
+__C.BATCH_SIZE = 64
 
 
 # ===========================================
