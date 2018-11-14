@@ -2,6 +2,7 @@
 .ropeproject/
 .ipynb_checkpoints/
 __pycache__/
+paper/
 src/__pycache__/
 models/__pycache__/
 src/multi_gpu/__pycache__/
@@ -17,3 +18,6 @@ logs/
 data/
 *.html
 *.pyc
+*.pdf
+*.docx
+*.doc
