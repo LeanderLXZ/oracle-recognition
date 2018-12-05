@@ -56,9 +56,7 @@ class ModelBase(object):
                 pool_size=None,
                 stride=None,
                 padding='SAME'):
-    """
-    Average pooling
-    """
+    """Average pooling"""
     with tf.name_scope('avg_pool'):
       return tf.layers.average_pooling2d(
           inputs=x,
@@ -68,9 +66,7 @@ class ModelBase(object):
 
   @staticmethod
   def _global_avg_pool(x):
-    """
-    Average pooling on full image
-    """
+    """Average pooling on full image"""
     with tf.name_scope('global_avg_pool'):
       assert x.get_shape().ndims == 4
       return tf.reduce_mean(x, [1, 2])
@@ -84,8 +80,7 @@ class DenseLayer(object):
                act_fn='relu',
                use_bias=True,
                idx=0):
-    """
-    Single convolution layer
+    """Single convolution layer
 
     Args:
       out_dim: hidden units of full_connected layer
@@ -102,9 +97,7 @@ class DenseLayer(object):
 
   @property
   def params(self):
-    """
-    Parameters of this layer.
-    """
+    """Parameters of this layer."""
     return {
       'out_dim': self.out_dim,
       'act_fn': self.act_fn,
@@ -113,12 +106,12 @@ class DenseLayer(object):
     }
 
   def __call__(self, inputs):
-    """
-    Single full-connected layer
+    """Single full-connected layer
 
     Args:
       inputs: input tensor
         - shape: (batch_size, num_units)
+
     Returns:
       output tensor of full-connected layer
     """
@@ -172,8 +165,7 @@ class ConvLayer(object):
                use_bias=True,
                atrous=False,
                idx=0):
-    """
-    Single convolution layer
+    """Single convolution layer
 
     Args:
       cfg: configuration
@@ -218,12 +210,12 @@ class ConvLayer(object):
     }
 
   def __call__(self, inputs):
-    """
-    Single convolution layer
+    """Single convolution layer
 
     Args:
       inputs: input tensor
         - shape: (batch_size, height, width, channel)
+
     Returns:
       output tensor of convolution layer
     """
@@ -296,8 +288,7 @@ class ConvTLayer(object):
                w_init_fn=tf.contrib.layers.xavier_initializer(),
                use_bias=True,
                idx=None):
-    """
-    Single transpose convolution layer
+    """Single transpose convolution layer
 
     Args:
       cfg: configuration
@@ -339,12 +330,12 @@ class ConvTLayer(object):
     }
 
   def __call__(self, inputs):
-    """
-    Single transpose convolution layer
+    """Single transpose convolution layer
 
     Args:
       inputs: input tensor
         - shape: (batch_size, height, width, channel)
+
     Returns:
       output tensor of transpose convolution layer
     """
@@ -400,8 +391,7 @@ class MaxPool(object):
                strides=None,
                padding='valid',
                idx=None):
-    """
-    Max Pooling layer.
+    """Max Pooling layer.
 
     Args:
       cfg: configuration
@@ -428,11 +418,11 @@ class MaxPool(object):
     }
 
   def __call__(self, inputs):
-    """
-    Batch normalization layer.
+    """Batch normalization layer.
 
     Args:
       inputs: input tensor
+
     Returns:
       max pooling tensor
     """
@@ -459,8 +449,7 @@ class BatchNorm(object):
                epsilon=0.001,
                act_fn='relu',
                idx=None):
-    """
-    Batch normalization layer.
+    """Batch normalization layer.
 
     Args:
       cfg: configuration
@@ -500,6 +489,7 @@ class BatchNorm(object):
 
     Args:
       inputs: input tensor
+
     Returns:
       batch normalization tensor
     """
@@ -523,8 +513,7 @@ class BatchNorm(object):
 class Reshape(object):
 
   def __init__(self, shape, name=None):
-    """
-    Reshape a tensor.
+    """Reshape a tensor.
 
     Args:
       shape: shape of output tensor
@@ -541,11 +530,11 @@ class Reshape(object):
             'name': self.name}
 
   def __call__(self, inputs):
-    """
-    Reshape a tensor.
+    """Reshape a tensor.
 
     Args:
       inputs: input tensor
+
     Returns:
       reshaped tensor
     """
@@ -555,16 +544,13 @@ class Reshape(object):
 
 
 class Sequential(object):
-  """
-  Build models architecture by sequential.
-  """
+  """Build models architecture by sequential."""
   def __init__(self, inputs):
     self._top = inputs
     self._info = []
 
   def add(self, layer):
-    """
-    Add a layer to the top of the models.
+    """Add a layer to the top of the models.
 
     Args:
       layer: the layer to be added

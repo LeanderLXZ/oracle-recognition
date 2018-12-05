@@ -10,9 +10,7 @@ from models import utils
 
 # Download database
 def download_data(data_base_name):
-  """
-  Download database.
-  """
+  """Download database."""
   utils.thick_line()
   print('Downloading {} data set...'.format(data_base_name))
   utils.thin_line()

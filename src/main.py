@@ -2,16 +2,13 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import math
 import time
 import argparse
-from os import environ
-from os.path import join, isdir
-
 import numpy as np
 import tensorflow as tf
-from PIL import Image
 from tqdm import tqdm
+from os import environ
+from os.path import join, isdir
 
 from config import config
 from models.baseline_config import basel_config
@@ -25,8 +22,7 @@ from capsNet_arch import caps_arch
 class Main(object):
 
   def __init__(self, model, cfg):
-    """
-    Load data and initialize models.
+    """Load data and initialize models.
 
     Args:
       model: the models which will be trained
@@ -116,9 +112,7 @@ class Main(object):
         self.train_log_path, cfg, model.clf_arch_info, model.rec_arch_info)
 
   def _display_status(self, sess, x_batch, y_batch, epoch_i, step):
-    """
-    Display information during training.
-    """
+    """Display information during training."""
     valid_batch_idx = np.random.choice(
         range(len(self.x_valid)), self.cfg.BATCH_SIZE).tolist()
     x_valid_batch = self.x_valid[valid_batch_idx]
@@ -159,9 +153,7 @@ class Main(object):
 
   def _save_logs(self, sess, train_writer, valid_writer,
                  x_batch, y_batch, epoch_i, step):
-    """
-    Save logs and ddd summaries to TensorBoard while training.
-    """
+    """Save logs and ddd summaries to TensorBoard while training."""
     valid_batch_idx = np.random.choice(
         range(len(self.x_valid)), self.cfg.BATCH_SIZE).tolist()
     x_valid_batch = self.x_valid[valid_batch_idx]
@@ -203,9 +195,7 @@ class Main(object):
         acc_valid, self.cfg.WITH_RECONSTRUCTION)
 
   def _eval_on_batches(self, mode, sess, x, y, n_batch, silent=False):
-    """
-    Calculate losses and accuracies of full train set.
-    """
+    """Calculate losses and accuracies of full train set."""
     loss_all = []
     acc_all = []
     clf_loss_all = []
@@ -275,9 +265,7 @@ class Main(object):
     return loss, clf_loss, rec_loss, accuracy
 
   def _eval_on_full_set(self, sess, epoch_i, step, silent=False):
-    """
-    Evaluate on the full data set and print information.
-    """
+    """Evaluate on the full data set and print information."""
     eval_start_time = time.time()
 
     if not silent:
@@ -322,93 +310,24 @@ class Main(object):
 
   def _save_images(self, sess, img_path, x_batch, y_batch,
                    step, silent=False, epoch_i=None):
-    """
-    Save reconstructed images.
-    """
+    """Save reconstructed images."""
     rec_images_ = sess.run(
         self.rec_images, feed_dict={self.inputs: x_batch,
                                     self.labels: y_batch,
                                     self.is_training: False})
 
-    # Image shape
-    img_shape = x_batch.shape[1:]
-
-    # Get maximum size for square grid of images
-    save_col_size = math.floor(np.sqrt(rec_images_.shape[0] * 2))
-    if save_col_size > self.cfg.MAX_IMAGE_IN_COL:
-      save_col_size = self.cfg.MAX_IMAGE_IN_COL
-    save_row_size = save_col_size // 2
-
-    # Scale to 0-255
-    rec_images_ = np.array(
-        [np.divide(((img_ - img_.min()) * 255), (img_.max() - img_.min()))
-         for img_ in rec_images_])
-    real_images_ = np.array(
-        [np.divide(((img_ - img_.min()) * 255), (img_.max() - img_.min()))
-         for img_ in x_batch])
-
-    # Put images in a square arrangement
-    rec_images_in_square = np.reshape(
-        rec_images_[: save_row_size * save_col_size],
-        (save_row_size, save_col_size, *img_shape)).astype(np.uint8)
-    real_images_in_square = np.reshape(
-        real_images_[: save_row_size * save_col_size],
-        (save_row_size, save_col_size, *img_shape)).astype(np.uint8)
-
-    if self.cfg.DATABASE_NAME == 'mnist' or self.cfg.DATABASE_NAME == 'radical':
-      mode = 'L'
-      rec_images_in_square = np.squeeze(rec_images_in_square, 4)
-      real_images_in_square = np.squeeze(real_images_in_square, 4)
-    else:
-      mode = 'RGB'
-
-    # Combine images to grid image
-    thin_gap = 1
-    thick_gap = 3
-    avg_gap = (thin_gap + thick_gap) / 2
-    new_im = Image.new(mode, (
-        int((img_shape[1] + thin_gap) *
-            save_col_size - thin_gap + thick_gap * 2),
-        int((img_shape[0] + avg_gap) *
-            save_row_size * 2 + thick_gap)), 'white')
-
-    for row_i in range(save_row_size * 2):
-      for col_i in range(save_col_size):
-        if (row_i + 1) % 2 == 0:  # Odd
-          if mode == 'L':
-            image = rec_images_in_square[(row_i + 1) // 2 - 1, col_i, :, :]
-          else:
-            image = rec_images_in_square[(row_i + 1) // 2 - 1, col_i, :, :, :]
-          im = Image.fromarray(image, mode)
-          new_im.paste(im, (
-              int(col_i * (img_shape[1] + thin_gap) + thick_gap),
-              int(row_i * img_shape[0] + (row_i + 1) * avg_gap)))
-        else:  # Even
-          if mode == 'L':
-            image = real_images_in_square[int((row_i + 1) // 2), col_i, :, :]
-          else:
-            image = real_images_in_square[int((row_i + 1) // 2), col_i, :, :, :]
-          im = Image.fromarray(image, mode)
-          new_im.paste(im, (
-              int(col_i * (img_shape[1] + thin_gap) + thick_gap),
-              int(row_i * (img_shape[0] + avg_gap) + thick_gap)))
-
-    if epoch_i is None:
-      save_image_path = join(
-          img_path, 'batch_{}.jpg'.format(step))
-    else:
-      save_image_path = join(
-          img_path,
-          'epoch_{}_batch_{}.jpg'.format(epoch_i, step))
-    if not silent:
-      utils.thin_line()
-      print('Saving image to {}...'.format(save_image_path))
-    new_im.save(save_image_path)
+    utils.save_imgs(
+        real_imgs=x_batch,
+        rec_imgs=rec_images_,
+        img_path=img_path,
+        database_name=self.cfg.DATABASE_NAME,
+        max_img_in_col=self.cfg.MAX_IMAGE_IN_COL,
+        step=step,
+        silent=silent,
+        epoch_i=epoch_i)
 
   def _save_model(self, sess, saver, step, silent=False):
-    """
-    Save models.
-    """
+    """Save models."""
     save_path = join(self.checkpoint_path, 'models.ckpt')
     if not silent:
       utils.thin_line()
@@ -416,9 +335,7 @@ class Main(object):
     saver.save(sess, save_path, global_step=step)
 
   def _test_after_training(self, sess):
-    """
-    Evaluate on the test set after training.
-    """
+    """Evaluate on the test set after training."""
     test_start_time = time.time()
 
     utils.thick_line()
@@ -638,9 +555,7 @@ class Main(object):
     utils.thick_line()
 
   def train(self):
-    """
-    Training models
-    """
+    """Training models."""
     session_cfg = tf.ConfigProto(allow_soft_placement=True)
     session_cfg.gpu_options.allow_growth = True
 

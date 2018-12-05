@@ -2,14 +2,10 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import math
 import time
-from os.path import join, isdir
-
-import numpy as np
 import tensorflow as tf
-from PIL import Image
 from tqdm import tqdm
+from os.path import join, isdir
 
 from config import config
 from models import utils
@@ -25,7 +21,9 @@ class Test(object):
     # Get checkpoint path
     self.checkpoint_path = join(
         cfg.CHECKPOINT_PATH,
-        '{}/models.ckpt-{}'.format(self.cfg.TEST_VERSION, self.cfg.TEST_CKP_IDX))
+        '{}/models.ckpt-{}'.format(
+            self.cfg.TEST_VERSION, self.cfg.TEST_CKP_IDX)
+    )
 
     # Get log path, append information if the directory exist.
     test_log_path_ = join(
@@ -93,77 +91,15 @@ class Test(object):
     rec_images_ = sess.run(
         rec_images, feed_dict={inputs: x_batch, labels: y_batch})
 
-    # Image shape
-    img_shape = x_batch.shape[1:]
-
-    # Get maximum size for square grid of images
-    save_col_size = math.floor(np.sqrt(rec_images_.shape[0] * 2))
-    if save_col_size > self.cfg.MAX_IMAGE_IN_COL:
-      save_col_size = self.cfg.MAX_IMAGE_IN_COL
-    save_row_size = save_col_size // 2
-
-    # Scale to 0-255
-    rec_images_ = np.array(
-        [np.divide(((img_ - img_.min()) * 255), (img_.max() - img_.min()))
-         for img_ in rec_images_])
-    real_images_ = np.array(
-        [np.divide(((img_ - img_.min()) * 255), (img_.max() - img_.min()))
-         for img_ in x_batch])
-
-    # Put images in a square arrangement
-    rec_images_in_square = np.reshape(
-        rec_images_[: save_row_size * save_col_size],
-        (save_row_size, save_col_size, *img_shape)).astype(np.uint8)
-    real_images_in_square = np.reshape(
-        real_images_[: save_row_size*save_col_size],
-        (save_row_size, save_col_size, *img_shape)).astype(np.uint8)
-
-    if self.cfg.DATABASE_NAME == 'mnist':
-      mode = 'L'
-      rec_images_in_square = np.squeeze(rec_images_in_square, 4)
-      real_images_in_square = np.squeeze(real_images_in_square, 4)
-    else:
-      mode = 'RGB'
-
-    # Combine images to grid image
-    thin_gap = 1
-    thick_gap = 3
-    avg_gap = (thin_gap + thick_gap) / 2
-    new_im = Image.new(mode, (
-        int((img_shape[1] + thin_gap)
-            * save_col_size - thin_gap + thick_gap * 2),
-        int((img_shape[0] + avg_gap)
-            * save_row_size * 2 + thick_gap)), 'white')
-
-    for row_i in range(save_row_size * 2):
-      for col_i in range(save_col_size):
-        if (row_i + 1) % 2 == 0:  # Odd
-          if mode == 'L':
-            image = rec_images_in_square[
-                (row_i + 1) // 2 - 1, col_i, :, :]
-          else:
-            image = rec_images_in_square[
-                (row_i + 1) // 2 - 1, col_i, :, :, :]
-          im = Image.fromarray(image, mode)
-          new_im.paste(im, (
-              int(col_i * (img_shape[1] + thin_gap) + thick_gap),
-              int(row_i * img_shape[0] + (row_i + 1) * avg_gap)))
-
-        else:  # Even
-          if mode == 'L':
-            image = real_images_in_square[
-                    int((row_i + 1) // 2), col_i, :, :]
-          else:
-            image = real_images_in_square[
-                    int((row_i + 1) // 2), col_i, :, :, :]
-          im = Image.fromarray(image, mode)
-          new_im.paste(im, (
-              int(col_i * (img_shape[1] + thin_gap) + thick_gap),
-              int(row_i * (img_shape[0] + avg_gap) + thick_gap)))
-
-    save_image_path = join(
-        self.test_image_path, 'batch_{}.jpg'.format(step))
-    new_im.save(save_image_path)
+    utils.save_imgs(
+        real_imgs=x_batch,
+        rec_imgs=rec_images_,
+        img_path=self.test_image_path,
+        database_name=self.cfg.DATABASE_NAME,
+        max_img_in_col=self.cfg.MAX_IMAGE_IN_COL,
+        step=step,
+        silent=True,
+        test_flag=True)
 
   def _eval_on_batches(self, sess, inputs, labels, loss, accuracy,
                        clf_loss, rec_loss, rec_images,  x, y, n_batch):

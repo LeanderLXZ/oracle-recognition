@@ -9,13 +9,13 @@ class ActivationFunc(object):
 
   @staticmethod
   def squash(x, batch_size, epsilon):
-    """
-    Squashing function
+    """Squashing function
 
     Args:
       x: A tensor with shape: (batch_size, num_caps, vec_dim, 1).
       batch_size: Batch size
       epsilon: Add epsilon(a very small number) to zeros
+
     Returns:
       A tensor with the same shape as input tensor but squashed in 'vec_dim'
       dimension.

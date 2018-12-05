@@ -18,8 +18,7 @@ class CapsLayer(object):
                route_epoch=None,
                batch_size=None,
                idx=0):
-    """
-    Initialize capsule layer.
+    """Initialize capsule layer.
 
     Args:
       cfg: configuration
@@ -49,12 +48,12 @@ class CapsLayer(object):
     }
 
   def __call__(self, inputs):
-    """
-    Apply dynamic routing.
+    """Apply dynamic routing.
 
     Args:
       inputs: input tensor
         - shape: (batch_size, num_caps_i, vec_dim_i, 1)
+
     Returns:
       output tensor
         - shape (batch_size, num_caps_j, vec_dim_j, 1)
@@ -69,8 +68,7 @@ class CapsLayer(object):
 
   def dynamic_routing(self, inputs, num_caps_j,
                       vec_dim_j, route_epoch, batch_size):
-    """
-    Dynamic routing according to Hinton's paper.
+    """Dynamic routing according to Hinton's paper.
 
     Args:
       inputs: input tensor
@@ -79,6 +77,7 @@ class CapsLayer(object):
       vec_dim_j: dimensions of vectors of upper layer
       route_epoch: number of dynamic routing iteration
       batch_size: number of samples per batch
+
     Returns:
       output tensor
         - shape (batch_size, num_caps_j, vec_dim_j, 1)
@@ -150,9 +149,7 @@ class CapsLayer(object):
         batch_size, num_caps_i, num_caps_j, 1, 1)
 
     def _sum_and_activate(_u_hat, _c_ij, cfg_, name=None):
-      """
-      Get sum of vectors and apply activation function.
-      """
+      """Get sum of vectors and apply activation function."""
       # Calculating s_j(using u_hat)
       # Using u_hat but not u_hat_stop in order to transfer gradients.
       _s_j = tf.reduce_sum(tf.multiply(_u_hat, _c_ij), axis=1)
@@ -245,8 +242,7 @@ class Conv2CapsLayer(object):
                w_init_fn=tf.contrib.layers.xavier_initializer(),
                use_bias=True,
                batch_size=None):
-    """
-    Generate a Capsule layer using convolution kernel.
+    """Generate a Capsule layer using convolution kernel.
 
     Args:
       cfg: configuration
@@ -288,12 +284,12 @@ class Conv2CapsLayer(object):
     }
 
   def __call__(self, inputs):
-    """
-    Convert a convolution layer to capsule layer.
+    """Convert a convolution layer to capsule layer.
 
     Args:
       inputs: input tensor
         - shape: (batch_size, height, width, depth)
+
     Returns:
       tensor of capsules
         - shape: (batch_size, num_caps_j, vec_dim_j, 1)
@@ -367,8 +363,7 @@ class Dense2CapsLayer(object):
                act_fn='relu',
                vec_dim=8,
                batch_size=None):
-    """
-    Generate a Capsule layer densely.
+    """Generate a Capsule layer densely.
 
     Args:
       cfg: configuration
@@ -404,8 +399,7 @@ class Dense2CapsLayer(object):
                 act_fn='relu',
                 use_bias=True,
                 idx=0):
-    """
-    Single full_connected layer
+    """Single full_connected layer
 
     Args:
       x: input tensor
@@ -413,6 +407,7 @@ class Dense2CapsLayer(object):
       act_fn: activation function
       use_bias: use bias
       idx: index of layer
+
     Returns:
       output tensor of full_connected layer
     """
@@ -451,12 +446,12 @@ class Dense2CapsLayer(object):
       return fc
 
   def __call__(self, inputs):
-    """
-    Convert inputs to capsule layer densely.
+    """Convert inputs to capsule layer densely.
 
     Args:
       inputs: input tensor
         - shape: (batch_size, height, width, depth)
+
     Returns:
       tensor of capsules
         - shape: (batch_size, num_caps_j, vec_dim_j, 1)

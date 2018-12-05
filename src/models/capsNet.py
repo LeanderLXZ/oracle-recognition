@@ -19,8 +19,7 @@ class CapsNet(object):
     self.rec_arch_info = None
 
   def _get_inputs(self, image_size, num_class):
-    """
-    Get input tensors.
+    """Get input tensors.
 
     Args:
       image_size: the size of input images, should be 3 dimensional
@@ -40,9 +39,7 @@ class CapsNet(object):
                  opt_name='adam',
                  n_train_samples=None,
                  global_step=None):
-    """
-    Optimizer.
-    """
+    """Optimizer."""
     if opt_name == 'adam':
       return tf.train.AdamOptimizer(self.cfg.LEARNING_RATE)
 
@@ -72,8 +69,8 @@ class CapsNet(object):
                    m_plus=0.9,
                    m_minus=0.1,
                    lambda_=0.5):
-    """
-    Calculate margin loss according to Hinton's paper.
+    """Calculate margin loss according to Hinton's paper.
+
     L = T_c * max(0, m_plus-||v_c||)^2 +
         lambda_ * (1-T_c) * max(0, ||v_c||-m_minus)^2
 
@@ -85,6 +82,7 @@ class CapsNet(object):
       m_plus: truncation of positive item
       m_minus: truncation of negative item
       lambda_: lambda
+
     Returns:
       margin loss
     """
@@ -109,8 +107,7 @@ class CapsNet(object):
     return margin_loss
 
   def _reconstruct_layers(self, inputs, labels, is_training=None):
-    """
-    Reconstruction layer
+    """Reconstruction layer
 
     Args:
       inputs: input tensor
@@ -118,6 +115,7 @@ class CapsNet(object):
       labels: labels
         - shape: (batch_size, n_class)
       is_training: Whether or not the model is in training mode.
+
     Returns:
       output tensor of reconstruction layer
     """
@@ -135,13 +133,13 @@ class CapsNet(object):
     return _reconstructed
 
   def _loss_without_rec(self, logits, labels):
-    """
-    Calculate loss without reconstruction.
+    """Calculate loss without reconstruction.
 
     Args:
       logits: output tensor of models
         - shape (batch_size, num_caps, vec_dim)
       labels: labels
+
     Return:
       total loss
     """
@@ -152,8 +150,7 @@ class CapsNet(object):
 
   def _loss_with_rec(self, inputs, logits,
                      labels, image_size, is_training=None):
-    """
-    Calculate loss with reconstruction.
+    """Calculate loss with reconstruction.
 
     Args:
       inputs: input tensor
@@ -163,6 +160,7 @@ class CapsNet(object):
       labels: labels
       image_size: size of image, 3D
       is_training: Whether or not the model is in training mode.
+
     Return:
       Total loss
     """
@@ -217,9 +215,7 @@ class CapsNet(object):
     return loss, classifier_loss, reconstruct_loss, reconstructed_images
 
   def _total_loss(self, inputs, logits, labels, image_size, is_training=None):
-    """
-    Get Losses and reconstructed images tensor.
-    """
+    """Get Losses and reconstructed images tensor."""
     if self.cfg.WITH_RECONSTRUCTION:
       loss, classifier_loss, reconstruct_loss, reconstructed_images = \
           self._loss_with_rec(
@@ -234,14 +230,14 @@ class CapsNet(object):
     return loss, classifier_loss, reconstruct_loss, reconstructed_images
 
   def _inference(self, inputs, labels, is_training=None):
-    """
-    Build inference graph.
+    """Build inference graph.
 
     Args:
       inputs: input tensor
         - shape (batch_size, *image_size)
       labels: labels tensor
       is_training: Whether or not the model is in training mode.
+
     Return:
       logits: output tensor of models
         - shape: (batch_size, num_caps, vec_dim)
@@ -268,13 +264,13 @@ class CapsNet(object):
                   image_size=(None, None, None),
                   num_class=None,
                   n_train_samples=None):
-    """
-    Build the graph of CapsNet.
+    """Build the graph of CapsNet.
 
     Args:
       image_size: size of input images, should be 3 dimensional
       num_class: number of class of label
       n_train_samples: number of train samples
+
     Returns:
       tuple of (global_step, train_graph, inputs, labels, train_op,
                 saver, summary_op, loss, accuracy, classifier_loss,

@@ -22,9 +22,7 @@ from urllib.request import urlretrieve
 
 
 def save_data_to_pkl(data, data_path, verbose=True):
-  """
-  Save data to pickle file.
-  """
+  """data to pickle file."""
   file_size = sys.getsizeof(data)
   if file_size / (10**9) > 4:
     if verbose:
@@ -40,9 +38,7 @@ def save_data_to_pkl(data, data_path, verbose=True):
 
 
 def load_data_from_pkl(data_path, verbose=True):
-  """
-  Load data from pickle file.
-  """
+  """Load data from pickle file."""
   with open(data_path, 'rb') as f:
     if verbose:
       print('Loading {}...'.format(f.name))
@@ -50,9 +46,7 @@ def load_data_from_pkl(data_path, verbose=True):
 
 
 def save_large_data_to_pkl(data, data_path, n_parts=2, verbose=True):
-  """
-  Save large data to pickle file.
-  """
+  """Save large data to pickle file."""
   if verbose:
     print('Saving large file into {} parts...'.format(n_parts))
   len_part = len(data) // n_parts
@@ -69,9 +63,7 @@ def save_large_data_to_pkl(data, data_path, n_parts=2, verbose=True):
 
 
 def load_large_data_to_pkl(data_path, n_parts=2, verbose=True):
-  """
-  Save large data to pickle file.
-  """
+  """Save large data to pickle file."""
   data = []
   for i in range(n_parts):
     with open(data_path + '_{}.p'.format(i), 'rb') as f:
@@ -84,9 +76,7 @@ def load_large_data_to_pkl(data_path, n_parts=2, verbose=True):
 
 
 def get_vec_length(vec, batch_size, epsilon):
-  """
-  Get the length of a vector.
-  """
+  """Get the length of a vector."""
   vec_shape = vec.get_shape().as_list()
   num_caps = vec_shape[1]
   vec_dim = vec_shape[2]
@@ -103,9 +93,7 @@ def get_vec_length(vec, batch_size, epsilon):
 
 
 def check_dir(path_list):
-  """
-  Check if directories exit or not.
-  """
+  """Check if directories exit or not."""
   for dir_path in path_list:
     if not isdir(dir_path):
       os.makedirs(dir_path)
@@ -120,9 +108,7 @@ def thick_line():
 
 
 def get_batches(x, y, batch_size):
-  """
-  Split features and labels into batches.
-  """
+  """Split features and labels into batches."""
   for start in range(0, len(x) - batch_size + 1, batch_size):
     end = start + batch_size
     yield x[start:end], y[start:end]
@@ -131,9 +117,7 @@ def get_batches(x, y, batch_size):
 def print_status(epoch_i, epochs, step, start_time, loss_train,
                  clf_loss_train, rec_loss_train, acc_train, loss_valid,
                  clf_loss_valid, rec_loss_valid, acc_valid, with_rec):
-  """
-  Print information while training.
-  """
+  """Print information while training."""
   if with_rec:
     print('Epoch: {}/{} |'.format(epoch_i + 1, epochs),
           'Batch: {} |'.format(step),
@@ -160,9 +144,7 @@ def print_full_set_eval(epoch_i, epochs, step, start_time,
                         loss_train, clf_loss_train, rec_loss_train, acc_train,
                         loss_valid, clf_loss_valid, rec_loss_valid, acc_valid,
                         with_full_set_eval, with_rec):
-  """
-  Print information of full set evaluation.
-  """
+  """Print information of full set evaluation."""
   thin_line()
   print('Epoch: {}/{} |'.format(epoch_i + 1, epochs),
         'Batch: {} |'.format(step),
@@ -182,9 +164,7 @@ def print_full_set_eval(epoch_i, epochs, step, start_time,
 
 
 def save_config_log(file_path, cfg, clf_arch_info=None, rec_arch_info=None):
-  """
-  Save configuration of training.
-  """
+  """Save configuration of training."""
   file_path = os.path.join(file_path, 'config_log.txt')
   thick_line()
   print('Saving {}...'.format(file_path))
@@ -216,9 +196,7 @@ def save_config_log(file_path, cfg, clf_arch_info=None, rec_arch_info=None):
 def save_log(file_path, epoch_i, step, using_time,
              loss_train, clf_loss_train, rec_loss_train, acc_train,
              loss_valid, clf_loss_valid, rec_loss_valid, acc_valid, with_rec):
-  """
-  Save losses and accuracies while training.
-  """
+  """Save losses and accuracies while training."""
   if with_rec:
     if not os.path.isfile(file_path):
       with open(file_path, 'w') as f:
@@ -256,9 +234,7 @@ def save_log(file_path, epoch_i, step, using_time,
 
 def save_test_log(file_path, loss_test, acc_test,
                   clf_loss_test, rec_loss_test, with_rec):
-  """
-  Save losses and accuracies of testing.
-  """
+  """Save losses and accuracies of testing."""
   file_path = os.path.join(file_path, 'test_log.txt')
   thick_line()
   print('Saving {}...'.format(file_path))
@@ -277,11 +253,11 @@ def save_test_log(file_path, loss_test, acc_test,
 
 
 def _read32(bytestream):
-  """
-  Read 32-bit integer from bytesteam
+  """Read 32-bit integer from bytesteam.
 
   Args:
     bytestream: A bytestream
+
   Returns:
     32-bit integer
   """
@@ -290,9 +266,7 @@ def _read32(bytestream):
 
 
 def extract_image(save_path, extract_path):
-  """
-  Extract the images into a 4D unit8 numpy array [index, y, x, depth].
-  """
+  """Extract the images into a 4D unit8 numpy array [index, y, x, depth]."""
   # Get data from save_path
   with open(save_path, 'rb') as f:
 
@@ -314,9 +288,7 @@ def extract_image(save_path, extract_path):
 
 
 def extract_labels_mnist(save_path, extract_path):
-  """
-  Extract the labels into a 1D uint8 numpy array [index].
-  """
+  """Extract the labels into a 1D uint8 numpy array [index]."""
   # Get data from save_path
   with open(save_path, 'rb') as f:
 
@@ -357,9 +329,7 @@ def download_and_extract_mnist(url, save_path, extract_path, data_type):
 
 
 def load_cifar10_batch(dataset_path, mode, batch_id=None):
-  """
-  Load a batch of the dataset
-  """
+  """Load a batch of the dataset."""
   if mode == 'train':
     with open(dataset_path + '/data_batch_' + str(batch_id),
               mode='rb') as file:
@@ -425,10 +395,96 @@ def download_and_extract_cifar10(url, save_path, file_name, extract_path):
   shutil.rmtree(extracted_dir_path)
 
 
+def save_imgs(real_imgs,
+              rec_imgs,
+              img_path,
+              database_name,
+              max_img_in_col,
+              step=None,
+              silent=False,
+              epoch_i=None,
+              test_flag=False):
+  # Image shape
+  img_shape = real_imgs.shape[1:]
+
+  # Get maximum size for square grid of images
+  save_col_size = math.floor(np.sqrt(rec_imgs.shape[0] * 2))
+  if save_col_size > max_img_in_col:
+    save_col_size = max_img_in_col
+  save_row_size = save_col_size // 2
+
+  # Scale to 0-255
+  rec_images_ = np.array(
+      [np.divide(((img_ - img_.min()) * 255), (img_.max() - img_.min()))
+       for img_ in rec_imgs])
+  real_images_ = np.array(
+      [np.divide(((img_ - img_.min()) * 255), (img_.max() - img_.min()))
+       for img_ in real_imgs])
+
+  # Put images in a square arrangement
+  rec_images_in_square = np.reshape(
+      rec_images_[: save_row_size * save_col_size],
+      (save_row_size, save_col_size, *img_shape)).astype(np.uint8)
+  real_images_in_square = np.reshape(
+      real_images_[: save_row_size * save_col_size],
+      (save_row_size, save_col_size, *img_shape)).astype(np.uint8)
+
+  if database_name == 'mnist' or database_name == 'radical':
+    mode = 'L'
+    rec_images_in_square = np.squeeze(rec_images_in_square, 4)
+    real_images_in_square = np.squeeze(real_images_in_square, 4)
+  else:
+    mode = 'RGB'
+
+  # Combine images to grid image
+  thin_gap = 1
+  thick_gap = 3
+  avg_gap = (thin_gap + thick_gap) / 2
+  new_im = Image.new(mode, (
+    int((img_shape[1] + thin_gap) *
+        save_col_size - thin_gap + thick_gap * 2),
+    int((img_shape[0] + avg_gap) *
+        save_row_size * 2 + thick_gap)), 'white')
+
+  for row_i in range(save_row_size * 2):
+    for col_i in range(save_col_size):
+      if (row_i + 1) % 2 == 0:  # Odd
+        if mode == 'L':
+          image = rec_images_in_square[(row_i + 1) // 2 - 1, col_i, :, :]
+        else:
+          image = rec_images_in_square[(row_i + 1) // 2 - 1, col_i, :, :, :]
+        im = Image.fromarray(image, mode)
+        new_im.paste(im, (
+          int(col_i * (img_shape[1] + thin_gap) + thick_gap),
+          int(row_i * img_shape[0] + (row_i + 1) * avg_gap)))
+      else:  # Even
+        if mode == 'L':
+          image = real_images_in_square[int((row_i + 1) // 2), col_i, :, :]
+        else:
+          image = real_images_in_square[int((row_i + 1) // 2), col_i, :, :, :]
+        im = Image.fromarray(image, mode)
+        new_im.paste(im, (
+          int(col_i * (img_shape[1] + thin_gap) + thick_gap),
+          int(row_i * (img_shape[0] + avg_gap) + thick_gap)))
+
+  if test_flag:
+    save_image_path = join(img_path, 'batch_{}.jpg'.format(step))
+  else:
+    if epoch_i is None:
+      save_image_path = join(
+          img_path, 'batch_{}.jpg'.format(step))
+    else:
+      save_image_path = join(
+          img_path,
+          'epoch_{}_batch_{}.jpg'.format(epoch_i, step))
+    if not silent:
+      thin_line()
+      print('Saving image to {}...'.format(save_image_path))
+  new_im.save(save_image_path)
+
+
 def square_grid_show_imgs(images, mode):
-  """
-  Save images as a square grid
-  """
+  """Save images as a square grid."""
   # Get maximum size for square grid of images
   save_size = math.floor(np.sqrt(images.shape[0]))
 
@@ -463,9 +519,7 @@ def square_grid_show_imgs(images, mode):
 
 
 class DLProgress(tqdm):
-  """
-  Handle Progress Bar while Downloading
-  """
+  """Handle Progress Bar while Downloading."""
   last_block = 0
 
   def hook(self, block_num=1, block_size=1, total_size=None):

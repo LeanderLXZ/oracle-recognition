@@ -16,8 +16,7 @@ class CapsNetDistribute(CapsNet):
     self.batch_size = cfg.GPU_BATCH_SIZE
 
   def _tower_loss(self, inputs, labels, image_size, is_training=None):
-    """
-    Calculate the total loss on a single tower running the models.
+    """Calculate the total loss on a single tower running the models.
 
     Args:
       inputs: inputs. 4D tensor
@@ -25,6 +24,7 @@ class CapsNetDistribute(CapsNet):
       labels: labels. 1D tensor of shape [batch_size]
       image_size: size of input images, should be 3 dimensional
       is_training: Whether or not the model is in training mode.
+
     Returns:
       Tuple: (loss, classifier_loss,
               reconstruct_loss, reconstructed_images)
@@ -43,8 +43,8 @@ class CapsNetDistribute(CapsNet):
 
   @staticmethod
   def _average_gradients(tower_grads):
-    """
-    Calculate the average gradient for each shared variable across all towers.
+    """Calculate the average gradient for each shared variable across all towers.
+
     This function provides a synchronization point across all towers.
 
     Args:
@@ -54,6 +54,7 @@ class CapsNetDistribute(CapsNet):
         - shape: [[(grad0_gpu0, var0_gpu0), ..., (gradM_gpu0, varM_gpu0)],
                    ...,
                   [(grad0_gpuN, var0_gpuN), ..., (gradM_gpuN, varM_gpuN)]]
+
     Returns:
       List of pairs of (gradient, variable) where the gradient has been averaged
       across all towers.
@@ -84,8 +85,7 @@ class CapsNetDistribute(CapsNet):
 
   def _average_metrics(self, loss_all, acc_all, clf_loss_all,
                        rec_loss_all, rec_images_all):
-    """
-    Calculate average of metrics.
+    """Calculate average of metrics.
 
     Args:
       loss_all: final losses of each tower, list
@@ -130,13 +130,13 @@ class CapsNetDistribute(CapsNet):
 
   def build_graph(self, image_size=(None, None, None),
                   num_class=None, n_train_samples=None):
-    """
-    Build the graph of CapsNet.
+    """Build the graph of CapsNet.
 
     Args:
       image_size: size of input images, should be 3 dimensional
       num_class: number of class of label
       n_train_samples: number of train samples
+
     Returns:
       tuple of (global_step, train_graph, inputs, labels, train_op,
                 saver, summary_op, loss, accuracy, classifier_loss,
