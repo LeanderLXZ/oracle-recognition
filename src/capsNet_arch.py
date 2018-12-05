@@ -502,14 +502,18 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
   return model.top_layer, model.info
 
 
+caps_arch = {
+  'classifier': classifier,
+  'decoder': decoder
+}
+
+
 if __name__ == '__main__':
 
   from config import config
-  from models.capsNet import CapsNet
   from models.capsNet_distribute import CapsNetDistribute
   from models import utils
 
-  # CapsNet_ = CapsNet(config)
   CapsNet_ = CapsNetDistribute(config)
   CapsNet_.build_graph(
       image_size=(*config.ORACLE_IMAGE_SIZE, 1),

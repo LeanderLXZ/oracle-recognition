@@ -38,10 +38,10 @@ __C.VERSION = None
 __C.LEARNING_RATE = 0.001
 
 # Epochs
-__C.EPOCHS = 1
+__C.EPOCHS = 2
 
 # Batch size
-__C.BATCH_SIZE = 64
+__C.BATCH_SIZE = 128
 
 
 # ===========================================
@@ -189,7 +189,7 @@ __C.SHOW_TRAINING_DETAILS = False
 # ===========================================
 
 # Testing version name
-__C.TEST_VERSION = 'conv_rec_mse'
+__C.TEST_VERSION = 'fc_rec_mse'
 
 # Testing checkpoint index
 __C.TEST_CKP_IDX = 29
@@ -238,7 +238,7 @@ __C.TEST_LOG_PATH = '../test_logs'
 __C.VAR_ON_CPU = True
 
 # Number of GPUs
-__C.GPU_NUMBER = 8
+__C.GPU_NUMBER = 2
 
 # Batch size on a single GPU
 __C.GPU_BATCH_SIZE = __C.BATCH_SIZE // __C.GPU_NUMBER
@@ -248,5 +248,5 @@ __C.MOVING_AVERAGE_DECAY = 0.9999
 
 # ===========================================
 
-# get config by: from config import config
-config = __C
+# get config by: from baseline_config import basel_config
+basel_config = __C

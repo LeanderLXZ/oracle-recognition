@@ -14,9 +14,12 @@ from PIL import Image
 from tqdm import tqdm
 
 from config import config
+from models.baseline_config import basel_config
 from models import utils
 from models.capsNet import CapsNet
 from models.capsNet_distribute import CapsNetDistribute
+from models.baseline_arch import basel_arch
+from capsNet_arch import caps_arch
 
 
 class Main(object):
@@ -661,17 +664,19 @@ if __name__ == '__main__':
                            "Choose the GPU from: {!s}".format([0, 1]))
   parser.add_argument('-m', '--multi', action="store_true",
                       help="Run multi-gpu version.")
+  parser.add_argument('-b', '--baseline', action="store_true",
+                      help="Using baseline architecture and parameters.")
   args = parser.parse_args()
 
   if args.gpu:
     utils.thick_line()
     print('Using /gpu: %d' % args.gpu)
     environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
-    CapsNet_ = CapsNet(config)
+    CapsNet_ = CapsNet
   elif args.multi:
     utils.thick_line()
     print('Run multi-gpu version.')
-    CapsNet_ = CapsNetDistribute(config)
+    CapsNet_ = CapsNetDistribute
   else:
     utils.thick_line()
     print('Input [ 1 ] to run normal version.')
@@ -679,11 +684,17 @@ if __name__ == '__main__':
     utils.thin_line()
     input_ = input('Input: ')
     if input_ == '1':
-      CapsNet_ = CapsNet(config)
+      CapsNet_ = CapsNet
     elif input_ == '2':
-      CapsNet_ = CapsNetDistribute(config)
+      CapsNet_ = CapsNetDistribute
     else:
       raise ValueError('Wrong input! Found: ', input_)
 
-  Main_ = Main(CapsNet_, config)
-  Main_.train()
+  if args.baseline:
+    arch_ = basel_arch
+    config_ = basel_config
+  else:
+    arch_ = caps_arch
+    config_ = config
+
+  Main(CapsNet_(config_, arch_), config_).train()

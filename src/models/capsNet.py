@@ -4,18 +4,17 @@ from __future__ import print_function
 
 import tensorflow as tf
 import numpy as np
-
-from capsNet_arch import classifier
-from capsNet_arch import decoder
 from models import utils
 
 
 class CapsNet(object):
 
-  def __init__(self, cfg):
+  def __init__(self, cfg, model_arch):
 
     self.cfg = cfg
     self.batch_size = cfg.BATCH_SIZE
+    self.classifier = model_arch['classifier']
+    self.decoder = model_arch['decoder']
     self.clf_arch_info = None
     self.rec_arch_info = None
 
@@ -129,7 +128,7 @@ class CapsNet(object):
 
     with tf.variable_scope('decoder'):
       # _reconstructed shape: (batch_size, image_size*image_size)
-      _reconstructed, self.rec_arch_info = decoder(
+      _reconstructed, self.rec_arch_info = self.decoder(
           _masked, self.cfg, batch_size=self.batch_size,
           is_training=is_training)
 
@@ -247,7 +246,7 @@ class CapsNet(object):
       logits: output tensor of models
         - shape: (batch_size, num_caps, vec_dim)
     """
-    logits, self.clf_arch_info = classifier(
+    logits, self.clf_arch_info = self.classifier(
         inputs, self.cfg, self.batch_size, is_training=is_training)
 
     # Logits shape: (batch_size, num_caps, vec_dim, 1)

@@ -9,8 +9,8 @@ from models.capsNet import CapsNet
 
 class CapsNetDistribute(CapsNet):
 
-  def __init__(self, cfg):
-    super(CapsNetDistribute, self).__init__(cfg)
+  def __init__(self, cfg, model_arch):
+    super(CapsNetDistribute, self).__init__(cfg, model_arch)
     self.clf_arch_info = None
     self.rec_arch_info = None
     self.batch_size = cfg.GPU_BATCH_SIZE
