@@ -590,7 +590,7 @@ if __name__ == '__main__':
     CapsNet_ = CapsNet
   elif args.multi:
     utils.thick_line()
-    print('Run multi-gpu version.')
+    print('Running multi-gpu version.')
     CapsNet_ = CapsNetDistribute
   else:
     utils.thick_line()
@@ -603,9 +603,10 @@ if __name__ == '__main__':
     elif input_ == '2':
       CapsNet_ = CapsNetDistribute
     else:
-      raise ValueError('Wrong input! Found: ', input_)
+      raise ValueError('Wrong Input! Found: ', input_)
 
   if args.baseline:
+    print('Running baseline model.')
     arch_ = basel_arch
     config_ = basel_config
   else:

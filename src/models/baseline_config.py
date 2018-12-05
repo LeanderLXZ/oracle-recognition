@@ -32,7 +32,7 @@ __C.DATABASE_NAME = 'mnist'
 
 # Training version
 # Set None to auto generate version
-__C.VERSION = None
+__C.VERSION = 'baseline'
 
 # Learning rate
 __C.LEARNING_RATE = 0.001

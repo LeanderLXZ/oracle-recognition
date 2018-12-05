@@ -14,7 +14,7 @@ import tarfile
 
 import numpy as np
 import tensorflow as tf
-from os.path import isdir
+from os.path import join, isdir
 from tqdm import tqdm
 from PIL import Image
 from matplotlib import pyplot as plt
