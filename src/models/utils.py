@@ -163,6 +163,23 @@ def print_full_set_eval(epoch_i, epochs, step, start_time,
   print('Full_Set_Valid_Accuracy: {:.2f}%'.format(acc_valid * 100))
 
 
+def print_multi_obj_eval(precision_manual, recall_manual,
+                         accuracy_manual, f1score_manual,
+                         precision, recall, accuracy, f1score):
+  """Print information of multi-objects detection evaluation."""
+  thin_line()
+  print('Precision Manual: {:.4f} \n'.format(precision_manual),
+        'Recall Manual: {:.4f} \n'.format(recall_manual),
+        'Accuracy Manual: {:.4f} \n'.format(accuracy_manual),
+        'F1 Score Manual: {:.4f} \n'.format(f1score_manual),
+        'Precision: {:.4f} \n'.format(precision),
+        'Recall: {:.4f} \n'.format(recall),
+        'Accuracy: {:.4f} \n'.format(accuracy),
+        'F1 Score: {:.4f} \n'.format(f1score),
+        )
+  thin_line()
+
+
 def save_config_log(file_path, cfg, clf_arch_info=None, rec_arch_info=None):
   """Save configuration of training."""
   file_path = os.path.join(file_path, 'config_log.txt')
@@ -250,6 +267,58 @@ def save_test_log(file_path, loss_test, acc_test,
       f.write('Test_Train_Loss: {:.4f}\n'.format(clf_loss_test))
       f.write('Test_Reconstruction_Loss: {:.4f}\n'.format(rec_loss_test))
     f.write('=' * 55)
+
+
+def save_multi_obj_scores(file_path, loss_test, clf_loss_test,
+                          rec_loss_test, with_rec, precision,
+                          recall, accuracy, f1score):
+  """Save evaluations of multi-objects detection."""
+  file_path = os.path.join(file_path, 'multi_obj_scores.txt')
+  thick_line()
+  print('Saving {}...'.format(file_path))
+
+  with open(file_path, 'a') as f:
+    local_time = time.strftime('%Y/%m/%d-%H:%M:%S', time.localtime(time.time()))
+    f.write('=' * 55 + '\n')
+    f.write('Time: {}\n'.format(local_time))
+    f.write('-' * 55 + '\n')
+    f.write('Test_Loss: {:.4f}\n'.format(loss_test))
+    if with_rec:
+      f.write('Test_Train_Loss: {:.4f}\n'.format(clf_loss_test))
+      f.write('Test_Reconstruction_Loss: {:.4f}\n'.format(rec_loss_test))
+    f.write('Precision: {:.4f} \n'.format(precision))
+    f.write('Recall: {:.4f} \n'.format(recall))
+    f.write('Accuracy: {:.4f} \n'.format(accuracy))
+    f.write('F1 Score: {:.4f} \n'.format(f1score))
+    f.write('=' * 55)
+
+
+def save_test_pred(file_path, labels, preds, preds_vec):
+  """Save predictions of multi-objects detection."""
+  check_dir([file_path])
+  file_path = os.path.join(file_path, 'pred_log.csv')
+  thick_line()
+  print('Saving {}...'.format(file_path))
+
+  preds_class = []
+  for pred_i in preds:
+    pred_idx = []
+    for idx, p in enumerate(pred_i):
+      if p > 0:
+        pred_idx.append(idx)
+    preds_class.append(pred_idx)
+
+  if not os.path.isfile(file_path):
+    with open(file_path, 'w') as f:
+      header = ['labels', 'preds_class', 'preds', 'preds_vec']
+      writer = csv.writer(f)
+      writer.writerow(header)
+
+  with open(file_path, 'a') as f:
+    for i in range(len(labels)):
+      log = [labels[i], preds_class[i], preds[i], preds_vec[i]]
+      writer = csv.writer(f)
+      writer.writerow(log)
 
 
 def _read32(bytestream):
@@ -468,18 +537,23 @@ def save_imgs(real_imgs,
           int(row_i * (img_shape[0] + avg_gap) + thick_gap)))
 
   if test_flag:
-    save_image_path = join(img_path, 'batch_{}.jpg'.format(step))
-  else:
-    if epoch_i is None:
-      save_image_path = join(
-          img_path, 'batch_{}.jpg'.format(step))
+    if step:
+      save_image_path = join(img_path, 'test_batch_{}.jpg'.format(step))
     else:
+      save_image_path = join(img_path, 'test.jpg')
+  else:
+    if epoch_i:
       save_image_path = join(
           img_path,
-          'epoch_{}_batch_{}.jpg'.format(epoch_i, step))
-    if not silent:
-      thin_line()
-      print('Saving image to {}...'.format(save_image_path))
+          'train_epoch_{}_batch_{}.jpg'.format(epoch_i, step))
+    else:
+      save_image_path = join(
+          img_path, 'train_batch_{}.jpg'.format(step))
+
+  if not silent:
+    thin_line()
+    print('Saving image to {}...'.format(save_image_path))
+
   new_im.save(save_image_path)
 
 

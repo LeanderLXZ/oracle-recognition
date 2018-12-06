@@ -251,10 +251,12 @@ class CapsNet(object):
       logits = tf.Print(logits, [tf.constant(3)],
                         message="\nCAPSULE layers passed...")
 
+    # Predictions
+    preds = utils.get_vec_length(logits, self.batch_size, self.cfg.EPSILON)
+    preds = tf.identity(preds, name='preds')
+
     # Accuracy
-    correct_pred = tf.equal(tf.argmax(utils.get_vec_length(
-        logits, self.batch_size, self.cfg.EPSILON), axis=1),
-        tf.argmax(labels, axis=1))
+    correct_pred = tf.equal(tf.argmax(preds), tf.argmax(labels, axis=1))
     accuracy = tf.reduce_mean(tf.cast(
         correct_pred, tf.float32), name='accuracy')
 

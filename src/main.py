@@ -63,7 +63,7 @@ class Main(object):
     # Check directory of paths
     utils.check_dir([self.train_log_path, self.checkpoint_path])
     if cfg.WITH_RECONSTRUCTION:
-      if cfg.SAVE_IMAGE_STEP is not None:
+      if cfg.SAVE_IMAGE_STEP:
         utils.check_dir([self.train_image_path])
 
     # Load data
@@ -111,7 +111,12 @@ class Main(object):
     utils.save_config_log(
         self.train_log_path, cfg, model.clf_arch_info, model.rec_arch_info)
 
-  def _display_status(self, sess, x_batch, y_batch, epoch_i, step):
+  def _display_status(self,
+                      sess,
+                      x_batch,
+                      y_batch,
+                      epoch_i,
+                      step):
     """Display information during training."""
     valid_batch_idx = np.random.choice(
         range(len(self.x_valid)), self.cfg.BATCH_SIZE).tolist()
@@ -151,8 +156,14 @@ class Main(object):
         loss_valid, clf_loss_valid, rec_loss_valid, acc_valid,
         self.cfg.WITH_RECONSTRUCTION)
 
-  def _save_logs(self, sess, train_writer, valid_writer,
-                 x_batch, y_batch, epoch_i, step):
+  def _save_logs(self,
+                 sess,
+                 train_writer,
+                 valid_writer,
+                 x_batch,
+                 y_batch,
+                 epoch_i,
+                 step):
     """Save logs and ddd summaries to TensorBoard while training."""
     valid_batch_idx = np.random.choice(
         range(len(self.x_valid)), self.cfg.BATCH_SIZE).tolist()
@@ -194,7 +205,13 @@ class Main(object):
         rec_loss_train, acc_train, loss_valid, clf_loss_valid, rec_loss_valid,
         acc_valid, self.cfg.WITH_RECONSTRUCTION)
 
-  def _eval_on_batches(self, mode, sess, x, y, n_batch, silent=False):
+  def _eval_on_batches(self,
+                       mode,
+                       sess,
+                       x,
+                       y,
+                       n_batch,
+                       silent=False):
     """Calculate losses and accuracies of full train set."""
     loss_all = []
     acc_all = []
@@ -264,7 +281,11 @@ class Main(object):
 
     return loss, clf_loss, rec_loss, accuracy
 
-  def _eval_on_full_set(self, sess, epoch_i, step, silent=False):
+  def _eval_on_full_set(self,
+                        sess,
+                        epoch_i,
+                        step,
+                        silent=False):
     """Evaluate on the full data set and print information."""
     eval_start_time = time.time()
 
@@ -308,23 +329,31 @@ class Main(object):
       print('Evaluation done! Using time: {:.2f}'
             .format(time.time() - eval_start_time))
 
-  def _save_images(self, sess, img_path, x_batch, y_batch,
-                   step, silent=False, epoch_i=None):
+  def _save_images(self,
+                   sess,
+                   img_path,
+                   x,
+                   y,
+                   step,
+                   silent=False,
+                   epoch_i=None,
+                   test_flag=False):
     """Save reconstructed images."""
     rec_images_ = sess.run(
-        self.rec_images, feed_dict={self.inputs: x_batch,
-                                    self.labels: y_batch,
+        self.rec_images, feed_dict={self.inputs: x,
+                                    self.labels: y,
                                     self.is_training: False})
 
     utils.save_imgs(
-        real_imgs=x_batch,
+        real_imgs=x,
         rec_imgs=rec_images_,
         img_path=img_path,
         database_name=self.cfg.DATABASE_NAME,
         max_img_in_col=self.cfg.MAX_IMAGE_IN_COL,
         step=step,
         silent=silent,
-        epoch_i=epoch_i)
+        epoch_i=epoch_i,
+        test_flag=test_flag)
 
   def _save_model(self, sess, saver, step, silent=False):
     """Save models."""
@@ -344,7 +373,7 @@ class Main(object):
     # Check directory of paths
     utils.check_dir([self.test_log_path])
     if self.cfg.WITH_RECONSTRUCTION:
-      if self.cfg.TEST_SAVE_IMAGE_STEP is not None:
+      if self.cfg.TEST_SAVE_IMAGE_STEP:
         utils.check_dir([self.test_image_path])
 
     # Load data
@@ -383,11 +412,11 @@ class Main(object):
         rec_loss_test_all.append(rec_loss_i)
 
         # Save reconstruct images
-        if self.cfg.TEST_SAVE_IMAGE_STEP is not None:
+        if self.cfg.TEST_SAVE_IMAGE_STEP:
           if step % self.cfg.TEST_SAVE_IMAGE_STEP == 0:
             self._save_images(
                 sess, self.test_image_path, test_batch_x,
-                test_batch_y, step, silent=False)
+                test_batch_y, step, silent=False, test_flag=True)
 
       clf_loss_test = sum(clf_loss_test_all) / len(clf_loss_test_all)
       rec_loss_test = sum(rec_loss_test_all) / len(rec_loss_test_all)
@@ -447,7 +476,7 @@ class Main(object):
       utils.thick_line()
       print('Training on epoch: {}/{}'.format(epoch_i + 1, self.cfg.EPOCHS))
 
-      if self.cfg.DISPLAY_STEP is not None:
+      if self.cfg.DISPLAY_STEP:
 
         for x_batch, y_batch in utils.get_batches(self.x_train,
                                                   self.y_train,
@@ -465,13 +494,13 @@ class Main(object):
             self._display_status(sess, x_batch, y_batch, epoch_i, step)
 
           # Save training logs
-          if self.cfg.SAVE_LOG_STEP is not None:
+          if self.cfg.SAVE_LOG_STEP:
             if step % self.cfg.SAVE_LOG_STEP == 0:
               self._save_logs(sess, train_writer, valid_writer,
                               x_batch, y_batch, epoch_i, step)
 
           # Save reconstruction images
-          if self.cfg.SAVE_IMAGE_STEP is not None:
+          if self.cfg.SAVE_IMAGE_STEP:
             if self.cfg.WITH_RECONSTRUCTION:
               if step % self.cfg.SAVE_IMAGE_STEP == 0:
                 self._save_images(
@@ -506,13 +535,13 @@ class Main(object):
                                               self.is_training: True})
 
           # Save training logs
-          if self.cfg.SAVE_LOG_STEP is not None:
+          if self.cfg.SAVE_LOG_STEP:
             if step % self.cfg.SAVE_LOG_STEP == 0:
               self._save_logs(sess, train_writer, valid_writer,
                               x_batch, y_batch, epoch_i, step)
 
           # Save reconstruction images
-          if self.cfg.SAVE_IMAGE_STEP is not None:
+          if self.cfg.SAVE_IMAGE_STEP:
             if self.cfg.WITH_RECONSTRUCTION:
               if step % self.cfg.SAVE_IMAGE_STEP == 0:
                 self._save_images(
