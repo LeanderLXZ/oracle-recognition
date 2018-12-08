@@ -34,64 +34,12 @@ class Main(object):
     self.cfg = cfg
 
     # Get paths from configuration
-    train_log_path_ = join(cfg.TRAIN_LOG_PATH, cfg.VERSION)
-    test_log_path_ = join(cfg.TEST_LOG_PATH, cfg.VERSION)
-    summary_path_ = join(cfg.SUMMARY_PATH, cfg.VERSION)
-    checkpoint_path_ = join(cfg.CHECKPOINT_PATH, cfg.VERSION)
-    self.preprocessed_path = join(cfg.DPP_DATA_PATH, cfg.DATABASE_NAME)
-
-    # Get log paths, append information if the directory exist.
-    self.train_log_path = train_log_path_
-    i_append_info = 0
-    while isdir(self.train_log_path):
-      i_append_info += 1
-      self.train_log_path = train_log_path_ + '({})'.format(i_append_info)
-
-    if i_append_info > 0:
-      self.summary_path = summary_path_ + '({})'.format(i_append_info)
-      self.checkpoint_path = checkpoint_path_ + '({})'.format(i_append_info)
-      self.test_log_path = test_log_path_ + '({})'.format(i_append_info)
-    else:
-      self.summary_path = summary_path_
-      self.checkpoint_path = checkpoint_path_
-      self.test_log_path = test_log_path_
-
-    # Images saving path
-    self.train_image_path = join(self.train_log_path, 'images')
-    self.test_image_path = join(self.test_log_path, 'images')
-
-    # Check directory of paths
-    utils.check_dir([self.train_log_path, self.checkpoint_path])
-    if cfg.WITH_RECONSTRUCTION:
-      if cfg.SAVE_IMAGE_STEP:
-        utils.check_dir([self.train_image_path])
+    self.preprocessed_path, self.train_log_path, \
+        self.test_log_path, self.summary_path, self.checkpoint_path, \
+        self.train_image_path, self.test_image_path = self._get_paths()
 
     # Load data
-    utils.thick_line()
-    print('Loading data...')
-    utils.thin_line()
-    # if self.cfg.DATABASE_NAME == 'radical':
-    #   self.x_train = utils.load_large_data_to_pkl(
-    #       join(self.preprocessed_path, 'x_train'),
-    #       n_parts=self.cfg.LARGE_DATA_PART_NUM)
-    # else:
-    self.x_train = utils.load_data_from_pkl(
-        join(self.preprocessed_path, 'x_train.p'))
-    self.y_train = utils.load_data_from_pkl(
-        join(self.preprocessed_path, 'y_train.p'))
-    self.x_valid = utils.load_data_from_pkl(
-        join(self.preprocessed_path, 'x_valid.p'))
-    self.y_valid = utils.load_data_from_pkl(
-        join(self.preprocessed_path, 'y_valid.p'))
-    utils.thin_line()
-    print('Data info:')
-    utils.thin_line()
-    print('x_train: {}\ny_train: {}\nx_valid: {}\ny_valid: {}'.format(
-        self.x_train.shape,
-        self.y_train.shape,
-        self.x_valid.shape,
-        self.y_valid.shape
-    ))
+    self.x_train, self.y_train, self.x_valid, self.y_valid = self._load_data()
 
     # Calculate number of batches
     self.n_batch_train = len(self.y_train) // cfg.BATCH_SIZE
@@ -110,6 +58,74 @@ class Main(object):
     # Save config
     utils.save_config_log(
         self.train_log_path, cfg, model.clf_arch_info, model.rec_arch_info)
+
+  def _get_paths(self):
+    """Get paths from configuration."""
+    train_log_path_ = join(self.cfg.TRAIN_LOG_PATH, self.cfg.VERSION)
+    test_log_path_ = join(self.cfg.TEST_LOG_PATH, self.cfg.VERSION)
+    summary_path_ = join(self.cfg.SUMMARY_PATH, self.cfg.VERSION)
+    checkpoint_path_ = join(self.cfg.CHECKPOINT_PATH, self.cfg.VERSION)
+    preprocessed_path = join(self.cfg.DPP_DATA_PATH, self.cfg.DATABASE_NAME)
+
+    # Get log paths, append information if the directory exist.
+    train_log_path = train_log_path_
+    i_append_info = 0
+    while isdir(self.train_log_path):
+      i_append_info += 1
+      train_log_path = train_log_path_ + '({})'.format(i_append_info)
+
+    if i_append_info > 0:
+      summary_path = summary_path_ + '({})'.format(i_append_info)
+      checkpoint_path = checkpoint_path_ + '({})'.format(i_append_info)
+      test_log_path = test_log_path_ + '({})'.format(i_append_info)
+    else:
+      summary_path = summary_path_
+      checkpoint_path = checkpoint_path_
+      test_log_path = test_log_path_
+
+    # Images saving path
+    train_image_path = join(train_log_path, 'images')
+    test_image_path = join(test_log_path, 'images')
+
+    # Check directory of paths
+    utils.check_dir([train_log_path, checkpoint_path])
+    if self.cfg.WITH_RECONSTRUCTION:
+      if self.cfg.SAVE_IMAGE_STEP:
+        utils.check_dir([train_image_path])
+
+    return preprocessed_path, train_log_path, test_log_path, \
+        summary_path, checkpoint_path, train_image_path, test_image_path
+
+  def _load_data(self):
+    """Load preprocessed data."""
+    utils.thick_line()
+    print('Loading data...')
+    utils.thin_line()
+
+    # if self.cfg.DATABASE_NAME == 'radical':
+    #   self.x_train = utils.load_large_data_to_pkl(
+    #       join(self.preprocessed_path, 'x_train'),
+    #       n_parts=self.cfg.LARGE_DATA_PART_NUM)
+    # else:
+    x_train = utils.load_data_from_pkl(
+        join(self.preprocessed_path, 'x_train.p'))
+    y_train = utils.load_data_from_pkl(
+        join(self.preprocessed_path, 'y_train.p'))
+    x_valid = utils.load_data_from_pkl(
+        join(self.preprocessed_path, 'x_valid.p'))
+    y_valid = utils.load_data_from_pkl(
+        join(self.preprocessed_path, 'y_valid.p'))
+
+    utils.thin_line()
+    print('Data info:')
+    utils.thin_line()
+    print('x_train: {}\ny_train: {}\nx_valid: {}\ny_valid: {}'.format(
+        x_train.shape,
+        y_train.shape,
+        x_valid.shape,
+        y_valid.shape))
+
+    return x_train, y_train, x_valid, y_valid
 
   def _display_status(self,
                       sess,
@@ -417,7 +433,7 @@ class Main(object):
           if step % self.cfg.TEST_SAVE_IMAGE_STEP == 0:
             self._save_images(
                 sess, self.test_image_path, test_batch_x,
-                test_batch_y, step, silent=False, test_flag=True)
+                test_batch_y, step, silent=True, test_flag=True)
 
       clf_loss_test = sum(clf_loss_test_all) / len(clf_loss_test_all)
       rec_loss_test = sum(rec_loss_test_all) / len(rec_loss_test_all)
@@ -487,18 +503,18 @@ class Main(object):
           # Training optimizer
           sess.run(self.optimizer, feed_dict={self.inputs: x_batch,
                                               self.labels: y_batch,
-                                              self.step: step - 1,
+                                              self.step: step-1,
                                               self.is_training: True})
 
           # Display training information
           if step % self.cfg.DISPLAY_STEP == 0:
-            self._display_status(sess, x_batch, y_batch, epoch_i, step)
+            self._display_status(sess, x_batch, y_batch, epoch_i, step-1)
 
           # Save training logs
           if self.cfg.SAVE_LOG_STEP:
             if step % self.cfg.SAVE_LOG_STEP == 0:
               self._save_logs(sess, train_writer, valid_writer,
-                              x_batch, y_batch, epoch_i, step)
+                              x_batch, y_batch, epoch_i, step-1)
 
           # Save reconstruction images
           if self.cfg.SAVE_IMAGE_STEP:
@@ -506,17 +522,17 @@ class Main(object):
               if step % self.cfg.SAVE_IMAGE_STEP == 0:
                 self._save_images(
                     sess, self.train_image_path, x_batch,
-                    y_batch, step, epoch_i=epoch_i)
+                    y_batch, step-1, epoch_i=epoch_i)
 
           # Save models
           if self.cfg.SAVE_MODEL_MODE == 'per_batch':
             if step % self.cfg.SAVE_MODEL_STEP == 0:
-              self._save_model(sess, self.saver, step)
+              self._save_model(sess, self.saver, step-1)
 
           # Evaluate on full set
           if self.cfg.FULL_SET_EVAL_MODE == 'per_batch':
             if step % self.cfg.FULL_SET_EVAL_STEP == 0:
-              self._eval_on_full_set(sess, epoch_i, step)
+              self._eval_on_full_set(sess, epoch_i, step-1)
               utils.thick_line()
       else:
         utils.thin_line()
@@ -532,14 +548,14 @@ class Main(object):
           # Training optimizer
           sess.run(self.optimizer, feed_dict={self.inputs: x_batch,
                                               self.labels: y_batch,
-                                              self.step: step - 1,
+                                              self.step: step-1,
                                               self.is_training: True})
 
           # Save training logs
           if self.cfg.SAVE_LOG_STEP:
             if step % self.cfg.SAVE_LOG_STEP == 0:
               self._save_logs(sess, train_writer, valid_writer,
-                              x_batch, y_batch, epoch_i, step)
+                              x_batch, y_batch, epoch_i, step-1)
 
           # Save reconstruction images
           if self.cfg.SAVE_IMAGE_STEP:
@@ -547,28 +563,32 @@ class Main(object):
               if step % self.cfg.SAVE_IMAGE_STEP == 0:
                 self._save_images(
                     sess, self.train_image_path, x_batch,
-                    y_batch, step, silent=True, epoch_i=epoch_i)
+                    y_batch, step-1, silent=True, epoch_i=epoch_i)
 
-          # Save models
+          # Save models per batch
           if self.cfg.SAVE_MODEL_MODE == 'per_batch':
             if step % self.cfg.SAVE_MODEL_STEP == 0:
-              self._save_model(sess, self.saver, step, silent=True)
+              self._save_model(sess, self.saver, step-1, silent=True)
 
           # Evaluate on full set
           if self.cfg.FULL_SET_EVAL_MODE == 'per_batch':
             if step % self.cfg.FULL_SET_EVAL_STEP == 0:
-              self._eval_on_full_set(sess, epoch_i, step, silent=True)
+              self._eval_on_full_set(sess, epoch_i, step-1, silent=True)
 
+      # Save model per epoch
       if self.cfg.SAVE_MODEL_MODE == 'per_epoch':
         if (epoch_i + 1) % self.cfg.SAVE_MODEL_STEP == 0:
           self._save_model(sess, self.saver, epoch_i)
+
+      # Evaluate per epoch
       if self.cfg.FULL_SET_EVAL_MODE == 'per_epoch':
         if (epoch_i + 1) % self.cfg.FULL_SET_EVAL_STEP == 0:
-          self._eval_on_full_set(sess, epoch_i, step)
+          self._eval_on_full_set(sess, epoch_i, step-1)
 
       utils.thin_line()
-      print('Epoch done! Using time: {:.2f}'
-            .format(time.time() - epoch_start_time))
+      print('Epoch {}/{} done! Using time: {:.2f}'
+            .format(epoch_i + 1, self.cfg.EPOCHS,
+                    time.time() - epoch_start_time))
 
     utils.thick_line()
     print('Training finished! Using time: {:.2f}'

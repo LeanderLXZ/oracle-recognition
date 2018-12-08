@@ -136,18 +136,12 @@ __C.RECONSTRUCTION_LOSS = 'mse'
 # Scaling for reconstruction loss
 __C.RECONSTRUCT_LOSS_SCALE = 0.392  # 0.0005*32*32=0.512  # 0.0005*784=0.392
 
-# -------------------------------------------
-# Test
-
-# Evaluate on test set after training
-__C.TEST_AFTER_TRAINING = True
-
 # ===========================================
-# #             Training Config             #
+# #         Training Configuration          #
 # ===========================================
 
 # Display step
-# Set None to not display
+# Set None to not display details
 __C.DISPLAY_STEP = None  # batches
 
 # Save summary step
@@ -171,10 +165,10 @@ __C.FULL_SET_EVAL_STEP = 1
 # Save models
 # 'per_epoch': save models when n epochs finished
 # 'per_batch': save models when n batches finished
-__C.SAVE_MODEL_MODE = None
-# __C.SAVE_MODEL_MODE = 'per_epoch'
+# __C.SAVE_MODEL_MODE = None
+__C.SAVE_MODEL_MODE = 'per_epoch'
 # None: not save models
-__C.SAVE_MODEL_STEP = 10
+__C.SAVE_MODEL_STEP = 1
 # Maximum number of recent checkpoints to keep.
 __C.MAX_TO_KEEP_CKP = 5
 
@@ -184,15 +178,22 @@ __C.EVAL_WITH_FULL_TRAIN_SET = False
 # Show details of training progress
 __C.SHOW_TRAINING_DETAILS = False
 
+
+# -------------------------------------------
+# Test
+
+# Evaluate on test set after training
+__C.TEST_AFTER_TRAINING = True
+
 # ===========================================
-# #             Testing Config              #
+# #          Testing Configuration          #
 # ===========================================
 
 # Testing version name
-__C.TEST_VERSION = 'conv_rec_mse'
+__C.TEST_VERSION = __C.VERSION
 
 # Testing checkpoint index
-__C.TEST_CKP_IDX = 29
+__C.TEST_CKP_IDX = 1
 
 # Testing with reconstruction
 __C.TEST_WITH_RECONSTRUCTION = True
@@ -251,7 +252,7 @@ __C.CHECKPOINT_PATH = '../checkpoints'
 __C.TEST_LOG_PATH = '../test_logs'
 
 # ===========================================
-# #          Multi-GPUs Config              #
+# #        Multi-GPUs Configuration         #
 # ===========================================
 
 # Save trainable variables on CPU
