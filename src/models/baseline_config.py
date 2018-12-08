@@ -137,7 +137,7 @@ __C.RECONSTRUCTION_LOSS = 'mse'
 __C.RECONSTRUCT_LOSS_SCALE = 0.392  # 0.0005*32*32=0.512  # 0.0005*784=0.392
 
 # ===========================================
-# #         Training Configuration          #
+# #         Training Configurations         #
 # ===========================================
 
 # Display step
@@ -186,7 +186,7 @@ __C.SHOW_TRAINING_DETAILS = False
 __C.TEST_AFTER_TRAINING = True
 
 # ===========================================
-# #          Testing Configuration          #
+# #          Testing Configurations         #
 # ===========================================
 
 # Testing version name
@@ -252,7 +252,7 @@ __C.CHECKPOINT_PATH = '../checkpoints'
 __C.TEST_LOG_PATH = '../test_logs'
 
 # ===========================================
-# #        Multi-GPUs Configuration         #
+# #        Multi-GPUs Configurations        #
 # ===========================================
 
 # Save trainable variables on CPU

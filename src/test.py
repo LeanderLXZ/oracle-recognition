@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import print_function
 
 import time
+import argparse
 import tensorflow as tf
 import numpy as np
 from tqdm import tqdm
@@ -11,6 +12,7 @@ from sklearn.metrics import \
   precision_score, recall_score, f1_score, accuracy_score
 
 from config import config
+from models.baseline_config import basel_config
 from models import utils
 
 
@@ -21,9 +23,21 @@ class Test(object):
     # Config
     self.cfg = cfg
 
+    # Get paths for testing
+    self.checkpoint_path, self.test_log_path, self.test_image_path = \
+        self._get_paths()
+
+    # Save config
+    utils.save_config_log(self.test_log_path, self.cfg)
+
+    # Load data
+    self.x_test, self.y_test = self._load_data()
+
+  def _get_paths(self):
+    """Get paths for testing."""
     # Get checkpoint path
-    self.checkpoint_path = join(
-        cfg.CHECKPOINT_PATH,
+    checkpoint_path = join(
+        self.cfg.CHECKPOINT_PATH,
         '{}/models.ckpt-{}'.format(
             self.cfg.TEST_VERSION, self.cfg.TEST_CKP_IDX)
     )
@@ -32,26 +46,22 @@ class Test(object):
     test_log_path_ = join(
         self.cfg.TEST_LOG_PATH,
         '{}-{}'.format(self.cfg.TEST_VERSION, self.cfg.TEST_CKP_IDX))
-    self.test_log_path = test_log_path_
+    test_log_path = test_log_path_
     i_append_info = 0
-    while isdir(self.test_log_path):
+    while isdir(test_log_path):
       i_append_info += 1
-      self.test_log_path = test_log_path_ + '({})'.format(i_append_info)
+      test_log_path = test_log_path_ + '({})'.format(i_append_info)
 
     # Path for saving images
-    self.test_image_path = join(self.test_log_path, 'images')
+    test_image_path = join(test_log_path, 'images')
 
     # Check directory of paths
-    utils.check_dir([self.test_log_path])
+    utils.check_dir([test_log_path])
     if self.cfg.TEST_WITH_RECONSTRUCTION:
       if self.cfg.TEST_SAVE_IMAGE_STEP:
-        utils.check_dir([self.test_image_path])
+        utils.check_dir([test_image_path])
 
-    # Save config
-    utils.save_config_log(self.test_log_path, self.cfg)
-
-    # Load data
-    self.x_test, self.y_test = self._load_data()
+    return checkpoint_path, test_log_path, test_image_path
 
   def _load_data(self):
     utils.thick_line()
@@ -223,9 +233,21 @@ class TestMultiObjects(object):
     # Config
     self.cfg = cfg
 
+    # Get paths for testing
+    self.checkpoint_path, self.test_log_path, self.test_image_path = \
+        self._get_paths()
+
+    # Save config
+    utils.save_config_log(self.test_log_path, self.cfg)
+
+    # Load data
+    self.x_test, self.y_test = self._load_data()
+
+  def _get_paths(self):
+    """Get paths for testing."""
     # Get checkpoint path
-    self.checkpoint_path = join(
-        cfg.CHECKPOINT_PATH,
+    checkpoint_path = join(
+        self.cfg.CHECKPOINT_PATH,
         '{}/models.ckpt-{}'.format(
             self.cfg.TEST_VERSION, self.cfg.TEST_CKP_IDX)
     )
@@ -233,27 +255,23 @@ class TestMultiObjects(object):
     # Get log path, append information if the directory exist.
     test_log_path_ = join(
         self.cfg.TEST_LOG_PATH,
-        '{}-{}'.format(self.cfg.TEST_VERSION, self.cfg.TEST_CKP_IDX))
-    self.test_log_path = test_log_path_
+        '{}-{}-multi_obj'.format(self.cfg.TEST_VERSION, self.cfg.TEST_CKP_IDX))
+    test_log_path = test_log_path_
     i_append_info = 0
-    while isdir(self.test_log_path):
+    while isdir(test_log_path):
       i_append_info += 1
-      self.test_log_path = test_log_path_ + '({})'.format(i_append_info)
+      test_log_path = test_log_path_ + '({})'.format(i_append_info)
 
     # Path for saving images
-    self.test_image_path = join(self.test_log_path, 'images')
+    test_image_path = join(test_log_path, 'images')
 
     # Check directory of paths
-    utils.check_dir([self.test_log_path])
+    utils.check_dir([test_log_path])
     if self.cfg.TEST_WITH_RECONSTRUCTION:
       if self.cfg.TEST_SAVE_IMAGE_STEP:
-        utils.check_dir([self.test_image_path])
+        utils.check_dir([test_image_path])
 
-    # Save config
-    utils.save_config_log(self.test_log_path, self.cfg)
-
-    # Load data
-    self.x_test, self.y_test = self._load_data()
+    return checkpoint_path, test_log_path, test_image_path
 
   def _load_data(self):
     utils.thick_line()
@@ -520,8 +538,28 @@ class TestMultiObjects(object):
 
 if __name__ == '__main__':
 
-  # Test_ = Test(config)
-  # Test_.test()
+  parser = argparse.ArgumentParser(
+      description="Testing the model."
+  )
+  parser.add_argument('-b', '--baseline', action="store_true",
+                      help="Use baseline configurations.")
+  parser.add_argument('-m', '--multi', action="store_true",
+                      help="Test multi objects detection.")
+  args = parser.parse_args()
 
-  Test_ = TestMultiObjects(config)
-  Test_.test()
+  if args.multi:
+    utils.thick_line()
+    print('Testing multi objects detection.')
+    utils.thick_line()
+    Test_ = TestMultiObjects
+  else:
+    Test_ = Test
+
+  if args.baseline:
+    print('Running baseline model.')
+    utils.thick_line()
+    config_ = basel_config
+  else:
+    config_ = config
+
+  Test_(config_).test()

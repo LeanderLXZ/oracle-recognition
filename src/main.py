@@ -627,10 +627,10 @@ if __name__ == '__main__':
                       choices=[0, 1], type=int, metavar='',
                       help="Run single-gpu version."
                            "Choose the GPU from: {!s}".format([0, 1]))
-  parser.add_argument('-m', '--multi', action="store_true",
+  parser.add_argument('-m', '--mgpu', action="store_true",
                       help="Run multi-gpu version.")
   parser.add_argument('-b', '--baseline', action="store_true",
-                      help="Using baseline architecture and parameters.")
+                      help="Use baseline architecture and configurations.")
   args = parser.parse_args()
 
   if args.gpu:
@@ -638,7 +638,7 @@ if __name__ == '__main__':
     print('Using /gpu: %d' % args.gpu)
     environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
     CapsNet_ = CapsNet
-  elif args.multi:
+  elif args.mgpu:
     utils.thick_line()
     print('Running multi-gpu version.')
     CapsNet_ = CapsNetDistribute
@@ -646,7 +646,7 @@ if __name__ == '__main__':
     utils.thick_line()
     print('Input [ 1 ] to run normal version.')
     print('Input [ 2 ] to run multi-gpu version.')
-    utils.thin_line()
+    utils.thick_line()
     input_ = input('Input: ')
     if input_ == '1':
       CapsNet_ = CapsNet
@@ -657,6 +657,7 @@ if __name__ == '__main__':
 
   if args.baseline:
     print('Running baseline model.')
+    utils.thick_line()
     arch_ = basel_arch
     config_ = basel_config
   else:
