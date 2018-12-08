@@ -70,7 +70,7 @@ class Main(object):
     # Get log paths, append information if the directory exist.
     train_log_path = train_log_path_
     i_append_info = 0
-    while isdir(self.train_log_path):
+    while isdir(train_log_path):
       i_append_info += 1
       train_log_path = train_log_path_ + '({})'.format(i_append_info)
 
