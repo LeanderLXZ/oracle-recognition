@@ -87,7 +87,7 @@ class Test(object):
       loss_ = loaded_graph.get_tensor_by_name("loss:0")
 
       if self.cfg.TEST_WITH_RECONSTRUCTION:
-        clf_loss_ = loaded_graph.get_tensor_by_name("classifier_loss:0")
+        clf_loss_ = loaded_graph.get_tensor_by_name("clf_loss:0")
         rec_loss_ = loaded_graph.get_tensor_by_name("rec_loss:0")
         rec_images_ = loaded_graph.get_tensor_by_name("rec_images:0")
         return inputs_, labels_, loss_, accuracy_, \
@@ -211,7 +211,7 @@ class Test(object):
       utils.thin_line()
       print('Test_Loss: {:.4f}'.format(loss_test))
       if self.cfg.TEST_WITH_RECONSTRUCTION:
-        print('Test_Classifier_Loss: {:.4f}\n'.format(clf_loss_test),
+        print('Test_clf_loss: {:.4f}\n'.format(clf_loss_test),
               'Test_Reconstruction_Loss: {:.4f}'.format(rec_loss_test))
       print('Test_Accuracy: {:.2f}%'.format(acc_test * 100))
 
@@ -556,8 +556,8 @@ if __name__ == '__main__':
     Test_ = Test
 
   if args.baseline:
-    print('Running baseline model.')
     utils.thick_line()
+    print('Running baseline model.')
     config_ = basel_config
   else:
     config_ = config
