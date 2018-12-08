@@ -344,6 +344,7 @@ class Main(object):
                                     self.labels: y,
                                     self.is_training: False})
 
+    # rec_images_ shape: [128, 28, 28, 1] for mnist
     utils.save_imgs(
         real_imgs=x,
         rec_imgs=rec_images_,

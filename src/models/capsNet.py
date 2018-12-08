@@ -256,7 +256,7 @@ class CapsNet(object):
     preds = tf.identity(preds, name='preds')
 
     # Accuracy
-    correct_pred = tf.equal(tf.argmax(preds), tf.argmax(labels, axis=1))
+    correct_pred = tf.equal(tf.argmax(preds, axis=1), tf.argmax(labels, axis=1))
     accuracy = tf.reduce_mean(tf.cast(
         correct_pred, tf.float32), name='accuracy')
 

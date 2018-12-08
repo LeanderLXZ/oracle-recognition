@@ -114,11 +114,11 @@ def get_batches(x, y, batch_size):
     yield x[start:end], y[start:end]
 
 
-def get_batches_all(x, y, batch_size):
-  """Split features and labels into batches."""
+def get_batches_all(x, batch_size):
+  """Split features into batches."""
   for start in range(0, len(x), batch_size):
     end = start + batch_size
-    yield x[start:end], y[start:end]
+    yield x[start:end]
 
 
 def print_status(epoch_i, epochs, step, start_time, loss_train,
@@ -276,10 +276,8 @@ def save_test_log(file_path, loss_test, acc_test,
     f.write('=' * 55)
 
 
-def save_multi_obj_scores(file_path, loss_test, clf_loss_test,
-                          rec_loss_test, with_rec, precision,
-                          recall, accuracy, f1score):
-  """Save evaluations of multi-objects detection."""
+def save_multi_obj_scores(file_path, precision, recall, accuracy, f1score):
+  """Save evaluation scores of multi-objects detection."""
   file_path = os.path.join(file_path, 'multi_obj_scores.txt')
   thick_line()
   print('Saving {}...'.format(file_path))
@@ -289,10 +287,6 @@ def save_multi_obj_scores(file_path, loss_test, clf_loss_test,
     f.write('=' * 55 + '\n')
     f.write('Time: {}\n'.format(local_time))
     f.write('-' * 55 + '\n')
-    f.write('Test_Loss: {:.4f}\n'.format(loss_test))
-    if with_rec:
-      f.write('Test_Train_Loss: {:.4f}\n'.format(clf_loss_test))
-      f.write('Test_Reconstruction_Loss: {:.4f}\n'.format(rec_loss_test))
     f.write('Precision: {:.4f} \n'.format(precision))
     f.write('Recall: {:.4f} \n'.format(recall))
     f.write('Accuracy: {:.4f} \n'.format(accuracy))
@@ -471,6 +465,41 @@ def download_and_extract_cifar10(url, save_path, file_name, extract_path):
   shutil.rmtree(extracted_dir_path)
 
 
+def img_add(src_list, merge=False, gamma=0):
+  """Add images together."""
+  if merge:
+    c = 1 / len(src_list)
+  else:
+    c = 1
+  added = np.zeros_like(src_list[0])
+  for src_img in src_list:
+    print(c)
+    added += src_img * c
+  added += gamma
+  added[added > 1] = 1
+  return added
+
+
+def imgs_black_to_color(imgs, same=False):
+  color_coef_list = [[1, 0, 0],
+                     [0, 1, 0],
+                     [0, 0, 1],
+                     [1, 1, 1]]
+  if same:
+    # img shape: [n_test, 28, 28, 1] for mnist
+    imgs_ = np.append(imgs, imgs, axis=3)
+    imgs_ = np.append(imgs_, imgs, axis=3)
+  else:
+    # img shape: [n_y, 28, 28, 1] for mnist
+    imgs_ = []
+    for i, img in enumerate(imgs):
+      img_colored = img * color_coef_list[i][0]
+      img_colored = np.append(img_colored, img * color_coef_list[i][1], axis=2)
+      img_colored = np.append(img_colored, img * color_coef_list[i][2], axis=2)
+      imgs_.append(img_colored)
+  return np.array(imgs_)
+
+
 def save_imgs(real_imgs,
               rec_imgs,
               img_path,
@@ -479,7 +508,9 @@ def save_imgs(real_imgs,
               step=None,
               silent=False,
               epoch_i=None,
-              test_flag=False):
+              test_flag=False,
+              colorful=False):
+  """Save images to jpg files."""
   # Image shape
   img_shape = real_imgs.shape[1:]
 
@@ -505,12 +536,12 @@ def save_imgs(real_imgs,
       real_images_[: save_row_size * save_col_size],
       (save_row_size, save_col_size, *img_shape)).astype(np.uint8)
 
+  mode = 'RGB'
   if database_name == 'mnist' or database_name == 'radical':
-    mode = 'L'
-    rec_images_in_square = np.squeeze(rec_images_in_square, 4)
-    real_images_in_square = np.squeeze(real_images_in_square, 4)
-  else:
-    mode = 'RGB'
+    if not colorful:
+      mode = 'L'
+      rec_images_in_square = np.squeeze(rec_images_in_square, 4)
+      real_images_in_square = np.squeeze(real_images_in_square, 4)
 
   # Combine images to grid image
   thin_gap = 1
@@ -564,7 +595,7 @@ def save_imgs(real_imgs,
   new_im.save(save_image_path)
 
 
-def square_grid_show_imgs(images, mode):
+def square_grid_show_imgs(images, mode=None):
   """Save images as a square grid."""
   # Get maximum size for square grid of images
   save_size = math.floor(np.sqrt(images.shape[0]))
@@ -585,7 +616,7 @@ def square_grid_show_imgs(images, mode):
     camp = 'gray'
     images_in_square = np.squeeze(images_in_square, 4)
   else:
-    camp = 'RGB'
+    camp = None
 
   # Combine images to grid image
   new_im = Image.new(mode,

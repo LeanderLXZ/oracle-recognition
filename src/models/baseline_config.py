@@ -189,7 +189,7 @@ __C.SHOW_TRAINING_DETAILS = False
 # ===========================================
 
 # Testing version name
-__C.TEST_VERSION = 'fc_rec_mse'
+__C.TEST_VERSION = 'conv_rec_mse'
 
 # Testing checkpoint index
 __C.TEST_CKP_IDX = 29
@@ -197,12 +197,18 @@ __C.TEST_CKP_IDX = 29
 # Testing with reconstruction
 __C.TEST_WITH_RECONSTRUCTION = True
 
+# Label for generating reconstruction images
+# 'pred': Use predicted y
+# 'real': Use real labels y
+__C.LABEL_FOR_TEST = 'pred'  # 'real'
+
 # Saving testing reconstruction images
 # None: not save images
 __C.TEST_SAVE_IMAGE_STEP = 10  # batches
 
 # Batch size of testing
 # should be same as training batch_size
+# if None, testing will not use mini-batch.
 __C.TEST_BATCH_SIZE = 256
 
 # ===========================================
