@@ -199,7 +199,8 @@ class CapsNet(object):
 
     reconstruct_loss = tf.identity(reconstruct_loss, name='rec_loss')
     reconstructed_images = tf.reshape(
-        reconstructed_images_, shape=[-1, *image_size], name='rec_images')
+        reconstructed_images_, shape=[-1, *image_size])
+    reconstructed_images = tf.identity(reconstructed_images, name='rec_images')
 
     # margin_loss_params: {'m_plus': 0.9, 'm_minus': 0.1, 'lambda_': 0.5}
     classifier_loss = self._margin_loss(
