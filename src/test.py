@@ -290,7 +290,11 @@ class TestMultiObjects(object):
                    labels,
                    preds_binary):
     """Save reconstructed images."""
-    n_test_img = self.cfg.MAX_IMAGE_IN_COL ** 2
+    if len(self.y_test) > self.cfg.MAX_IMAGE_IN_COL ** 2:
+      n_test_img = self.cfg.MAX_IMAGE_IN_COL ** 2
+      test_img_idx = np.random.choice(len(self.y_test), n_test_img)
+    else:
+      test_img_idx = list(range(len(self.y_test)))
     rec_images_ = []
     if self.cfg.LABEL_FOR_TEST == 'pred':
       label_for_img = preds_binary
@@ -298,7 +302,6 @@ class TestMultiObjects(object):
       label_for_img = self.y_test
     else:
       raise ValueError('Wrong LABEL_FOR_TEST Name!')
-    test_img_idx = np.random.choice(len(self.x_test), n_test_img)
 
     for x, y_hat in zip(self.x_test[test_img_idx],
                         label_for_img[test_img_idx]):
