@@ -394,35 +394,32 @@ class TestMultiObjects(object):
     assert len(pred_all) == len(self.x_test)
     return np.array(pred_all)
 
-  def _get_preds_binary(self,
-                        preds_vec,
-                        predict_mode='top_n',
-                        max_predict_num=2,
-                        pred_threshold=0.5):
+  def _get_preds_binary(self, preds_vec):
     """Get binary predictions.
 
      -> [0, 0, 1, ..., 0, 1, 0] as labels
      """
     preds = np.array(preds_vec)
-    if predict_mode == 'top_n':
+    if self.cfg.MOD_PRED_MODE == 'top_n':
       for pred_i in preds:
-        pos_idx = np.argsort(pred_i)[-max_predict_num:]
-        neg_idx = np.argsort(pred_i)[:-max_predict_num]
+        pos_idx = np.argsort(pred_i)[-self.cfg.MOD_PRED_MAX_NUM:]
+        neg_idx = np.argsort(pred_i)[:-self.cfg.MOD_PRED_MAX_NUM]
         pred_i[pos_idx] = 1
         pred_i[neg_idx] = 0
-    elif predict_mode == 'length_rate':
+    elif self.cfg.MOD_PRED_MODE == 'length_rate':
       for pred_i in preds:
         pred_i_copy = pred_i.copy()
         max_ = pred_i.max()
-        pred_i[pred_i < (max_ * pred_threshold)] = 0
-        pred_i[pred_i >= (max_ * pred_threshold)] = 1
-        if np.sum(pred_i) > max_predict_num:
-          pos_idx = np.argsort(pred_i_copy)[-max_predict_num:]
-          neg_idx = np.argsort(pred_i_copy)[:-max_predict_num]
+        pred_i[pred_i < (max_ * self.cfg.MOD_PRED_THRESHOLD)] = 0
+        pred_i[pred_i >= (max_ * self.cfg.MOD_PRED_THRESHOLD)] = 1
+        if np.sum(pred_i) > self.cfg.MOD_PRED_MAX_NUM:
+          pos_idx = np.argsort(pred_i_copy)[-self.cfg.MOD_PRED_MAX_NUM:]
+          neg_idx = np.argsort(pred_i_copy)[:-self.cfg.MOD_PRED_MAX_NUM]
           pred_i[pos_idx] = 1
           pred_i[neg_idx] = 0
     else:
-      raise ValueError('Wrong Mode Name! Find {}!'.format(predict_mode))
+      raise ValueError(
+          'Wrong Mode Name! Find {}!'.format(self.cfg.MOD_PRED_MODE))
 
     if self.cfg.SAVE_TEST_PRED:
       utils.save_test_pred(self.test_log_path, self.y_test, preds, preds_vec)
@@ -499,10 +496,7 @@ class TestMultiObjects(object):
       preds_vec_test = self._get_preds_vector(sess, inputs, preds)
 
       # Get binary predictions
-      preds_binary = self._get_preds_binary(
-          preds_vec=preds_vec_test,
-          predict_mode='top_n',
-          max_predict_num=2)
+      preds_binary = self._get_preds_binary(preds_vec=preds_vec_test)
 
       # Get evaluation scores for multi-objects detection.
       precision, recall, accuracy, f1score = \

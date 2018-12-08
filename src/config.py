@@ -197,11 +197,6 @@ __C.TEST_CKP_IDX = 29
 # Testing with reconstruction
 __C.TEST_WITH_RECONSTRUCTION = True
 
-# Label for generating reconstruction images
-# 'pred': Use predicted y
-# 'real': Use real labels y
-__C.LABEL_FOR_TEST = 'pred'  # 'real'
-
 # Saving testing reconstruction images
 # None: not save images
 __C.TEST_SAVE_IMAGE_STEP = 10  # batches
@@ -210,6 +205,25 @@ __C.TEST_SAVE_IMAGE_STEP = 10  # batches
 # should be same as training batch_size
 # if None, testing will not use mini-batch.
 __C.TEST_BATCH_SIZE = 256
+
+# -------------------------------------------
+# Multi-objects detection
+
+# Label for generating reconstruction images
+# 'pred': Use predicted y
+# 'real': Use real labels y
+__C.LABEL_FOR_TEST = 'pred'  # 'real'
+
+# Mode of prediction for multi-objects detection
+# 'top_n': sort vectors, select longest n classes as y
+# 'length_rate': using length rate of the longest vector class as threshold
+__C.MOD_PRED_MODE = 'top_n'  # 'length_rate'
+
+# Max number of prediction y
+__C.MOD_PRED_MAX_NUM = 2
+
+# Threshold for 'length_rate' mode
+__C.MOD_PRED_THRESHOLD = 0.5
 
 # ===========================================
 # #                  Others                 #
