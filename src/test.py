@@ -18,10 +18,11 @@ from models import utils
 
 class Test(object):
 
-  def __init__(self, cfg):
+  def __init__(self, cfg, multi_gpu=False):
 
     # Config
     self.cfg = cfg
+    self.multi_gpu = multi_gpu
 
     # Get paths for testing
     self.checkpoint_path, self.test_log_path, self.test_image_path = \
@@ -83,17 +84,29 @@ class Test(object):
 
       inputs_ = loaded_graph.get_tensor_by_name("inputs:0")
       labels_ = loaded_graph.get_tensor_by_name("labels:0")
-      accuracy_ = loaded_graph.get_tensor_by_name("accuracy:0")
-      loss_ = loaded_graph.get_tensor_by_name("loss:0")
 
-      if self.cfg.TEST_WITH_RECONSTRUCTION:
-        clf_loss_ = loaded_graph.get_tensor_by_name("clf_loss:0")
-        rec_loss_ = loaded_graph.get_tensor_by_name("rec_loss:0")
-        rec_images_ = loaded_graph.get_tensor_by_name("rec_images:0")
-        return inputs_, labels_, loss_, accuracy_, \
-            clf_loss_, rec_loss_, rec_images_
+      if self.multi_gpu:
+        accuracy_ = loaded_graph.get_tensor_by_name("total_acc:0")
+        loss_ = loaded_graph.get_tensor_by_name("total_loss:0")
+        if self.cfg.TEST_WITH_RECONSTRUCTION:
+          clf_loss_ = loaded_graph.get_tensor_by_name("total_clf_loss:0")
+          rec_loss_ = loaded_graph.get_tensor_by_name("total_rec_loss:0")
+          rec_images_ = loaded_graph.get_tensor_by_name("total_rec_images:0")
+          return inputs_, labels_, loss_, accuracy_, \
+              clf_loss_, rec_loss_, rec_images_
+        else:
+          return inputs_, labels_, loss_, accuracy_
       else:
-        return inputs_, labels_, loss_, accuracy_
+        accuracy_ = loaded_graph.get_tensor_by_name("accuracy:0")
+        loss_ = loaded_graph.get_tensor_by_name("loss:0")
+        if self.cfg.TEST_WITH_RECONSTRUCTION:
+          clf_loss_ = loaded_graph.get_tensor_by_name("clf_loss:0")
+          rec_loss_ = loaded_graph.get_tensor_by_name("rec_loss:0")
+          rec_images_ = loaded_graph.get_tensor_by_name("rec_images:0")
+          return inputs_, labels_, loss_, accuracy_, \
+              clf_loss_, rec_loss_, rec_images_
+        else:
+          return inputs_, labels_, loss_, accuracy_
 
   def _save_images(self,
                    sess,
@@ -228,10 +241,11 @@ class Test(object):
 
 class TestMultiObjects(object):
 
-  def __init__(self, cfg):
+  def __init__(self, cfg, multi_gpu=False):
 
     # Config
     self.cfg = cfg
+    self.multi_gpu = multi_gpu
 
     # Get paths for testing
     self.checkpoint_path, self.test_log_path, self.test_image_path = \
@@ -291,15 +305,23 @@ class TestMultiObjects(object):
       utils.thin_line()
       print('Loading graph and tensors...')
 
-      inputs_ = loaded_graph.get_tensor_by_name("inputs:0")
-      labels_ = loaded_graph.get_tensor_by_name("labels:0")
-      preds_ = loaded_graph.get_tensor_by_name("preds:0")
+      inputs_ = loaded_graph.get_tensor_by_name('inputs:0')
+      labels_ = loaded_graph.get_tensor_by_name('labels:0')
 
-      if self.cfg.TEST_WITH_RECONSTRUCTION:
-        rec_images_ = loaded_graph.get_tensor_by_name("rec_images:0")
-        return inputs_, labels_, preds_, rec_images_
+      if self.multi_gpu:
+        preds_ = loaded_graph.get_tensor_by_name('total_preds:0')
+        if self.cfg.TEST_WITH_RECONSTRUCTION:
+          rec_images_ = loaded_graph.get_tensor_by_name('total_rec_images:0')
+          return inputs_, labels_, preds_, rec_images_
+        else:
+          return inputs_, labels_, preds_
       else:
-        return inputs_, labels_, preds_
+        preds_ = loaded_graph.get_tensor_by_name('preds:0')
+        if self.cfg.TEST_WITH_RECONSTRUCTION:
+          rec_images_ = loaded_graph.get_tensor_by_name('rec_images:0')
+          return inputs_, labels_, preds_, rec_images_
+        else:
+          return inputs_, labels_, preds_
 
   def _save_images(self,
                    sess,

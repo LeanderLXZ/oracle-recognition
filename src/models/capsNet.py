@@ -199,8 +199,7 @@ class CapsNet(object):
 
     reconstruct_loss = tf.identity(reconstruct_loss, name='rec_loss')
     reconstructed_images = tf.reshape(
-        reconstructed_images_, shape=[-1, *image_size])
-    reconstructed_images = tf.identity(reconstructed_images, name='rec_images')
+        reconstructed_images_, shape=[-1, *image_size], name='rec_images')
 
     # margin_loss_params: {'m_plus': 0.9, 'm_minus': 0.1, 'lambda_': 0.5}
     classifier_loss = self._margin_loss(
@@ -261,7 +260,7 @@ class CapsNet(object):
     accuracy = tf.reduce_mean(tf.cast(
         correct_pred, tf.float32), name='accuracy')
 
-    return logits, accuracy
+    return logits, accuracy, preds
 
   def build_graph(self,
                   image_size=(None, None, None),
@@ -296,7 +295,7 @@ class CapsNet(object):
                                   global_step=global_step)
 
       # Build inference Graph
-      logits, accuracy = self._inference(
+      logits, accuracy, preds = self._inference(
           inputs, labels, is_training=is_training)
 
       # Build reconstruction part

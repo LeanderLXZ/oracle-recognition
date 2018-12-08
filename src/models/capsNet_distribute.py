@@ -30,7 +30,7 @@ class CapsNetDistribute(CapsNet):
               reconstruct_loss, reconstructed_images)
     """
     # Build inference Graph.
-    logits, accuracy = self._inference(
+    logits, accuracy, preds = self._inference(
         inputs, labels, is_training=is_training)
 
     # Calculating the loss.
@@ -38,7 +38,7 @@ class CapsNetDistribute(CapsNet):
         self._total_loss(
             inputs, logits, labels, image_size, is_training=is_training)
 
-    return loss, accuracy, classifier_loss, \
+    return loss, accuracy, preds, classifier_loss, \
         reconstruct_loss, reconstructed_images
 
   @staticmethod
@@ -83,13 +83,14 @@ class CapsNetDistribute(CapsNet):
 
     return average_grads
 
-  def _average_metrics(self, loss_all, acc_all, clf_loss_all,
-                       rec_loss_all, rec_images_all):
+  def _average_metrics(self, loss_all, acc_all, preds_all,
+                       clf_loss_all, rec_loss_all, rec_images_all):
     """Calculate average of metrics.
 
     Args:
       loss_all: final losses of each tower, list
       acc_all: accuracies of each tower, list
+      preds_all: predictions of each tower, list
       clf_loss_all: classifier losses of each tower, list
       rec_loss_all: reconstruction losses of each tower, list
       rec_images_all: reconstructed images of each tower, list of 4D tensor
@@ -106,6 +107,9 @@ class CapsNetDistribute(CapsNet):
     accuracy = tf.divide(
         tf.add_n(acc_all), n_tower, name='total_acc')
     assert accuracy.get_shape() == ()
+
+    preds = tf.concat(preds_all, axis=0, name='total_preds')
+    assert preds.get_shape()[0] == self.cfg.BATCH_SIZE
 
     if self.cfg.WITH_RECONSTRUCTION:
       classifier_loss = tf.divide(
@@ -125,7 +129,7 @@ class CapsNetDistribute(CapsNet):
       classifier_loss, reconstruct_loss, \
           reconstructed_images = None, None, None
 
-    return loss, accuracy, classifier_loss, \
+    return loss, accuracy, preds, classifier_loss, \
         reconstruct_loss, reconstructed_images
 
   def build_graph(self, image_size=(None, None, None),
@@ -171,6 +175,7 @@ class CapsNetDistribute(CapsNet):
       clf_loss_all = []
       rec_loss_all = []
       rec_images_all = []
+      preds_all = []
       for i in range(self.cfg.GPU_NUMBER):
         with tf.variable_scope(tf.get_variable_scope(), reuse=bool(i != 0)):
           with tf.device('/gpu:%d' % i):
@@ -180,7 +185,7 @@ class CapsNetDistribute(CapsNet):
               x_tower, y_tower = x_splits[i], y_splits[i]
 
               # Calculate the loss for one tower.
-              loss_, accuracy_, classifier_loss_, reconstruct_loss_, \
+              loss_, accuracy_, preds_, classifier_loss_, reconstruct_loss_, \
                   reconstructed_images_ = self._tower_loss(
                       x_tower, y_tower, image_size, is_training=is_training)
 
@@ -196,14 +201,15 @@ class CapsNetDistribute(CapsNet):
               clf_loss_all.append(classifier_loss_)
               rec_loss_all.append(reconstruct_loss_)
               rec_images_all.append(reconstructed_images_)
+              preds_all.append(preds_)
 
       # Calculate the mean of each gradient.
       grads = self._average_gradients(tower_grads)
 
       # Calculate means of metrics
-      loss, accuracy, classifier_loss, reconstruct_loss, \
+      loss, accuracy, preds, classifier_loss, reconstruct_loss, \
           reconstructed_images = self._average_metrics(
-              loss_all, acc_all, clf_loss_all,
+              loss_all, acc_all, preds_all, clf_loss_all,
               rec_loss_all, rec_images_all)
 
       # Apply the gradients to adjust the shared variables.
@@ -219,7 +225,8 @@ class CapsNetDistribute(CapsNet):
       train_op = tf.group(apply_gradient_op, variables_averages_op)
 
       # Create a saver.
-      saver = tf.train.Saver(max_to_keep=self.cfg.MAX_TO_KEEP_CKP)
+      saver = tf.train.Saver(tf.global_variables(),
+                             max_to_keep=self.cfg.MAX_TO_KEEP_CKP)
 
       # Build the summary operation from the last tower summaries.
       tf.summary.scalar('accuracy', accuracy)
