@@ -613,10 +613,10 @@ def square_grid_show_imgs(images, mode=None):
   # images_in_square.shape = (5, 5, 28, 28, 1)
 
   if mode == 'L':
-    camp = 'gray'
+    cmap = 'gray'
     images_in_square = np.squeeze(images_in_square, 4)
   else:
-    camp = None
+    cmap = None
 
   # Combine images to grid image
   new_im = Image.new(mode,
@@ -626,7 +626,7 @@ def square_grid_show_imgs(images, mode=None):
       im = Image.fromarray(image, mode)
       new_im.paste(im, (col_i * images.shape[1], row_i * images.shape[2]))
 
-  plt.imshow(np.array(new_im), cmap=camp)
+  plt.imshow(np.array(new_im), cmap=cmap)
   plt.show()
 
 

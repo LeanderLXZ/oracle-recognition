@@ -403,10 +403,10 @@ class DataPreProcess(object):
     if self.cfg.NUM_MULTI_OBJECT:
       if self.data_base_name == 'radical':
         self._generate_multi_obj_img(
-            overlap=True, show_img=True, data_aug=True)
+            overlap=True, show_img=False, data_aug=True)
       if self.data_base_name == 'mnist':
         self._generate_multi_obj_img(
-            overlap=True, show_img=True, data_aug=True)
+            overlap=True, show_img=False, data_aug=True)
 
     # Split data set into train/valid
     self._train_valid_split()
