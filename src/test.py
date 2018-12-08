@@ -565,17 +565,26 @@ if __name__ == '__main__':
   )
   parser.add_argument('-b', '--baseline', action="store_true",
                       help="Use baseline configurations.")
-  parser.add_argument('-m', '--multi', action="store_true",
+  parser.add_argument('-mo', '--multi_obj', action="store_true",
                       help="Test multi objects detection.")
+  parser.add_argument('-m', '--mgpu', action="store_true",
+                      help="Test multi-gpu version.")
   args = parser.parse_args()
 
-  if args.multi:
+  if args.multi_obj:
     utils.thick_line()
     print('Testing multi objects detection.')
     utils.thick_line()
     Test_ = TestMultiObjects
   else:
     Test_ = Test
+
+  if args.mgpu:
+    utils.thick_line()
+    print('Testing multi-gpu version.')
+    multi_gpu_ = True
+  else:
+    multi_gpu_ = False
 
   if args.baseline:
     utils.thick_line()
@@ -584,4 +593,4 @@ if __name__ == '__main__':
   else:
     config_ = config
 
-  Test_(config_).test()
+  Test_(config_, multi_gpu_).test()
