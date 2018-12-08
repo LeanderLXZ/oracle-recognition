@@ -41,7 +41,7 @@ __C.LEARNING_RATE = 0.001
 __C.EPOCHS = 2
 
 # Batch size
-__C.BATCH_SIZE = 128
+__C.BATCH_SIZE = 512
 
 
 # ===========================================
