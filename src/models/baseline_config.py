@@ -204,8 +204,7 @@ __C.TEST_SAVE_IMAGE_STEP = 10  # batches
 
 # Batch size of testing
 # should be same as training batch_size
-# if None, testing will not use mini-batch.
-__C.TEST_BATCH_SIZE = 256
+__C.TEST_BATCH_SIZE = __C.BATCH_SIZE
 
 # -------------------------------------------
 # Multi-objects detection
