@@ -395,7 +395,10 @@ class TestMultiObjects(object):
     print('Calculating evaluation scores for multi-objects detection...')
 
     def _f_beta_score(p, r, beta):
-      return ((1 + (beta ** 2)) * p * r) / ((beta ** 2) * p + r)
+      if p + r == 0:
+        return 0.
+      else:
+        return ((1 + (beta ** 2)) * p * r) / ((beta ** 2) * p + r)
 
     # Calculate scores manually
     precision_manual = []
@@ -528,7 +531,10 @@ class TestMultiObjects(object):
     for idx, imgs in enumerate(rec_images_):
       imgs_colored = utils.imgs_black_to_color(imgs)
       imgs_merged = utils.img_add(
-          imgs_colored, merge=True, vec=preds_vec_[idx], gamma=0)
+          imgs_colored, merge=True,
+          vec=preds_vec_[idx],
+          # vec=None,
+          gamma=0)
       rec_imgs_.append(imgs_merged)
     rec_imgs_ = np.array(rec_imgs_)
     assert real_imgs_.shape == rec_imgs_.shape
