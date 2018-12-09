@@ -465,7 +465,7 @@ class TestMultiObjects(object):
     if self.cfg.SAVE_TEST_PRED:
       utils.save_test_pred(self.test_log_path, self.y_test, preds, preds_vec)
 
-    return np.array(preds)
+    return np.array(preds, dtype=int)
 
   def _get_multi_obj_scores(self, preds):
     """Get evaluation scores for multi-objects detection."""
@@ -495,10 +495,10 @@ class TestMultiObjects(object):
     f1score_manual = np.mean(f1score_manual)
 
     # Calculate scores by using scikit-learn tools
-    precision = precision_score(self.y_test, preds, average='binary')
-    recall = recall_score(self.y_test, preds, average='binary')
+    precision = precision_score(self.y_test, preds, average='samples')
+    recall = recall_score(self.y_test, preds, average='samples')
     accuracy = accuracy_score(self.y_test, preds)
-    f1score = f1_score(self.y_test, preds, average='binary')
+    f1score = f1_score(self.y_test, preds, average='samples')
 
     # Print evaluation information
     utils.print_multi_obj_eval(
