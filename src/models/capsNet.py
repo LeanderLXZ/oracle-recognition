@@ -133,7 +133,8 @@ class CapsNet(object):
     Returns:
       A tensor with cost for each data point of shape [batch_size].
     """
-    logits = logits - 0.5
+    logits = utils.get_vec_length(
+        logits, self.batch_size, self.cfg.EPSILON) - 0.5
     positive_cost = labels * tf.cast(tf.less(logits, margin),
                                      tf.float32) * tf.pow(logits - margin, 2)
     negative_cost = (1 - labels) * tf.cast(

@@ -491,6 +491,7 @@ def img_add(src_list, merge=False, vec=None, gamma=0):
       added += src_img * c
   added += gamma
   added[added > 1] = 1
+  added[added < 0] = 0
   return added
 
 
