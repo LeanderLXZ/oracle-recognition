@@ -438,7 +438,7 @@ if __name__ == '__main__':
   if args.baseline:
     utils.thick_line()
     print('Running baseline model.')
-    DataPreProcess(basel_config, global_seed, 'radical').pipeline()
+    DataPreProcess(basel_config, global_seed, 'mnist').pipeline()
   else:
     utils.thick_line()
     print('Input [ 1 ] to preprocess the Oracle Radicals database.')
