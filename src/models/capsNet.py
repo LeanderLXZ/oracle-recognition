@@ -40,8 +40,19 @@ class CapsNet(object):
                  n_train_samples=None,
                  global_step=None):
     """Optimizer."""
+    # Learning rate with exponential decay
+    if self.cfg.LR_DECAY:
+      learning_rate_ = tf.train.exponential_decay(
+          learning_rate=self.cfg.LEARNING_RATE,
+          global_step=global_step,
+          decay_steps=self.cfg.LEARNING_RATE,
+          decay_rate=self.cfg.LEARNING_RATE)
+      learning_rate_ = tf.maximum(learning_rate_, 1e-6)
+    else:
+      learning_rate_ = self.cfg.LEARNING_RATE
+
     if opt_name == 'adam':
-      return tf.train.AdamOptimizer(self.cfg.LEARNING_RATE)
+      return tf.train.AdamOptimizer(learning_rate_)
 
     elif opt_name == 'momentum':
       n_batches_per_epoch = \
@@ -58,7 +69,7 @@ class CapsNet(object):
           learning_rate=learning_rate, momentum=self.cfg.MOMENTUM)
 
     elif opt_name == 'gd':
-      return tf.train.GradientDescentOptimizer(self.cfg.LEARNING_RATE)
+      return tf.train.GradientDescentOptimizer(learning_rate_)
 
     else:
       raise ValueError('Wrong optimizer name!')

@@ -37,6 +37,14 @@ __C.VERSION = None
 # Learning rate
 __C.LEARNING_RATE = 0.001
 
+# Learning rate with exponential decay
+# Use learning rate decay
+__C.LR_DECAY = True
+# Decay steps
+__C.LR_DECAY_STEPS = 2000
+# Exponential decay rate
+__C.LR_DECAY_RATE = 0.96
+
 # Epochs
 __C.EPOCHS = 50
 
@@ -107,12 +115,11 @@ __C.WEIGHTS_STDDEV = 0.01
 # 'momentum': MomentumOptimizer()
 __C.OPTIMIZER = 'adam'
 
+# Momentum Optimizer
 # Boundaries of learning rate
 __C.LR_BOUNDARIES = [82, 123, 300]
-
 # Stage of learning rate
 __C.LR_STAGE = [1, 0.1, 0.01, 0.002]
-
 # Momentum parameter of momentum optimizer
 __C.MOMENTUM = 0.9
 

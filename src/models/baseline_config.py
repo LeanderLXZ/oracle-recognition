@@ -37,6 +37,14 @@ __C.VERSION = 'baseline'
 # Learning rate
 __C.LEARNING_RATE = 0.001
 
+# Learning rate with exponential decay
+# Use learning rate decay
+__C.LR_DECAY = True
+# Decay steps
+__C.LR_DECAY_STEPS = 2000
+# Exponential decay rate
+__C.LR_DECAY_RATE = 0.96
+
 # Epochs
 __C.EPOCHS = 50
 
