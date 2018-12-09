@@ -103,9 +103,7 @@ __C.CLF_LOSS = 'margin_h'
 # default: {'m_plus': 0.9, 'm_minus': 0.1, 'lambda_': 0.5}
 __C.MARGIN_LOSS_PARAMS = {'m_plus': 0.9,
                           'm_minus': 0.1,
-                          'lambda_': 0.5,
-                          'margin': 0.4,
-                          'down_weight': 0.5}
+                          'lambda_': 0.5}
 # default: {'margin': 0.4, 'down_weight': 0.5}
 __C.MARGIN_LOSS_H_PARAMS = {'margin': 0.4,
                             'down_weight': 0.5}

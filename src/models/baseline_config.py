@@ -46,7 +46,7 @@ __C.LR_DECAY_STEPS = 2000
 __C.LR_DECAY_RATE = 0.96
 
 # Epochs
-__C.EPOCHS = 50
+__C.EPOCHS = 20
 
 # Batch size
 __C.BATCH_SIZE = 512
@@ -97,7 +97,7 @@ __C.LARGE_DATA_PART_NUM = 1
 # Classification loss
 # 'margin': margin loss
 # 'margin_h': margin loss in Hinton's paper
-__C.CLF_LOSS = 'margin'
+__C.CLF_LOSS = 'margin_h'
 
 # Parameters of margin loss
 # default: {'m_plus': 0.9, 'm_minus': 0.1, 'lambda_': 0.5}
@@ -125,10 +125,8 @@ __C.OPTIMIZER = 'adam'
 
 # Boundaries of learning rate
 __C.LR_BOUNDARIES = [82, 123, 300]
-
 # Stage of learning rate
 __C.LR_STAGE = [1, 0.1, 0.01, 0.002]
-
 # Momentum parameter of momentum optimizer
 __C.MOMENTUM = 0.9
 

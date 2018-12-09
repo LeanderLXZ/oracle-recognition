@@ -45,8 +45,8 @@ class CapsNet(object):
       learning_rate_ = tf.train.exponential_decay(
           learning_rate=self.cfg.LEARNING_RATE,
           global_step=global_step,
-          decay_steps=self.cfg.LEARNING_RATE,
-          decay_rate=self.cfg.LEARNING_RATE)
+          decay_steps=self.cfg.LR_DECAY_STEPS,
+          decay_rate=self.cfg.LR_DECAY_RATE)
       learning_rate_ = tf.maximum(learning_rate_, 1e-6)
     else:
       learning_rate_ = self.cfg.LEARNING_RATE
