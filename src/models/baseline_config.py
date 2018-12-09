@@ -80,7 +80,7 @@ __C.MAX_IMAGE_NUM = 2000
 # If None, one image only shows one object.
 # If n, one image includes a superposition of n objects, the positions of
 # those objects are random.
-__C.NUM_MULTI_OBJECT = None
+__C.NUM_MULTI_OBJECT = 2
 # The number of multi-objects images
 __C.NUM_MULTI_IMG = 10000
 
