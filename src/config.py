@@ -225,6 +225,9 @@ __C.MOD_PRED_MAX_NUM = 2
 # Threshold for 'length_rate' mode
 __C.MOD_PRED_THRESHOLD = 0.5
 
+# Save test prediction vectors
+__C.SAVE_TEST_PRED = True
+
 # ===========================================
 # #                  Others                 #
 # ===========================================
