@@ -7,6 +7,6 @@ cp -r ../train_logs/ ../logs
 cp -r ../test_logs/ ../logs
 cp -r ../checkpoints/ ../logs
 
-zip ../logs.zip ../logs
+zip -r ../logs.zip ../logs
 
 rm -rf ../logs
