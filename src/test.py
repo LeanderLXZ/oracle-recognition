@@ -479,11 +479,17 @@ class TestMultiObjects(object):
     """Get evaluation scores for multi-objects detection."""
     utils.thin_line()
     print('Calculating evaluation scores for multi-objects detection...')
+
+    def _f_beta_score(p, r, beta):
+      return ((1 + (beta ** 2)) * p * r) / ((beta ** 2) * p + r)
+
     # Calculate scores manually
     precision_manual = []
     recall_manual = []
     accuracy_manual = []
     f1score_manual = []
+    f05score_manual = []
+    f2score_manual = []
     for y_pred, y_true in zip(preds, self.y_test):
       # true positive
       tp = np.sum(np.multiply(y_true, y_pred))
@@ -498,11 +504,15 @@ class TestMultiObjects(object):
       recall_ = tp / (tp + fn)
       recall_manual.append(recall_)
       accuracy_manual.append((tp + tn) / (tp + fp + tn + fn))
-      f1score_manual.append(precision_ * recall_ / 2 * (precision_ + recall_))
+      f1score_manual.append(_f_beta_score(precision_, recall_, 1.))
+      f05score_manual.append(_f_beta_score(precision_, recall_, 0.5))
+      f2score_manual.append(_f_beta_score(precision_, recall_, 2.))
     precision_manual = np.mean(precision_manual)
     recall_manual = np.mean(recall_manual)
     accuracy_manual = np.mean(accuracy_manual)
     f1score_manual = np.mean(f1score_manual)
+    f05score_manual = np.mean(f05score_manual)
+    f2score_manual = np.mean(f2score_manual)
 
     # Calculate scores by using scikit-learn tools
     precision = precision_score(self.y_test, preds, average='samples')
@@ -514,9 +524,16 @@ class TestMultiObjects(object):
     utils.print_multi_obj_eval(
         precision_manual, recall_manual,
         accuracy_manual, f1score_manual,
+        f05score_manual, f2score_manual,
         precision, recall, accuracy, f1score)
 
-    return precision, recall, accuracy, f1score
+    # Save evaluation scores of multi-objects detection.
+    utils.save_multi_obj_scores(
+        self.test_log_path,
+        precision_manual, recall_manual,
+        accuracy_manual, f1score_manual,
+        f05score_manual, f2score_manual,
+        precision, recall, accuracy, f1score)
 
   def test(self):
     """Test models."""
@@ -550,12 +567,7 @@ class TestMultiObjects(object):
       preds_binary = self._get_preds_binary(preds_vec=preds_vec_test)
 
       # Get evaluation scores for multi-objects detection.
-      precision, recall, accuracy, f1score = \
-          self._get_multi_obj_scores(preds_binary)
-
-      # Save evaluation scores of multi-objects detection.
-      utils.save_multi_obj_scores(
-          self.test_log_path, precision, recall, accuracy, f1score)
+      self._get_multi_obj_scores(preds_binary)
 
       # Save reconstruction images of multi-objects detection
       self._save_images(sess, rec_images, inputs, labels, preds_binary)
