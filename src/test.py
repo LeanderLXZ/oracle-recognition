@@ -579,7 +579,8 @@ class TestMultiObjects(object):
       self._get_multi_obj_scores(preds_binary)
 
       # Save reconstruction images of multi-objects detection
-      self._save_images(sess, rec_images, inputs, labels, preds_binary)
+      self._save_images(sess, rec_images, inputs,
+                        labels, preds_binary, preds_vec_test)
 
       utils.thin_line()
       print('Testing finished! Using time: {:.2f}'
