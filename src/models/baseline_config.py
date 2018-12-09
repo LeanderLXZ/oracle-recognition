@@ -97,15 +97,13 @@ __C.LARGE_DATA_PART_NUM = 1
 # Classification loss
 # 'margin': margin loss
 # 'margin_h': margin loss in Hinton's paper
-__C.CLF_LOSS = 'margin_h'
+__C.CLF_LOSS = 'margin'
 
 # Parameters of margin loss
 # default: {'m_plus': 0.9, 'm_minus': 0.1, 'lambda_': 0.5}
 __C.MARGIN_LOSS_PARAMS = {'m_plus': 0.9,
                           'm_minus': 0.1,
-                          'lambda_': 0.5,
-                          'margin': 0.4,
-                          'down_weight': 0.5}
+                          'lambda_': 0.5}
 # default: {'margin': 0.4, 'down_weight': 0.5}
 __C.MARGIN_LOSS_H_PARAMS = {'margin': 0.4,
                             'down_weight': 0.5}
