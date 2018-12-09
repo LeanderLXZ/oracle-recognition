@@ -12,7 +12,7 @@ from sklearn.metrics import \
   precision_score, recall_score, f1_score, accuracy_score
 
 from config import config
-from models.baseline_config import basel_config
+from baseline_config import basel_config
 from models import utils
 
 

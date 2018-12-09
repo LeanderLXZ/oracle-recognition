@@ -5,8 +5,8 @@ from __future__ import print_function
 import tensorflow as tf
 
 from models.caps_activate_fn import ActivationFunc
-from models.model_base import variable_on_cpu
-from models.model_base import get_act_fn
+from models.layers import variable_on_cpu
+from models.layers import get_act_fn
 
 
 class CapsLayer(object):

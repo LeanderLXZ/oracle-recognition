@@ -11,11 +11,11 @@ from os import environ
 from os.path import join, isdir
 
 from config import config
-from models.baseline_config import basel_config
+from baseline_config import basel_config
 from models import utils
 from models.capsNet import CapsNet
 from models.capsNet_distribute import CapsNetDistribute
-from models.baseline_arch import basel_arch
+from baseline_arch import basel_arch
 from capsNet_arch import caps_arch
 
 

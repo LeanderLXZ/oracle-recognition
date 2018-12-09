@@ -2,8 +2,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from models.model_base import *
-from models.capsule_layer import *
+from models.layers import *
+from models.capsule_layers import *
 
 
 def classifier(inputs, cfg, batch_size=None, is_training=None):

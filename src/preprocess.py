@@ -18,7 +18,7 @@ from sklearn.model_selection import train_test_split
 from models import utils
 from config import config as cfg_1
 from config_pipeline import config as cfg_2
-from models.baseline_config import basel_config
+from baseline_config import basel_config
 
 from keras.preprocessing.image import ImageDataGenerator
 import keras.backend.tensorflow_backend as KTF
