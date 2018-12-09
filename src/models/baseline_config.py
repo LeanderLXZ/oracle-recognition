@@ -201,7 +201,7 @@ __C.TEST_AFTER_TRAINING = True
 __C.TEST_VERSION = __C.VERSION
 
 # Testing checkpoint index
-__C.TEST_CKP_IDX = 1
+__C.TEST_CKP_IDX = 48
 
 # Testing with reconstruction
 __C.TEST_WITH_RECONSTRUCTION = True
