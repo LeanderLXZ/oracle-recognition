@@ -417,7 +417,7 @@ class TestMultiObjects(object):
 
     for _ in tqdm(range(n_batch), total=n_batch,
                   ncols=100, unit=' batches'):
-      x_batch, y_batch = next(_batch_generator)
+      x_batch = next(_batch_generator)
 
       # The last batch which has less examples
       len_batch = len(x_batch)
