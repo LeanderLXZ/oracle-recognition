@@ -82,7 +82,7 @@ __C.MAX_IMAGE_NUM = 5000
 # those objects are random.
 __C.NUM_MULTI_OBJECT = 2
 # The number of multi-objects images
-__C.NUM_MULTI_IMG = 100
+__C.NUM_MULTI_IMG = 10000
 
 # Number of parts for saving large pickle files
 __C.LARGE_DATA_PART_NUM = 1

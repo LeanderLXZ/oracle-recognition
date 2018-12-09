@@ -5,6 +5,7 @@ from __future__ import print_function
 import time
 import os
 import math
+import argparse
 from PIL import Image
 import numpy as np
 import sklearn.utils
@@ -17,6 +18,7 @@ from sklearn.model_selection import train_test_split
 from models import utils
 from config import config as cfg_1
 from config_pipeline import config as cfg_2
+from models.baseline_config import basel_config
 
 from keras.preprocessing.image import ImageDataGenerator
 import keras.backend.tensorflow_backend as KTF
@@ -426,34 +428,42 @@ if __name__ == '__main__':
 
   global_seed = None
 
-  utils.thick_line()
-  print('Input [ 1 ] to preprocess the Oracle Radicals database.')
-  print('Input [ 2 ] to preprocess the MNIST database.')
-  print('Input [ 3 ] to preprocess the CIFAR-10 database.')
-  utils.thin_line()
-  input_mode = input('Input: ')
+  parser = argparse.ArgumentParser(
+      description="Testing the model."
+  )
+  parser.add_argument('-b', '--baseline', action="store_true",
+                      help="Use baseline configurations.")
+  args = parser.parse_args()
 
-  utils.thick_line()
-  print('Input [ 1 ] to use config.')
-  print('Input [ 2 ] to use config_pipeline.')
-  utils.thin_line()
-  input_cfg = input('Input: ')
-
-  if input_cfg == '1':
-    cfg_selected = cfg_1
-  elif input_cfg == '2':
-    cfg_selected = cfg_2
+  if args.baseline:
+    utils.thick_line()
+    print('Running baseline model.')
+    DataPreProcess(basel_config, global_seed, 'radical').pipeline()
   else:
-    raise ValueError('Wrong config input! Found: {}'.format(input_cfg))
+    utils.thick_line()
+    print('Input [ 1 ] to preprocess the Oracle Radicals database.')
+    print('Input [ 2 ] to preprocess the MNIST database.')
+    print('Input [ 3 ] to preprocess the CIFAR-10 database.')
+    utils.thin_line()
+    input_mode = input('Input: ')
+    utils.thick_line()
+    print('Input [ 1 ] to use config.')
+    print('Input [ 2 ] to use config_pipeline.')
+    utils.thin_line()
+    input_cfg = input('Input: ')
 
-  if input_mode == '1':
-    DPP = DataPreProcess(cfg_selected, global_seed, 'radical')
-    DPP.pipeline()
-  elif input_mode == '2':
-    DPP = DataPreProcess(cfg_selected, global_seed, 'mnist')
-    DPP.pipeline()
-  elif input_mode == '3':
-    DPP = DataPreProcess(cfg_selected, global_seed, 'cifar10')
-    DPP.pipeline()
-  else:
-    raise ValueError('Wrong database input! Found: {}'.format(input_mode))
+    if input_cfg == '1':
+      cfg_selected = cfg_1
+    elif input_cfg == '2':
+      cfg_selected = cfg_2
+    else:
+      raise ValueError('Wrong config input! Found: {}'.format(input_cfg))
+
+    if input_mode == '1':
+      DataPreProcess(cfg_selected, global_seed, 'radical').pipeline()
+    elif input_mode == '2':
+      DataPreProcess(cfg_selected, global_seed, 'mnist').pipeline()
+    elif input_mode == '3':
+      DataPreProcess(cfg_selected, global_seed, 'cifar10').pipeline()
+    else:
+      raise ValueError('Wrong database input! Found: {}'.format(input_mode))
