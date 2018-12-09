@@ -506,33 +506,3 @@ caps_arch = {
   'classifier': classifier,
   'decoder': decoder
 }
-
-
-if __name__ == '__main__':
-
-  from config import config
-  from models.capsNet_distribute import CapsNetDistribute
-  from models import utils
-
-  CapsNet_ = CapsNetDistribute(config)
-  CapsNet_.build_graph(
-      image_size=(*config.ORACLE_IMAGE_SIZE, 1),
-      num_class=config.NUM_RADICALS)
-
-  utils.thick_line()
-  print('Classifier Architecture:\n')
-  utils.thin_line()
-  for i, (clf_name, clf_params, clf_shape) in enumerate(CapsNet_.clf_arch_info):
-    print('[{}] {}'
-          '\n\tParameters: {}'
-          '\n\tOutput tensor shape: {}\n'.format(i, clf_name,
-                                                 clf_params, clf_shape))
-  utils.thick_line()
-  print('Reconstruction Architecture:\n')
-  utils.thin_line()
-  for j, (rec_name, rec_params, rec_shape) in enumerate(CapsNet_.rec_arch_info):
-    print('[{}] {}'
-          '\n\tParameters: {}'
-          '\n\tOutput tensor shape: {}\n'.format(j, rec_name,
-                                                 rec_params, rec_shape))
-  utils.thick_line()

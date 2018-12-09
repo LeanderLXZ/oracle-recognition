@@ -38,7 +38,7 @@ __C.VERSION = 'baseline'
 __C.LEARNING_RATE = 0.001
 
 # Epochs
-__C.EPOCHS = 2
+__C.EPOCHS = 50
 
 # Batch size
 __C.BATCH_SIZE = 512

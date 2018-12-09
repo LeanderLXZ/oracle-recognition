@@ -27,8 +27,8 @@ __C = EasyDict()
 # 'radical': Oracle Radicals
 # 'mnist': MNIST
 # 'cifar10' CIFAR-10
-#  __C.DATABASE_NAME = 'radical'
-__C.DATABASE_NAME = 'mnist'
+__C.DATABASE_NAME = 'radical'
+# __C.DATABASE_NAME = 'mnist'
 
 # Training version
 # Set None to auto generate version
@@ -38,7 +38,7 @@ __C.VERSION = None
 __C.LEARNING_RATE = 0.001
 
 # Epochs
-__C.EPOCHS = 1
+__C.EPOCHS = 50
 
 # Batch size
 __C.BATCH_SIZE = 64
@@ -66,7 +66,7 @@ __C.NUM_RADICALS = 20
 # Using data augment
 __C.USE_DATA_AUG = True
 # The max number of images if use data augment
-__C.MAX_IMAGE_NUM = 2000
+__C.MAX_IMAGE_NUM = 5000
 
 # Preprocessing images of superpositions of multi-objects
 # If None, one image only shows one object.
