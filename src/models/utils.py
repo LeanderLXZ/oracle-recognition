@@ -184,7 +184,6 @@ def print_multi_obj_eval(precision_manual, recall_manual,
         'Accuracy: {:.4f} \n'.format(accuracy),
         'F1 Score: {:.4f} \n'.format(f1score),
         )
-  thin_line()
 
 
 def save_config_log(file_path, cfg, clf_arch_info=None, rec_arch_info=None):
@@ -260,7 +259,7 @@ def save_test_log(file_path, loss_test, acc_test,
                   clf_loss_test, rec_loss_test, with_rec):
   """Save losses and accuracies of testing."""
   file_path = os.path.join(file_path, 'test_log.txt')
-  thick_line()
+  thin_line()
   print('Saving {}...'.format(file_path))
 
   with open(file_path, 'a') as f:
@@ -279,7 +278,7 @@ def save_test_log(file_path, loss_test, acc_test,
 def save_multi_obj_scores(file_path, precision, recall, accuracy, f1score):
   """Save evaluation scores of multi-objects detection."""
   file_path = os.path.join(file_path, 'multi_obj_scores.txt')
-  thick_line()
+  thin_line()
   print('Saving {}...'.format(file_path))
 
   with open(file_path, 'a') as f:
@@ -298,7 +297,7 @@ def save_test_pred(file_path, labels, preds, preds_vec):
   """Save predictions of multi-objects detection."""
   check_dir([file_path])
   file_path = os.path.join(file_path, 'pred_log.csv')
-  thick_line()
+  thin_line()
   print('Saving {}...'.format(file_path))
 
   preds_class = []
@@ -473,7 +472,6 @@ def img_add(src_list, merge=False, gamma=0):
     c = 1
   added = np.zeros_like(src_list[0])
   for src_img in src_list:
-    print(c)
     added += src_img * c
   added += gamma
   added[added > 1] = 1

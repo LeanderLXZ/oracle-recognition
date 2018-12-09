@@ -330,6 +330,8 @@ class TestMultiObjects(object):
                    labels,
                    preds_binary):
     """Save reconstructed images."""
+    utils.thin_line()
+    print('Getting reconstruction images...')
     if len(self.y_test) > self.cfg.MAX_IMAGE_IN_COL ** 2:
       n_test_img = self.cfg.MAX_IMAGE_IN_COL ** 2
       test_img_idx = np.random.choice(len(self.y_test), n_test_img)
@@ -402,14 +404,17 @@ class TestMultiObjects(object):
         img_path=self.test_image_path,
         database_name=self.cfg.DATABASE_NAME,
         max_img_in_col=self.cfg.MAX_IMAGE_IN_COL,
-        silent=True,
-        test_flag=True)
+        silent=False,
+        test_flag=True,
+        colorful=True)
 
   def _get_preds_vector(self,
                         sess,
                         inputs,
                         preds):
     """Get prediction vectors of full train set."""
+    utils.thin_line()
+    print('Getting prediction vectors...')
     pred_all = []
     _batch_generator = utils.get_batches_all(
         self.x_test, self.cfg.TEST_BATCH_SIZE)
@@ -440,6 +445,8 @@ class TestMultiObjects(object):
 
      -> [0, 0, 1, ..., 0, 1, 0] as labels
      """
+    utils.thin_line()
+    print('Converting prediction vectors to binaries...')
     preds = np.array(preds_vec)
     if self.cfg.MOD_PRED_MODE == 'top_n':
       for pred_i in preds:
@@ -469,6 +476,8 @@ class TestMultiObjects(object):
 
   def _get_multi_obj_scores(self, preds):
     """Get evaluation scores for multi-objects detection."""
+    utils.thin_line()
+    print('Calculating evaluation scores for multi-objects detection...')
     # Calculate scores manually
     precision_manual = []
     recall_manual = []
