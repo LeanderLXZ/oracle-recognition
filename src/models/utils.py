@@ -182,7 +182,7 @@ def print_multi_obj_eval(precision_manual, recall_manual,
         'Precision: {:.4f} \n'.format(precision),
         'Recall: {:.4f} \n'.format(recall),
         'Accuracy: {:.4f} \n'.format(accuracy),
-        'F1 Score: {:.4f} \n'.format(f1score),
+        'F1 Score: {:.4f}'.format(f1score),
         )
 
 

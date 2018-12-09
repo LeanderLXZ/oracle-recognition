@@ -151,7 +151,7 @@ class Test(object):
 
     if self.cfg.TEST_WITH_RECONSTRUCTION:
       for _ in tqdm(range(n_batch), total=n_batch,
-                    ncols=100, unit=' batches'):
+                    ncols=100, unit=' batch'):
         step += 1
         x_batch, y_batch = next(_batch_generator)
         loss_i, clf_loss_i, rec_loss_i, acc_i = \
@@ -345,9 +345,10 @@ class TestMultiObjects(object):
     else:
       raise ValueError('Wrong LABEL_FOR_TEST Name!')
 
-    for x, y_hat in zip(self.x_test[test_img_idx],
-                        label_for_img[test_img_idx]):
-
+    for x, y_hat in tqdm(zip(self.x_test[test_img_idx],
+                             label_for_img[test_img_idx]),
+                         total=len(test_img_idx),
+                         ncols=100, unit=' img'):
       # Get new x and y_hat list in which each y contain single object
       # [0, 1, 0, 1, 0] -> [[0, 1, 0, 0, 0],
       #                     [0, 0, 0, 1, 0]]
@@ -421,7 +422,7 @@ class TestMultiObjects(object):
     n_batch = (len(self.x_test) // self.cfg.TEST_BATCH_SIZE) + 1
 
     for _ in tqdm(range(n_batch), total=n_batch,
-                  ncols=100, unit=' batches'):
+                  ncols=100, unit=' batch'):
       x_batch = next(_batch_generator)
 
       # The last batch which has less examples

@@ -256,7 +256,7 @@ class Main(object):
         rec_loss = sum(rec_loss_all) / len(rec_loss_all)
       else:
         for _ in tqdm(range(n_batch), total=n_batch,
-                      ncols=100, unit=' batches'):
+                      ncols=100, unit=' batch'):
           x_batch, y_batch = next(_batch_generator)
           loss_i, acc_i = sess.run(
               [self.loss, self.accuracy],
@@ -415,7 +415,7 @@ class Main(object):
 
     if self.cfg.WITH_RECONSTRUCTION:
       for _ in tqdm(range(n_batch_test), total=n_batch_test,
-                    ncols=100, unit=' batches'):
+                    ncols=100, unit=' batch'):
         step += 1
         test_batch_x, test_batch_y = next(_test_batch_generator)
         loss_test_i, clf_loss_i, rec_loss_i, acc_test_i = sess.run(
@@ -540,7 +540,7 @@ class Main(object):
             self.x_train, self.y_train, self.cfg.BATCH_SIZE)
         for _ in tqdm(range(self.n_batch_train),
                       total=self.n_batch_train,
-                      ncols=100, unit=' batches'):
+                      ncols=100, unit=' batch'):
 
           step += 1
           x_batch, y_batch = next(train_batch_generator)

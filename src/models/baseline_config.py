@@ -212,7 +212,7 @@ __C.TEST_BATCH_SIZE = __C.BATCH_SIZE
 # Label for generating reconstruction images
 # 'pred': Use predicted y
 # 'real': Use real labels y
-__C.LABEL_FOR_TEST = 'pred'  # 'real'
+__C.LABEL_FOR_TEST = 'real'  # 'real'
 
 # Mode of prediction for multi-objects detection
 # 'top_n': sort vectors, select longest n classes as y
