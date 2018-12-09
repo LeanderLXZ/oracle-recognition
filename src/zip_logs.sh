@@ -2,10 +2,10 @@
 
 mkdir ../logs
 
-cp ../tf_logs/ ../logs
-cp ../train_logs/ ../logs
-cp ../test_logs/ ../logs
-cp ../checkpoints/ ../logs
+cp -r ../tf_logs/ ../logs
+cp -r ../train_logs/ ../logs
+cp -r ../test_logs/ ../logs
+cp -r ../checkpoints/ ../logs
 
 zip ../logs.zip ../logs
 
