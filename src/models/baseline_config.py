@@ -46,7 +46,7 @@ __C.LR_DECAY_STEPS = 2000
 __C.LR_DECAY_RATE = 0.96
 
 # Epochs
-__C.EPOCHS = 20
+__C.EPOCHS = 50
 
 # Batch size
 __C.BATCH_SIZE = 512
@@ -207,7 +207,7 @@ __C.TEST_AFTER_TRAINING = True
 __C.TEST_VERSION = __C.VERSION
 
 # Testing checkpoint index
-__C.TEST_CKP_IDX = 48
+__C.TEST_CKP_IDX = 49
 
 # Testing with reconstruction
 __C.TEST_WITH_REC = True
