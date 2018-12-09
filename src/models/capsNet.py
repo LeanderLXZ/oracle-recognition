@@ -126,12 +126,12 @@ class CapsNet(object):
 
     Args:
       labels: tensor, one hot encoding of ground truth.
-      logits: tensor, model predictions in range [0, 1]
+      logits: tensor, model predictions vectors.
       margin: scalar, the margin after subtracting 0.5 from raw_logits.
       down_weight: scalar, the factor for negative cost.
 
     Returns:
-      A tensor with cost for each data point of shape [batch_size].
+      A scalar with cost for all data point.
     """
     logits = utils.get_vec_length(
         logits, self.batch_size, self.cfg.EPSILON) - 0.5
@@ -139,7 +139,9 @@ class CapsNet(object):
                                      tf.float32) * tf.pow(logits - margin, 2)
     negative_cost = (1 - labels) * tf.cast(
         tf.greater(logits, -margin), tf.float32) * tf.pow(logits + margin, 2)
-    return 0.5 * positive_cost + down_weight * 0.5 * negative_cost
+    loss_c = 0.5 * positive_cost + down_weight * 0.5 * negative_cost
+    margin_loss = tf.reduce_mean(tf.reduce_sum(loss_c, axis=1))
+    return margin_loss
 
   def _reconstruct_layers(self, inputs, labels, is_training=None):
     """Reconstruction layer
