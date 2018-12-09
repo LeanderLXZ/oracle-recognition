@@ -427,14 +427,12 @@ class TestMultiObjects(object):
               np.zeros_like(x_batch[0]), axis=0), axis=0)
         assert len(x_batch) == self.cfg.TEST_BATCH_SIZE
 
-      pred_i = sess.run([preds], feed_dict={inputs: x_batch})
-
+      pred_i = sess.run(preds, feed_dict={inputs: x_batch})
       if len_batch != self.cfg.TEST_BATCH_SIZE:
         pred_i = pred_i[:len_batch]
+      pred_all.extend(list(pred_i))
 
-      pred_all.extend(pred_i.to_list())
-
-    assert len(pred_all) == len(self.x_test)
+    assert len(pred_all) == len(self.x_test), (len(pred_all), len(self.x_test))
     return np.array(pred_all)
 
   def _get_preds_binary(self, preds_vec):
