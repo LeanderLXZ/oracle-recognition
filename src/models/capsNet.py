@@ -117,6 +117,29 @@ class CapsNet(object):
 
     return margin_loss
 
+  def _margin_loss_h(self, logits, labels, margin=0.4, down_weight=0.5):
+    """Penalizes deviations from margin for each logit.
+
+    Each wrong logit costs its distance to margin. For negative logits margin is
+    0.1 and for positives it is 0.9. First subtract 0.5 from all logits. Now
+    margin is 0.4 from each side.
+
+    Args:
+      labels: tensor, one hot encoding of ground truth.
+      logits: tensor, model predictions in range [0, 1]
+      margin: scalar, the margin after subtracting 0.5 from raw_logits.
+      down_weight: scalar, the factor for negative cost.
+
+    Returns:
+      A tensor with cost for each data point of shape [batch_size].
+    """
+    logits = logits - 0.5
+    positive_cost = labels * tf.cast(tf.less(logits, margin),
+                                     tf.float32) * tf.pow(logits - margin, 2)
+    negative_cost = (1 - labels) * tf.cast(
+        tf.greater(logits, -margin), tf.float32) * tf.pow(logits + margin, 2)
+    return 0.5 * positive_cost + down_weight * 0.5 * negative_cost
+
   def _reconstruct_layers(self, inputs, labels, is_training=None):
     """Reconstruction layer
 
@@ -154,8 +177,14 @@ class CapsNet(object):
     Return:
       total loss
     """
-    # margin_loss_params: {'m_plus': 0.9, 'm_minus': 0.1, 'lambda_': 0.5}
-    loss = self._margin_loss(logits, labels, **self.cfg.MARGIN_LOSS_PARAMS)
+    if self.cfg.CLF_LOSS == 'margin':
+      loss = self._margin_loss(
+          logits, labels, **self.cfg.MARGIN_LOSS_PARAMS)
+    elif self.cfg.CLF_LOSS == 'margin_h':
+      loss = self._margin_loss_h(
+          logits, labels, **self.cfg.MARGIN_LOSS_H_PARAMS)
+    else:
+      raise ValueError('Wrong CLF_LOSS Name!')
 
     return loss
 
@@ -185,7 +214,7 @@ class CapsNet(object):
           message="\nRECONSTRUCTION layers passed...")
 
     # Reconstruction loss
-    if self.cfg.RECONSTRUCTION_LOSS == 'mse':
+    if self.cfg.REC_LOSS == 'mse':
       inputs_flatten = tf.contrib.layers.flatten(inputs)
       if self.cfg.DECODER_TYPE != 'fc':
         reconstructed_ = tf.contrib.layers.flatten(reconstructed)
@@ -194,8 +223,7 @@ class CapsNet(object):
       reconstruct_loss = tf.reduce_mean(
           tf.square(reconstructed_ - inputs_flatten))
       reconstructed_images_ = reconstructed
-
-    elif self.cfg.RECONSTRUCTION_LOSS == 'ce':
+    elif self.cfg.REC_LOSS == 'ce':
       if self.cfg.DECODER_TYPE == 'fc':
         inputs_ = tf.contrib.layers.flatten(inputs)
       else:
@@ -204,21 +232,25 @@ class CapsNet(object):
           tf.nn.sigmoid_cross_entropy_with_logits(
               labels=inputs_, logits=reconstructed))
       reconstructed_images_ = tf.nn.sigmoid(reconstructed)
-
     else:
       raise ValueError('Wrong reconstruction loss type!')
-
     reconstruct_loss = tf.identity(reconstruct_loss, name='rec_loss')
     reconstructed_images = tf.reshape(
         reconstructed_images_, shape=[-1, *image_size], name='rec_images')
 
-    # margin_loss_params: {'m_plus': 0.9, 'm_minus': 0.1, 'lambda_': 0.5}
-    classifier_loss = self._margin_loss(
-        logits, labels, **self.cfg.MARGIN_LOSS_PARAMS)
+    # Classifier loss
+    if self.cfg.CLF_LOSS == 'margin':
+      classifier_loss = self._margin_loss(
+          logits, labels, **self.cfg.MARGIN_LOSS_PARAMS)
+    elif self.cfg.CLF_LOSS == 'margin_h':
+      classifier_loss = self._margin_loss_h(
+          logits, labels, **self.cfg.MARGIN_LOSS_H_PARAMS)
+    else:
+      raise ValueError('Wrong CLF_LOSS Name!')
     classifier_loss = tf.identity(classifier_loss, name='clf_loss')
 
     loss = classifier_loss + \
-        self.cfg.RECONSTRUCT_LOSS_SCALE * reconstruct_loss
+        self.cfg.REC_LOSS_SCALE * reconstruct_loss
 
     if self.cfg.SHOW_TRAINING_DETAILS:
       loss = tf.Print(loss, [tf.constant(5)], message="\nloss calculated...")
@@ -227,7 +259,7 @@ class CapsNet(object):
 
   def _total_loss(self, inputs, logits, labels, image_size, is_training=None):
     """Get Losses and reconstructed images tensor."""
-    if self.cfg.WITH_RECONSTRUCTION:
+    if self.cfg.WITH_REC:
       loss, classifier_loss, reconstruct_loss, reconstructed_images = \
           self._loss_with_rec(
               inputs, logits, labels, image_size, is_training=is_training)
@@ -327,7 +359,7 @@ class CapsNet(object):
       # Build the summary operation from the last tower summaries.
       tf.summary.scalar('accuracy', accuracy)
       tf.summary.scalar('loss', loss)
-      if self.cfg.WITH_RECONSTRUCTION:
+      if self.cfg.WITH_REC:
         tf.summary.scalar('clf_loss', classifier_loss)
         tf.summary.scalar('rec_loss', reconstruct_loss)
       summary_op = tf.summary.merge_all()

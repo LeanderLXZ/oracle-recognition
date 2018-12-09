@@ -89,7 +89,7 @@ class Main(object):
 
     # Check directory of paths
     utils.check_dir([train_log_path, checkpoint_path])
-    if self.cfg.WITH_RECONSTRUCTION:
+    if self.cfg.WITH_REC:
       if self.cfg.SAVE_IMAGE_STEP:
         utils.check_dir([train_image_path])
 
@@ -139,7 +139,7 @@ class Main(object):
     x_valid_batch = self.x_valid[valid_batch_idx]
     y_valid_batch = self.y_valid[valid_batch_idx]
 
-    if self.cfg.WITH_RECONSTRUCTION:
+    if self.cfg.WITH_REC:
       loss_train, clf_loss_train, rec_loss_train, acc_train = \
           sess.run([self.loss, self.clf_loss,
                     self.rec_loss, self.accuracy],
@@ -170,7 +170,7 @@ class Main(object):
         epoch_i, self.cfg.EPOCHS, step, self.start_time,
         loss_train, clf_loss_train, rec_loss_train, acc_train,
         loss_valid, clf_loss_valid, rec_loss_valid, acc_valid,
-        self.cfg.WITH_RECONSTRUCTION)
+        self.cfg.WITH_REC)
 
   def _save_logs(self,
                  sess,
@@ -186,7 +186,7 @@ class Main(object):
     x_valid_batch = self.x_valid[valid_batch_idx]
     y_valid_batch = self.y_valid[valid_batch_idx]
 
-    if self.cfg.WITH_RECONSTRUCTION:
+    if self.cfg.WITH_REC:
       summary_train, loss_train, clf_loss_train, rec_loss_train, acc_train = \
           sess.run([self.summary, self.loss, self.clf_loss,
                     self.rec_loss, self.accuracy],
@@ -219,7 +219,7 @@ class Main(object):
         join(self.train_log_path, 'train_log.csv'), epoch_i + 1, step,
         time.time() - self.start_time, loss_train, clf_loss_train,
         rec_loss_train, acc_train, loss_valid, clf_loss_valid, rec_loss_valid,
-        acc_valid, self.cfg.WITH_RECONSTRUCTION)
+        acc_valid, self.cfg.WITH_REC)
 
   def _eval_on_batches(self,
                        mode,
@@ -239,7 +239,7 @@ class Main(object):
       print('Calculating loss and accuracy of full {} set...'.format(mode))
       _batch_generator = utils.get_batches(x, y, self.cfg.BATCH_SIZE)
 
-      if self.cfg.WITH_RECONSTRUCTION:
+      if self.cfg.WITH_REC:
         for _ in tqdm(range(n_batch), total=n_batch,
                       ncols=100, unit=' batches'):
           x_batch, y_batch = next(_batch_generator)
@@ -268,7 +268,7 @@ class Main(object):
         clf_loss, rec_loss = None, None
 
     else:
-      if self.cfg.WITH_RECONSTRUCTION:
+      if self.cfg.WITH_REC:
         for x_batch, y_batch in utils.get_batches(x, y, self.cfg.BATCH_SIZE):
           loss_i, clf_loss_i, rec_loss_i, acc_i = sess.run(
               [self.loss, self.clf_loss, self.rec_loss, self.accuracy],
@@ -328,7 +328,7 @@ class Main(object):
           epoch_i, self.cfg.EPOCHS, step, self.start_time,
           loss_train, clf_loss_train, rec_loss_train, acc_train,
           loss_valid, clf_loss_valid, rec_loss_valid, acc_valid,
-          self.cfg.EVAL_WITH_FULL_TRAIN_SET, self.cfg.WITH_RECONSTRUCTION)
+          self.cfg.EVAL_WITH_FULL_TRAIN_SET, self.cfg.WITH_REC)
 
     file_path = join(self.train_log_path, 'full_set_eval_log.csv')
     if not silent:
@@ -338,7 +338,7 @@ class Main(object):
       file_path, epoch_i + 1, step, time.time() - self.start_time,
       loss_train, clf_loss_train, rec_loss_train, acc_train,
       loss_valid, clf_loss_valid, rec_loss_valid, acc_valid,
-      self.cfg.WITH_RECONSTRUCTION)
+      self.cfg.WITH_REC)
 
     if not silent:
       utils.thin_line()
@@ -389,7 +389,7 @@ class Main(object):
 
     # Check directory of paths
     utils.check_dir([self.test_log_path])
-    if self.cfg.WITH_RECONSTRUCTION:
+    if self.cfg.WITH_REC:
       if self.cfg.TEST_SAVE_IMAGE_STEP:
         utils.check_dir([self.test_image_path])
 
@@ -413,7 +413,7 @@ class Main(object):
     _test_batch_generator = utils.get_batches(
         x_test, y_test, self.cfg.BATCH_SIZE)
 
-    if self.cfg.WITH_RECONSTRUCTION:
+    if self.cfg.WITH_REC:
       for _ in tqdm(range(n_batch_test), total=n_batch_test,
                     ncols=100, unit=' batch'):
         step += 1
@@ -458,15 +458,15 @@ class Main(object):
     utils.thin_line()
     print('Test_Loss: {:.4f}\n'.format(loss_test),
           'Test_Accuracy: {:.2f}%'.format(acc_test * 100))
-    if self.cfg.WITH_RECONSTRUCTION:
+    if self.cfg.WITH_REC:
       utils.thin_line()
       print('Test_Train_Loss: {:.4f}\n'.format(clf_loss_test),
-            'Test_Reconstruction_Loss: {:.4f}'.format(rec_loss_test))
+            'Test_REC_LOSS: {:.4f}'.format(rec_loss_test))
 
     # Save test log
     utils.save_test_log(
         self.test_log_path, loss_test, acc_test, clf_loss_test,
-        rec_loss_test, self.cfg.WITH_RECONSTRUCTION)
+        rec_loss_test, self.cfg.WITH_REC)
 
     utils.thin_line()
     print('Testing finished! Using time: {:.2f}'
@@ -518,7 +518,7 @@ class Main(object):
 
           # Save reconstruction images
           if self.cfg.SAVE_IMAGE_STEP:
-            if self.cfg.WITH_RECONSTRUCTION:
+            if self.cfg.WITH_REC:
               if step % self.cfg.SAVE_IMAGE_STEP == 0:
                 self._save_images(
                     sess, self.train_image_path, x_batch,
@@ -559,7 +559,7 @@ class Main(object):
 
           # Save reconstruction images
           if self.cfg.SAVE_IMAGE_STEP:
-            if self.cfg.WITH_RECONSTRUCTION:
+            if self.cfg.WITH_REC:
               if step % self.cfg.SAVE_IMAGE_STEP == 0:
                 self._save_images(
                     sess, self.train_image_path, x_batch,

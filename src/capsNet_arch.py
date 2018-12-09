@@ -142,7 +142,7 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
 def decoder(inputs, cfg, batch_size=None, is_training=None):
 
   model = Sequential(inputs)
-  act_fn_last = None if cfg.RECONSTRUCTION_LOSS == 'ce' else 'relu'
+  act_fn_last = None if cfg.REC_LOSS == 'ce' else 'relu'
 
   if cfg.DATABASE_NAME == 'radical':
     if cfg.DECODER_TYPE == 'fc':

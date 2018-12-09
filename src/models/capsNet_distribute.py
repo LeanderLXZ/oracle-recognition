@@ -111,7 +111,7 @@ class CapsNetDistribute(CapsNet):
     preds = tf.concat(preds_all, axis=0, name='total_preds')
     assert preds.get_shape()[0] == self.cfg.BATCH_SIZE
 
-    if self.cfg.WITH_RECONSTRUCTION:
+    if self.cfg.WITH_REC:
       classifier_loss = tf.divide(
           tf.add_n(clf_loss_all), n_tower, name='total_clf_loss')
       assert classifier_loss.get_shape() == ()
@@ -231,7 +231,7 @@ class CapsNetDistribute(CapsNet):
       # Build the summary operation from the last tower summaries.
       tf.summary.scalar('accuracy', accuracy)
       tf.summary.scalar('loss', loss)
-      if self.cfg.WITH_RECONSTRUCTION:
+      if self.cfg.WITH_REC:
         tf.summary.scalar('clf_loss', classifier_loss)
         tf.summary.scalar('rec_loss', reconstruct_loss)
       summary_op = tf.summary.merge_all()

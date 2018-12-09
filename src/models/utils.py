@@ -161,7 +161,7 @@ def print_full_set_eval(epoch_i, epochs, step, start_time,
     print('Full_Set_Train_Loss: {:.4f}'.format(loss_train))
     if with_rec:
       print('Train_Classifier_Loss: {:.4f}\n'.format(clf_loss_train),
-            'Train_Reconstruction_Loss: {:.4f}'.format(rec_loss_train))
+            'Train_REC_LOSS: {:.4f}'.format(rec_loss_train))
     print('Full_Set_Train_Accuracy: {:.2f}%'.format(acc_train * 100))
   print('Full_Set_Valid_Loss: {:.4f}'.format(loss_valid))
   if with_rec:
@@ -227,9 +227,9 @@ def save_log(file_path, epoch_i, step, using_time,
     if not os.path.isfile(file_path):
       with open(file_path, 'w') as f:
         header = ['Local_Time', 'Epoch', 'Batch', 'Time', 'Train_Loss',
-                  'Train_Classifier_loss', 'Train_Reconstruction_Loss',
+                  'Train_Classifier_loss', 'Train_REC_LOSS',
                   'Train_Accuracy', 'Valid_Loss', 'Valid_Classifier_loss',
-                  'Valid_Reconstruction_Loss', 'Valid_Accuracy']
+                  'Valid_REC_LOSS', 'Valid_Accuracy']
         writer = csv.writer(f)
         writer.writerow(header)
 
@@ -274,7 +274,7 @@ def save_test_log(file_path, loss_test, acc_test,
     f.write('Test_Accuracy: {:.2f}%\n'.format(acc_test * 100))
     if with_rec:
       f.write('Test_Train_Loss: {:.4f}\n'.format(clf_loss_test))
-      f.write('Test_Reconstruction_Loss: {:.4f}\n'.format(rec_loss_test))
+      f.write('Test_REC_LOSS: {:.4f}\n'.format(rec_loss_test))
     f.write('=' * 55)
 
 
@@ -477,15 +477,18 @@ def download_and_extract_cifar10(url, save_path, file_name, extract_path):
   shutil.rmtree(extracted_dir_path)
 
 
-def img_add(src_list, merge=False, gamma=0):
+def img_add(src_list, merge=False, vec=None, gamma=0):
   """Add images together."""
   if merge:
     c = 1 / len(src_list)
   else:
     c = 1
   added = np.zeros_like(src_list[0])
-  for src_img in src_list:
-    added += src_img * c
+  for i, src_img in enumerate(src_list):
+    if vec:
+      added += src_img * (1 / vec[i]) * c
+    else:
+      added += src_img * c
   added += gamma
   added[added > 1] = 1
   return added

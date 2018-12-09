@@ -8,8 +8,8 @@ from easydict import EasyDict
 # Auto-generate version
 def _auto_version(c):
   _version = c['DATABASE_NAME']
-  if c['WITH_RECONSTRUCTION']:
-    _version += '_{}_{}'.format(c['DECODER_TYPE'], c['RECONSTRUCTION_LOSS'])
+  if c['WITH_REC']:
+    _version += '_{}_{}'.format(c['DECODER_TYPE'], c['REC_LOSS'])
   else:
     _version += '_no_rec'
   if c['DPP_TEST_AS_VALID']:
@@ -94,11 +94,21 @@ __C.LARGE_DATA_PART_NUM = 1
 # -------------------------------------------
 # Classification
 
+# Classification loss
+# 'margin': margin loss
+# 'margin_h': margin loss in Hinton's paper
+__C.CLF_LOSS = 'margin_h'
+
 # Parameters of margin loss
 # default: {'m_plus': 0.9, 'm_minus': 0.1, 'lambda_': 0.5}
 __C.MARGIN_LOSS_PARAMS = {'m_plus': 0.9,
                           'm_minus': 0.1,
-                          'lambda_': 0.5}
+                          'lambda_': 0.5,
+                          'margin': 0.4,
+                          'down_weight': 0.5}
+# default: {'margin': 0.4, 'down_weight': 0.5}
+__C.MARGIN_LOSS_H_PARAMS = {'margin': 0.4,
+                            'down_weight': 0.5}
 
 # Add epsilon(a very small number) to zeros
 __C.EPSILON = 1e-9
@@ -128,7 +138,7 @@ __C.MOMENTUM = 0.9
 # Reconstruction
 
 # Training with reconstruction
-__C.WITH_RECONSTRUCTION = True
+__C.WITH_REC = True
 
 # Type of decoder of reconstruction:
 # 'fc': full_connected layers
@@ -139,10 +149,10 @@ __C.DECODER_TYPE = 'fc'
 # Reconstruction loss
 # 'mse': Mean Square Error
 # 'ce' : sigmoid_cross_entropy_with_logits
-__C.RECONSTRUCTION_LOSS = 'mse'
+__C.REC_LOSS = 'mse'
 
 # Scaling for reconstruction loss
-__C.RECONSTRUCT_LOSS_SCALE = 0.392  # 0.0005*32*32=0.512  # 0.0005*784=0.392
+__C.REC_LOSS_SCALE = 0.392  # 0.0005*32*32=0.512  # 0.0005*784=0.392
 
 # ===========================================
 # #         Training Configurations         #
@@ -204,7 +214,7 @@ __C.TEST_VERSION = __C.VERSION
 __C.TEST_CKP_IDX = 48
 
 # Testing with reconstruction
-__C.TEST_WITH_RECONSTRUCTION = True
+__C.TEST_WITH_REC = True
 
 # Saving testing reconstruction images
 # None: not save images
