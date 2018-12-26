@@ -71,12 +71,23 @@ __C.IMAGE_SIZE = (28, 28)
 # Resize images
 __C.RESIZE_IMG = False
 
+# Using data augment
+__C.USE_DATA_AUG = True
+# Parameters for data augment
+__C.DATA_AUG_PARAM = dict(
+    rotation_range=40,
+    width_shift_range=0.25,
+    height_shift_range=0.25,
+    # shear_range=0.1,
+    zoom_range=[0.5, 1.0],
+    horizontal_flip=True,
+    fill_mode='nearest'
+)
+
 # Oracle Parameters
 # Number of radicals to use for training
 # Max = 148
 __C.NUM_RADICALS = 20
-# Using data augment
-__C.USE_DATA_AUG = True
 # The max number of images if use data augment
 __C.MAX_IMAGE_NUM = 5000
 

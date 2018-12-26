@@ -69,6 +69,8 @@ class DataPreProcess(object):
     self.y_test = utils.load_data_from_pkl(
         join(self.source_data_path, 'test_labels.p'))
 
+    # TODO: data augment
+
   def _resize_imgs(self):
     """Resize images"""
     self.img_size = self.cfg.IMAGE_SIZE
@@ -79,7 +81,7 @@ class DataPreProcess(object):
         self.x_test, self.cfg.IMAGE_SIZE, img_mode=self.img_mode,
         resize_filter=Image.ANTIALIAS)
 
-  def _load_oracle_radicals(self, data_aug_param=None):
+  def _load_oracle_radicals(self):
     """
     Load oracle data set from files.
     """
@@ -111,7 +113,7 @@ class DataPreProcess(object):
       # Data augment
       if self.cfg.USE_DATA_AUG:
         x_tensor = self._augment_data(
-            x_tensor, data_aug_param, img_num=self.cfg.MAX_IMAGE_NUM)
+            x_tensor, self.cfg.DATA_AUG_PARAM, img_num=self.cfg.MAX_IMAGE_NUM)
       assert len(x_tensor) == self.cfg.MAX_IMAGE_NUM
 
       self.x.append(x_tensor)
@@ -230,18 +232,13 @@ class DataPreProcess(object):
       img_idx_ = np.random.choice(len(self.x_test), self.cfg.NUM_MULTI_OBJECT)
       imgs_ = list(self.x_test[img_idx_])
 
+      # TODO: No repetitive labels
+
       # Data augment
       if data_aug:
-        data_aug_param = dict(
-            rotation_range=20,
-            width_shift_range=0.2,
-            height_shift_range=0.2,
-            zoom_range=0.2,
-            fill_mode='nearest'
-        )
-        imgs_ = np.array(
-            self._augment_data(
-                imgs_, data_aug_param, img_num=len(imgs_), add_self=False))
+        imgs_ = np.array(self._augment_data(
+            imgs_, self.cfg.DATA_AUG_PARAM,
+            img_num=len(imgs_), add_self=True))
 
       # Merge images
       if self.cfg.OVERLAP:
@@ -394,23 +391,13 @@ class DataPreProcess(object):
     self.preprocessed_path = join(self.cfg.DPP_DATA_PATH, self.data_base_name)
     self.source_data_path = join(self.cfg.SOURCE_DATA_PATH, self.data_base_name)
 
-    data_aug_parameters = dict(
-        rotation_range=40,
-        width_shift_range=0.1,
-        height_shift_range=0.1,
-        shear_range=0.1,
-        zoom_range=0.1,
-        horizontal_flip=True,
-        fill_mode='nearest'
-    )
-
     # Load data
     if self.data_base_name == 'mnist' or self.data_base_name == 'cifar10':
       self._load_data()
       if self.cfg.RESIZE_IMG:
         self._resize_imgs()
     elif self.data_base_name == 'radical':
-      self._load_oracle_radicals(data_aug_parameters)
+      self._load_oracle_radicals()
       self._train_test_split()
 
     # Scaling images to (0, 1)
