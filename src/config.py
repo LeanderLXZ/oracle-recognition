@@ -27,8 +27,8 @@ __C = EasyDict()
 # 'radical': Oracle Radicals
 # 'mnist': MNIST
 # 'cifar10' CIFAR-10
-# __C.DATABASE_NAME = 'radical'
-__C.DATABASE_NAME = 'mnist'
+__C.DATABASE_NAME = 'radical'
+# __C.DATABASE_NAME = 'mnist'
 
 # Training version
 # Set None to auto generate version
@@ -65,9 +65,13 @@ __C.TEST_SIZE = 0.2
 # Rate of train-validation split
 __C.VALID_SIZE = 0.1
 
-# Oracle Parameters
 # Image size
-__C.ORACLE_IMAGE_SIZE = (32, 32)
+__C.IMAGE_SIZE = (28, 28)
+
+# Resize images
+__C.RESIZE_IMG = False
+
+# Oracle Parameters
 # Number of radicals to use for training
 # Max = 148
 __C.NUM_RADICALS = 20

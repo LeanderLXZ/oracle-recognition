@@ -43,16 +43,15 @@ class DataPreProcess(object):
 
     if self.data_base_name == 'mnist':
       self.img_size = (28, 28)
+      self.img_mode = 'L'
     elif self.data_base_name == 'cifar10':
       self.img_size = (32, 32)
+      self.img_mode = 'RGB'
     elif self.data_base_name == 'radical':
-      self.img_size = self.cfg.ORACLE_IMAGE_SIZE
+      self.img_size = self.cfg.IMAGE_SIZE
+      self.img_mode = 'L'
     else:
       raise ValueError('Wrong database name!')
-
-  def _resize_imgs(self):
-    # TODO: Resize images
-    pass
 
   def _load_data(self):
     """
@@ -70,6 +69,16 @@ class DataPreProcess(object):
     self.y_test = utils.load_data_from_pkl(
         join(self.source_data_path, 'test_labels.p'))
 
+  def _resize_imgs(self):
+    """Resize images"""
+    self.img_size = self.cfg.IMAGE_SIZE
+    self.x = utils.img_resize(
+        self.x, self.cfg.IMAGE_SIZE, img_mode=self.img_mode,
+        resize_filter=Image.ANTIALIAS)
+    self.x_test = utils.img_resize(
+        self.x_test, self.cfg.IMAGE_SIZE, img_mode=self.img_mode,
+        resize_filter=Image.ANTIALIAS)
+
   def _load_oracle_radicals(self, data_aug_param=None):
     """
     Load oracle data set from files.
@@ -77,7 +86,8 @@ class DataPreProcess(object):
     utils.thin_line()
     print('Loading {} data set...'.format(self.data_base_name))
     classes = sorted(os.listdir(self.source_data_path))
-    print(classes)
+    if '.DS_Store' in classes:
+      classes.remove('.DS_Store')
 
     self.x = []
     self.y = []
@@ -91,8 +101,10 @@ class DataPreProcess(object):
       for img_name in images:
         # Load image
         img = Image.open(join(class_dir, img_name)).convert('L')
-        # Reshape image
-        reshaped_img = self._reshape_img(img)
+        # Resize image
+        reshaped_img = self._resize_oracle_img(img)
+        # Change background
+        reshaped_img = 255 - reshaped_img
         # Save image to array
         x_tensor.append(reshaped_img)
 
@@ -113,9 +125,9 @@ class DataPreProcess(object):
         self.x.shape, self.y.shape))
     assert len(self.x) == len(self.y)
 
-  def _reshape_img(self, img):
+  def _resize_oracle_img(self, img):
     """
-    Reshaping an image to a ORACLE_IMAGE_SIZE
+    Resizing an image to IMAGE_SIZE
     """
     reshaped_image = Image.new('L', self.img_size, 'white')
     img_width, img_height = img.size
@@ -179,7 +191,7 @@ class DataPreProcess(object):
 
   def _one_hot_encoding(self):
     """
-    Scaling images to (0, 1).
+    One-hot-encoding labels.
     """
     utils.thin_line()
     print('One-hot-encoding labels...')
@@ -236,7 +248,8 @@ class DataPreProcess(object):
         mul_img_ = utils.img_add_overlap(imgs_, merge=False, gamma=0)
       else:
         mul_img_ = utils.img_add_no_overlap(
-            imgs_, self.cfg.NUM_MULTI_OBJECT, resize_filter=Image.ANTIALIAS)
+            imgs_, self.cfg.NUM_MULTI_OBJECT,
+            img_mode=self.img_mode, resize_filter=Image.ANTIALIAS)
 
       self.x_test_mul.append(mul_img_)
 
@@ -299,20 +312,20 @@ class DataPreProcess(object):
       train_num = 60000
       test_num = 10000
       n_classes = 10
-      img_size = (28, 28, 1)
+      img_size = (*self.img_size, 1)
 
     elif self.data_base_name == 'cifar10':
       train_num = 50000
       test_num = 10000
       n_classes = 10
-      img_size = (32, 32, 3)
+      img_size = (*self.img_size, 3)
 
     elif self.data_base_name == 'radical':
       train_num = len(self.x_train)
       test_num = len(self.y_train)
       n_classes = \
           148 if self.cfg.NUM_RADICALS is None else self.cfg.NUM_RADICALS
-      img_size = (*self.cfg.ORACLE_IMAGE_SIZE, 1)
+      img_size = (*self.cfg.IMAGE_SIZE, 1)
     else:
       raise ValueError('Wrong database name!')
 
@@ -394,6 +407,8 @@ class DataPreProcess(object):
     # Load data
     if self.data_base_name == 'mnist' or self.data_base_name == 'cifar10':
       self._load_data()
+      if self.cfg.RESIZE_IMG:
+        self._resize_imgs()
     elif self.data_base_name == 'radical':
       self._load_oracle_radicals(data_aug_parameters)
       self._train_test_split()

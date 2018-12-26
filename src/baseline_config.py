@@ -65,16 +65,20 @@ __C.TEST_SIZE = 0.2
 # Rate of train-validation split
 __C.VALID_SIZE = 0.1
 
-# Oracle Parameters
 # Image size
-__C.ORACLE_IMAGE_SIZE = (32, 32)
+__C.IMAGE_SIZE = (28, 28)
+
+# Resize images
+__C.RESIZE_IMG = False
+
+# Oracle Parameters
 # Number of radicals to use for training
 # Max = 148
 __C.NUM_RADICALS = 20
 # Using data augment
 __C.USE_DATA_AUG = True
 # The max number of images if use data augment
-__C.MAX_IMAGE_NUM = 2000
+__C.MAX_IMAGE_NUM = 5000
 
 # Preprocessing images of superpositions of multi-objects
 # If None, one image only shows one object.

@@ -58,7 +58,7 @@ __C.VALID_SIZE = 0.1
 
 # Oracle Parameters
 #  Image size
-__C.ORACLE_IMAGE_SIZE = (32, 32)
+__C.IMAGE_SIZE = (32, 32)
 # Number of radicals to use for training
 # If None, use all radicals (NUM_RADICALS=148)
 __C.NUM_RADICALS = None

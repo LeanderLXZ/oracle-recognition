@@ -525,11 +525,11 @@ class TestMultiObjects(object):
       rec_images_.append(y_rec_imgs_[:n_y])
 
     # Get colorful overlapped images
-    real_imgs_ = utils.imgs_black_to_color(
+    real_imgs_ = utils.img_black_to_color(
         self.x_test[test_img_idx], same=True)
     rec_imgs_ = []
     for idx, imgs in enumerate(rec_images_):
-      imgs_colored = utils.imgs_black_to_color(imgs)
+      imgs_colored = utils.img_black_to_color(imgs)
       imgs_merged = utils.img_add_overlap(
           imgs_colored, merge=True,
           vec=preds_vec_[idx],

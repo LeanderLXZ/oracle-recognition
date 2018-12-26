@@ -168,7 +168,7 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
       # model.add(BatchNorm(
       #     cfg, is_training, momentum=0.99, act_fn=act_fn_last, idx=2))
       assert model.top_layer.get_shape() == (
-        batch_size, cfg.ORACLE_IMAGE_SIZE[0]*cfg.ORACLE_IMAGE_SIZE[1]
+        batch_size, cfg.IMAGE_SIZE[0]*cfg.IMAGE_SIZE[1]
       ), model.top_layer.get_shape()
 
     elif cfg.DECODER_TYPE == 'conv':
@@ -216,7 +216,7 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
       model.add(BatchNorm(
           cfg, is_training, momentum=0.99, act_fn=act_fn_last, idx=3))
       assert model.top_layer.get_shape() == (
-        batch_size, *cfg.ORACLE_IMAGE_SIZE, 1), model.top_layer.get_shape()
+        batch_size, *cfg.IMAGE_SIZE, 1), model.top_layer.get_shape()
 
     elif cfg.DECODER_TYPE == 'conv_t':
       model.add(Reshape(
@@ -277,7 +277,7 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
       model.add(BatchNorm(
           cfg, is_training, momentum=0.99, act_fn=act_fn_last, idx=4))
       assert model.top_layer.get_shape() == (
-        batch_size, *cfg.ORACLE_IMAGE_SIZE, 1), model.top_layer.get_shape()
+        batch_size, *cfg.IMAGE_SIZE, 1), model.top_layer.get_shape()
 
     else:
       raise ValueError('Wrong decoder type!')

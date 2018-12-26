@@ -66,7 +66,7 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
           act_fn=act_fn_last,
           idx=2))
       assert model.top_layer.get_shape() == (
-        batch_size, cfg.ORACLE_IMAGE_SIZE[0]*cfg.ORACLE_IMAGE_SIZE[1]
+        batch_size, cfg.IMAGE_SIZE[0]*cfg.IMAGE_SIZE[1]
       ), model.top_layer.get_shape()
 
   elif cfg.DATABASE_NAME == 'mnist':

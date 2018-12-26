@@ -495,7 +495,7 @@ def img_add_overlap(imgs, merge=False, vec=None, gamma=0):
   return added
 
 
-def img_add_no_overlap(imgs, num_mul_obj, resize_filter=None):
+def img_add_no_overlap(imgs, num_mul_obj, img_mode='L', resize_filter=None):
   """Add images together without overlap."""
   img_shape = np.array(imgs).shape[1:]
   save_size = \
@@ -520,14 +520,27 @@ def img_add_no_overlap(imgs, num_mul_obj, resize_filter=None):
       row_start += img_shape[0]
       row_end += img_shape[0]
   new_img = np.squeeze(new_img, axis=-1)
-  added = Image.fromarray(new_img.astype('uint8'), mode='L')
+  added = Image.fromarray(new_img.astype('uint8'), mode=img_mode)
   added = np.expand_dims(
       added.resize(img_shape[:2], resize_filter), axis=-1) / 255.
 
   return added
 
 
-def imgs_black_to_color(imgs, same=False):
+def img_resize(imgs, img_shape, img_mode='L', resize_filter=None):
+  """Resize images"""
+  resized_imgs = []
+  for img in imgs:
+    if img_mode == 'L':
+      img = np.squeeze(img, axis=-1)
+    img = Image.fromarray(img.astype('uint8'), mode=img_mode)
+    resized_img = np.expand_dims(
+        img.resize(img_shape, resize_filter), axis=-1)
+    resized_imgs.append(resized_img)
+  return resized_imgs
+
+
+def img_black_to_color(imgs, same=False):
   color_coef_list = [[1, 0, 0],
                      [0, 1, 0],
                      [0, 0, 1],
