@@ -200,8 +200,9 @@ class DataPreProcess(object):
     self.x_test, self.y_test = sklearn.utils.shuffle(
         self.x_test, self.y_test, random_state=self.seed)
 
-  def _generate_multi_obj_img(
-        self, overlap=True, show_img=False, data_aug=False):
+  def _generate_multi_obj_img(self,
+                              show_img=False,
+                              data_aug=False):
     """
     Generate images of superpositions of multi-objects
     """
@@ -231,7 +232,7 @@ class DataPreProcess(object):
                 imgs_, data_aug_param, img_num=len(imgs_), add_self=False))
 
       # Merge images
-      if overlap:
+      if self.cfg.OVERLAP:
         mul_img_ = utils.img_add_overlap(imgs_, merge=False, gamma=0)
       else:
         mul_img_ = utils.img_add_no_overlap(
@@ -408,12 +409,7 @@ class DataPreProcess(object):
 
     # Generate multi-objects test images
     if self.cfg.NUM_MULTI_OBJECT:
-      if self.data_base_name == 'radical':
-        self._generate_multi_obj_img(
-            overlap=False, show_img=False, data_aug=True)
-      if self.data_base_name == 'mnist':
-        self._generate_multi_obj_img(
-            overlap=False, show_img=False, data_aug=False)
+      self._generate_multi_obj_img(show_img=False, data_aug=False)
 
     # Split data set into train/valid
     self._train_valid_split()
