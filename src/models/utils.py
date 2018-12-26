@@ -477,14 +477,14 @@ def download_and_extract_cifar10(url, save_path, file_name, extract_path):
   shutil.rmtree(extracted_dir_path)
 
 
-def img_add(src_list, merge=False, vec=None, gamma=0):
-  """Add images together."""
+def img_add_overlap(imgs, merge=False, vec=None, gamma=0):
+  """Add images together with overlap."""
   if merge:
-    c = 1 / len(src_list)
+    c = 1 / len(imgs)
   else:
     c = 1
-  added = np.zeros_like(src_list[0])
-  for i, src_img in enumerate(src_list):
+  added = np.zeros_like(imgs[0])
+  for i, src_img in enumerate(imgs):
     if vec:
       added += src_img * (1 / vec[i]) * c
     else:
@@ -492,6 +492,38 @@ def img_add(src_list, merge=False, vec=None, gamma=0):
   added += gamma
   added[added > 1] = 1
   added[added < 0] = 0
+  return added
+
+
+def img_add_no_overlap(imgs, num_mul_obj, resize_filter=None):
+  """Add images together without overlap."""
+  img_shape = np.array(imgs).shape[1:]
+  save_size = \
+      math.ceil(np.sqrt(num_mul_obj)) * img_shape[0]
+  new_img = \
+      np.zeros([save_size, save_size, img_shape[-1]]).astype('uint8')
+
+  # Scale to 0-255
+  imgs = np.array(
+      [np.divide(((img - img.min()) * 255), (img.max() - img.min()))
+       for img in imgs])
+
+  # Combine images
+  row_start, row_end, col_start, col_end = 0, img_shape[0], 0, 0
+  for img in imgs:
+    col_end += img_shape[1]
+    new_img[row_start:row_end, col_start:col_end, :] = img
+    col_start += img_shape[1]
+    if col_end == save_size:
+      col_start = 0
+      col_end = 0
+      row_start += img_shape[0]
+      row_end += img_shape[0]
+  new_img = np.squeeze(new_img, axis=-1)
+  added = Image.fromarray(new_img.astype('uint8'), mode='L')
+  added = np.expand_dims(
+      added.resize(img_shape[:2], resize_filter), axis=-1) / 255.
+
   return added
 
 

@@ -530,7 +530,7 @@ class TestMultiObjects(object):
     rec_imgs_ = []
     for idx, imgs in enumerate(rec_images_):
       imgs_colored = utils.imgs_black_to_color(imgs)
-      imgs_merged = utils.img_add(
+      imgs_merged = utils.img_add_overlap(
           imgs_colored, merge=True,
           vec=preds_vec_[idx],
           # vec=None,

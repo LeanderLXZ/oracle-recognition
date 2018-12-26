@@ -50,6 +50,10 @@ class DataPreProcess(object):
     else:
       raise ValueError('Wrong database name!')
 
+  def _resize_imgs(self):
+    # TODO: Resize images
+    pass
+
   def _load_data(self):
     """
     Load data set from files.
@@ -226,13 +230,14 @@ class DataPreProcess(object):
             self._augment_data(
                 imgs_, data_aug_param, img_num=len(imgs_), add_self=False))
 
+      # Merge images
       if overlap:
-
-        mul_img_ = utils.img_add(imgs_, merge=False, gamma=0)
-        self.x_test_mul.append(mul_img_)
+        mul_img_ = utils.img_add_overlap(imgs_, merge=False, gamma=0)
       else:
-        # TODO: Image merge with no overlap
-        pass
+        mul_img_ = utils.img_add_no_overlap(
+            imgs_, self.cfg.NUM_MULTI_OBJECT, resize_filter=Image.ANTIALIAS)
+
+      self.x_test_mul.append(mul_img_)
 
       # labels
       mul_y = [0 if y_ == 0 else 1 for y_ in np.sum(
@@ -405,10 +410,10 @@ class DataPreProcess(object):
     if self.cfg.NUM_MULTI_OBJECT:
       if self.data_base_name == 'radical':
         self._generate_multi_obj_img(
-            overlap=True, show_img=False, data_aug=True)
+            overlap=False, show_img=False, data_aug=True)
       if self.data_base_name == 'mnist':
         self._generate_multi_obj_img(
-            overlap=True, show_img=False, data_aug=True)
+            overlap=False, show_img=False, data_aug=False)
 
     # Split data set into train/valid
     self._train_valid_split()
