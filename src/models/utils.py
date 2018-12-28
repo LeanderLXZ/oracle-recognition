@@ -645,8 +645,7 @@ def save_imgs(real_imgs,
       save_image_path = join(
           img_path, 'train_batch_{}'.format(step))
 
-  save_image_path = join(
-      save_image_path, '{}.jpg'.format(append_info))
+  save_image_path = save_image_path + '{}.jpg'.format(append_info)
 
   if not silent:
     thin_line()

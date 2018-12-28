@@ -451,8 +451,8 @@ class DataPreProcess(object):
     self.preprocessed_path = join(self.cfg.DPP_DATA_PATH, self.data_base_name)
     self.source_data_path = join(self.cfg.SOURCE_DATA_PATH, self.data_base_name)
 
-    show_img = True
-    # show_img = False
+    # show_img = True
+    show_img = False
 
     # Load data
     if self.data_base_name == 'mnist' or self.data_base_name == 'cifar10':
