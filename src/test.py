@@ -32,16 +32,6 @@ class Test(object):
     self.multi_gpu = multi_gpu
     self.version = version
 
-    # Get paths for testing
-    self.checkpoint_path, self.test_log_path, self.test_image_path = \
-        self._get_paths()
-
-    # Save config
-    utils.save_config_log(self.test_log_path, self.cfg)
-
-    # Load data
-    self.x_test, self.y_test = self._load_data()
-
     # Checkpoint index
     if load_last_ckp:
       ckp_indices = []
@@ -52,6 +42,16 @@ class Test(object):
       self.ckp_idx = max(ckp_indices)
     else:
       self.ckp_idx = self.cfg.TEST_CKP_IDX
+
+    # Get paths for testing
+    self.checkpoint_path, self.test_log_path, self.test_image_path = \
+        self._get_paths()
+
+    # Save config
+    utils.save_config_log(self.test_log_path, self.cfg)
+
+    # Load data
+    self.x_test, self.y_test = self._load_data()
 
   def _get_paths(self):
     """Get paths for testing."""
@@ -269,16 +269,6 @@ class TestMultiObjects(object):
     self.multi_gpu = multi_gpu
     self.version = version
 
-    # Get paths for testing
-    self.checkpoint_path, self.test_log_path, self.test_image_path = \
-        self._get_paths()
-
-    # Save config
-    utils.save_config_log(self.test_log_path, self.cfg)
-
-    # Load data
-    self.x_test, self.y_test = self._load_data()
-
     # Checkpoint index
     if load_last_ckp:
       ckp_indices = []
@@ -289,6 +279,16 @@ class TestMultiObjects(object):
       self.ckp_idx = max(ckp_indices)
     else:
       self.ckp_idx = self.cfg.TEST_CKP_IDX
+
+    # Get paths for testing
+    self.checkpoint_path, self.test_log_path, self.test_image_path = \
+        self._get_paths()
+
+    # Save config
+    utils.save_config_log(self.test_log_path, self.cfg)
+
+    # Load data
+    self.x_test, self.y_test = self._load_data()
 
   def _get_paths(self):
     """Get paths for testing."""
