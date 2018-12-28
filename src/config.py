@@ -180,6 +180,9 @@ __C.REC_LOSS_SCALE = 0.392  # 0.0005*32*32=0.512  # 0.0005*784=0.392
 # Evaluate on test set after training
 __C.TEST_AFTER_TRAINING = True
 
+# Evaluate on multi-objects test set after training
+__C.TEST_MO_AFTER_TRAINING = True
+
 
 # ===========================================
 # #         Training Configurations         #
@@ -232,13 +235,14 @@ __C.SHOW_TRAINING_DETAILS = False
 __C.TEST_VERSION = 'conv_rec_mse'
 
 # Testing checkpoint index
-__C.TEST_CKP_IDX = 29
+# If None, load the latest checkpoint.
+__C.TEST_CKP_IDX = None
 
 # Testing with reconstruction
 __C.TEST_WITH_REC = True
 
 # Saving testing reconstruction images
-# None: not save images
+# If None, do not save images.
 __C.TEST_SAVE_IMAGE_STEP = 10  # batches
 
 # Batch size of testing

@@ -17,21 +17,24 @@ from models.capsNet import CapsNet
 from models.capsNet_distribute import CapsNetDistribute
 from baseline_arch import basel_arch
 from capsNet_arch import caps_arch
+from test import Test, TestMultiObjects
 
 
 class Main(object):
 
-  def __init__(self, model, cfg):
-    """Load data and initialize models.
-
-    Args:
-      model: the models which will be trained
-    """
+  def __init__(self, cfg, model_arch, multi_gpu=False):
+    """Load data and initialize models."""
     # Global start time
     self.start_time = time.time()
 
     # Config
     self.cfg = cfg
+    self.multi_gpu = multi_gpu
+
+    if multi_gpu:
+      model = CapsNetDistribute(cfg, model_arch)
+    else:
+      model = CapsNet(cfg, model_arch)
 
     # Get paths from configuration
     self.preprocessed_path, self.train_log_path, \
@@ -372,7 +375,11 @@ class Main(object):
         epoch_i=epoch_i,
         test_flag=test_flag)
 
-  def _save_model(self, sess, saver, step, silent=False):
+  def _save_model(self,
+                  sess,
+                  saver,
+                  step,
+                  silent=False):
     """Save models."""
     save_path = join(self.checkpoint_path, 'models.ckpt')
     if not silent:
@@ -380,97 +387,16 @@ class Main(object):
       print('Saving models to {}...'.format(save_path))
     saver.save(sess, save_path, global_step=step)
 
-  def _test_after_training(self, sess):
+  def _test_after_training(self, multi_obj=False):
     """Evaluate on the test set after training."""
-    test_start_time = time.time()
-
-    utils.thick_line()
-    print('Testing...')
-
-    # Check directory of paths
-    utils.check_dir([self.test_log_path])
-    if self.cfg.WITH_REC:
-      if self.cfg.TEST_SAVE_IMAGE_STEP:
-        utils.check_dir([self.test_image_path])
-
-    # Load data
-    utils.thin_line()
-    print('Loading test set...')
-    utils.thin_line()
-    x_test = utils.load_data_from_pkl(
-        join(self.preprocessed_path, 'x_test.p'))
-    y_test = utils.load_data_from_pkl(
-        join(self.preprocessed_path, 'y_test.p'))
-    n_batch_test = len(y_test) // self.cfg.BATCH_SIZE
-
-    utils.thin_line()
-    print('Calculating loss and accuracy on test set...')
-    loss_test_all = []
-    acc_test_all = []
-    clf_loss_test_all = []
-    rec_loss_test_all = []
-    step = 0
-    _test_batch_generator = utils.get_batches(
-        x_test, y_test, self.cfg.BATCH_SIZE)
-
-    if self.cfg.WITH_REC:
-      for _ in tqdm(range(n_batch_test), total=n_batch_test,
-                    ncols=100, unit=' batch'):
-        step += 1
-        test_batch_x, test_batch_y = next(_test_batch_generator)
-        loss_test_i, clf_loss_i, rec_loss_i, acc_test_i = sess.run(
-            [self.loss, self.clf_loss, self.rec_loss, self.accuracy],
-            feed_dict={self.inputs: test_batch_x,
-                       self.labels: test_batch_y,
-                       self.is_training: False})
-        loss_test_all.append(loss_test_i)
-        acc_test_all.append(acc_test_i)
-        clf_loss_test_all.append(clf_loss_i)
-        rec_loss_test_all.append(rec_loss_i)
-
-        # Save reconstruct images
-        if self.cfg.TEST_SAVE_IMAGE_STEP:
-          if step % self.cfg.TEST_SAVE_IMAGE_STEP == 0:
-            self._save_images(
-                sess, self.test_image_path, test_batch_x,
-                test_batch_y, step, silent=True, test_flag=True)
-
-      clf_loss_test = sum(clf_loss_test_all) / len(clf_loss_test_all)
-      rec_loss_test = sum(rec_loss_test_all) / len(rec_loss_test_all)
-
+    if multi_obj:
+      test_ = TestMultiObjects
     else:
-      for _ in tqdm(range(n_batch_test), total=n_batch_test,
-                    ncols=100, unit=' batches'):
-        test_batch_x, test_batch_y = next(_test_batch_generator)
-        loss_test_i, acc_test_i = sess.run(
-            [self.loss, self.accuracy],
-            feed_dict={self.inputs: test_batch_x,
-                       self.labels: test_batch_y,
-                       self.is_training: False})
-        loss_test_all.append(loss_test_i)
-        acc_test_all.append(acc_test_i)
-      clf_loss_test, rec_loss_test = None, None
-
-    loss_test = sum(loss_test_all) / len(loss_test_all)
-    acc_test = sum(acc_test_all) / len(acc_test_all)
-
-    # Print losses and accuracy
-    utils.thin_line()
-    print('Test_Loss: {:.4f}\n'.format(loss_test),
-          'Test_Accuracy: {:.2f}%'.format(acc_test * 100))
-    if self.cfg.WITH_REC:
-      utils.thin_line()
-      print('Test_Train_Loss: {:.4f}\n'.format(clf_loss_test),
-            'Test_REC_LOSS: {:.4f}'.format(rec_loss_test))
-
-    # Save test log
-    utils.save_test_log(
-        self.test_log_path, loss_test, acc_test, clf_loss_test,
-        rec_loss_test, self.cfg.WITH_REC)
-
-    utils.thin_line()
-    print('Testing finished! Using time: {:.2f}'
-          .format(time.time() - test_start_time))
+      test_ = Test
+    test_(cfg=self.cfg,
+          multi_gpu=self.multi_gpu,
+          version=self.cfg.VERSION,
+          load_last_ckp=True).test()
 
   def _trainer(self, sess):
 
@@ -597,7 +523,11 @@ class Main(object):
 
     # Evaluate on test set after training
     if self.cfg.TEST_AFTER_TRAINING:
-      self._test_after_training(sess)
+      self._test_after_training()
+
+    # Evaluate on multi-objects test set after training
+    if self.cfg.TEST_MO_AFTER_TRAINING:
+      self._test_after_training(multi_obj=True)
 
     utils.thick_line()
     print('All task finished! Total time: {:.2f}'
@@ -637,11 +567,11 @@ if __name__ == '__main__':
     utils.thick_line()
     print('Using /gpu: %d' % args.gpu)
     environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
-    CapsNet_ = CapsNet
+    multi_gpu_ = False
   elif args.mgpu:
     utils.thick_line()
     print('Running multi-gpu version.')
-    CapsNet_ = CapsNetDistribute
+    multi_gpu_ = True
   else:
     utils.thick_line()
     print('Input [ 1 ] to run normal version.')
@@ -649,9 +579,9 @@ if __name__ == '__main__':
     utils.thick_line()
     input_ = input('Input: ')
     if input_ == '1':
-      CapsNet_ = CapsNet
+      multi_gpu_ = False
     elif input_ == '2':
-      CapsNet_ = CapsNetDistribute
+      multi_gpu_ = True
     else:
       raise ValueError('Wrong Input! Found: ', input_)
 
@@ -664,4 +594,4 @@ if __name__ == '__main__':
     arch_ = caps_arch
     config_ = config
 
-  Main(CapsNet_(config_, arch_), config_).train()
+  Main(config_, arch_, multi_gpu=multi_gpu_).train()

@@ -3,11 +3,13 @@ from __future__ import division
 from __future__ import print_function
 
 import time
+import re
 import argparse
 import tensorflow as tf
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
+from os import listdir
 from os.path import join, isdir
 # from sklearn.metrics import \
 #   precision_score, recall_score, f1_score, accuracy_score
@@ -19,11 +21,16 @@ from models import utils
 
 class Test(object):
 
-  def __init__(self, cfg, multi_gpu=False):
+  def __init__(self,
+               cfg,
+               multi_gpu=False,
+               version=None,
+               load_last_ckp=True):
 
     # Config
     self.cfg = cfg
     self.multi_gpu = multi_gpu
+    self.version = version
 
     # Get paths for testing
     self.checkpoint_path, self.test_log_path, self.test_image_path = \
@@ -35,19 +42,28 @@ class Test(object):
     # Load data
     self.x_test, self.y_test = self._load_data()
 
+    # Checkpoint index
+    if load_last_ckp:
+      ckp_indices = []
+      for f_name in listdir(join(self.cfg.CHECKPOINT_PATH, version)):
+        m = re.match('.*-(\d*).meta', f_name)
+        if m:
+          ckp_indices.append(int(m.group(1)))
+      self.ckp_idx = max(ckp_indices)
+    else:
+      self.ckp_idx = self.cfg.TEST_CKP_IDX
+
   def _get_paths(self):
     """Get paths for testing."""
     # Get checkpoint path
     checkpoint_path = join(
         self.cfg.CHECKPOINT_PATH,
-        '{}/models.ckpt-{}'.format(
-            self.cfg.TEST_VERSION, self.cfg.TEST_CKP_IDX)
-    )
+        '{}/models.ckpt-{}'.format(self.version, self.ckp_idx))
 
     # Get log path, append information if the directory exist.
     test_log_path_ = join(
         self.cfg.TEST_LOG_PATH,
-        '{}-{}'.format(self.cfg.TEST_VERSION, self.cfg.TEST_CKP_IDX))
+        '{}-{}'.format(self.version, self.ckp_idx))
     test_log_path = test_log_path_
     i_append_info = 0
     while isdir(test_log_path):
@@ -194,6 +210,9 @@ class Test(object):
     tf.reset_default_graph()
     loaded_graph = tf.Graph()
 
+    utils.thick_line()
+    print('Testing on test set...')
+
     with tf.Session(graph=loaded_graph) as sess:
 
       # Load saved models
@@ -208,9 +227,6 @@ class Test(object):
       else:
         inputs, labels, loss, accuracy = self._get_tensors(loaded_graph)
         clf_loss, rec_loss, rec_images = None, None, None
-
-      utils.thick_line()
-      print('Testing on test set...')
 
       utils.thin_line()
       print('Calculating loss and accuracy of test set...')
@@ -242,11 +258,16 @@ class Test(object):
 
 class TestMultiObjects(object):
 
-  def __init__(self, cfg, multi_gpu=False):
+  def __init__(self,
+               cfg,
+               multi_gpu=False,
+               version=None,
+               load_last_ckp=True):
 
     # Config
     self.cfg = cfg
     self.multi_gpu = multi_gpu
+    self.version = version
 
     # Get paths for testing
     self.checkpoint_path, self.test_log_path, self.test_image_path = \
@@ -258,19 +279,28 @@ class TestMultiObjects(object):
     # Load data
     self.x_test, self.y_test = self._load_data()
 
+    # Checkpoint index
+    if load_last_ckp:
+      ckp_indices = []
+      for f_name in listdir(join(self.cfg.CHECKPOINT_PATH, version)):
+        m = re.match('.*-(\d*).meta', f_name)
+        if m:
+          ckp_indices.append(int(m.group(1)))
+      self.ckp_idx = max(ckp_indices)
+    else:
+      self.ckp_idx = self.cfg.TEST_CKP_IDX
+
   def _get_paths(self):
     """Get paths for testing."""
     # Get checkpoint path
     checkpoint_path = join(
         self.cfg.CHECKPOINT_PATH,
-        '{}/models.ckpt-{}'.format(
-            self.cfg.TEST_VERSION, self.cfg.TEST_CKP_IDX)
-    )
+        '{}/models.ckpt-{}'.format(self.version, self.ckp_idx))
 
     # Get log path, append information if the directory exist.
     test_log_path_ = join(
         self.cfg.TEST_LOG_PATH,
-        '{}-{}-multi_obj'.format(self.cfg.TEST_VERSION, self.cfg.TEST_CKP_IDX))
+        '{}-{}'.format(self.version, self.ckp_idx))
     test_log_path = test_log_path_
     i_append_info = 0
     while isdir(test_log_path):
@@ -574,6 +604,9 @@ class TestMultiObjects(object):
     tf.reset_default_graph()
     loaded_graph = tf.Graph()
 
+    utils.thick_line()
+    print('Testing on test set...')
+
     with tf.Session(graph=loaded_graph) as sess:
 
       # Load saved models
@@ -586,9 +619,6 @@ class TestMultiObjects(object):
       else:
         inputs, labels, preds = self._get_tensors(loaded_graph)
         rec_images = None
-
-      utils.thick_line()
-      print('Testing on test set...')
 
       utils.thin_line()
       print('Calculating loss and accuracy of test set...')
@@ -647,4 +677,9 @@ if __name__ == '__main__':
   else:
     config_ = config
 
-  Test_(config_, multi_gpu_).test()
+  load_last_ckp_ = False if config_.TEST_CKP_IDX else True
+
+  Test_(cfg=config_,
+        multi_gpu=multi_gpu_,
+        version=config_.TEST_VERSION,
+        load_last_ckp=load_last_ckp_).test()

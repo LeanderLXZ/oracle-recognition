@@ -222,6 +222,9 @@ __C.SHOW_TRAINING_DETAILS = False
 # Evaluate on test set after training
 __C.TEST_AFTER_TRAINING = True
 
+# Evaluate on multi-objects test set after training
+__C.TEST_MO_AFTER_TRAINING = True
+
 
 # ===========================================
 # #          Testing Configurations         #
@@ -231,7 +234,8 @@ __C.TEST_AFTER_TRAINING = True
 __C.TEST_VERSION = __C.VERSION
 
 # Testing checkpoint index
-__C.TEST_CKP_IDX = 49
+# If None, load the latest checkpoint.
+__C.TEST_CKP_IDX = None
 
 # Testing with reconstruction
 __C.TEST_WITH_REC = True
