@@ -15,6 +15,7 @@ from baseline_config import basel_config
 from models import utils
 from models.capsNet import CapsNet
 from models.capsNet_distribute import CapsNetDistribute
+from models.capsNet_multi_tasks import CapsNetMultiTasks
 from baseline_arch import basel_arch
 from capsNet_arch import caps_arch
 from test import Test, TestMultiObjects
@@ -22,18 +23,23 @@ from test import Test, TestMultiObjects
 
 class Main(object):
 
-  def __init__(self, cfg, model_arch, multi_gpu=False):
+  def __init__(self, cfg, model_arch, mode='normal'):
     """Load data and initialize models."""
     # Global start time
     self.start_time = time.time()
 
     # Config
     self.cfg = cfg
-    self.multi_gpu = multi_gpu
+    self.multi_gpu = True
 
-    if multi_gpu:
+    if mode == 'multi-tasks':
+      self.multi_gpu = True
+      model = CapsNetMultiTasks(cfg, model_arch)
+    elif mode == 'multi-gpu':
+      self.multi_gpu = True
       model = CapsNetDistribute(cfg, model_arch)
     else:
+      self.multi_gpu = False
       model = CapsNet(cfg, model_arch)
 
     # Get paths from configuration
@@ -559,31 +565,29 @@ if __name__ == '__main__':
                            "Choose the GPU from: {!s}".format([0, 1]))
   parser.add_argument('-m', '--mgpu', action="store_true",
                       help="Run multi-gpu version.")
+  parser.add_argument('-t', '--mtask', action="store_true",
+                      help="Run multi-tasks version.")
   parser.add_argument('-b', '--baseline', action="store_true",
                       help="Use baseline architecture and configurations.")
   args = parser.parse_args()
 
-  if args.gpu:
+  if args.mtask:
     utils.thick_line()
-    print('Using /gpu: %d' % args.gpu)
-    environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
-    multi_gpu_ = False
+    print('Running multi-tasks version.')
+    mode_ = 'multi-tasks'
   elif args.mgpu:
     utils.thick_line()
     print('Running multi-gpu version.')
-    multi_gpu_ = True
+    mode_ = 'multi-gpu'
+  elif args.gpu:
+    utils.thick_line()
+    print('Running single version. Using /gpu: %d' % args.gpu)
+    environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
+    mode_ = 'single-gpu'
   else:
     utils.thick_line()
-    print('Input [ 1 ] to run normal version.')
-    print('Input [ 2 ] to run multi-gpu version.')
-    utils.thick_line()
-    input_ = input('Input: ')
-    if input_ == '1':
-      multi_gpu_ = False
-    elif input_ == '2':
-      multi_gpu_ = True
-    else:
-      raise ValueError('Wrong Input! Found: ', input_)
+    print('Running normal version.')
+    mode_ = 'normal'
 
   if args.baseline:
     print('Running baseline model.')
@@ -594,4 +598,4 @@ if __name__ == '__main__':
     arch_ = caps_arch
     config_ = config
 
-  Main(config_, arch_, multi_gpu=multi_gpu_).train()
+  Main(config_, arch_, mode=mode_).train()

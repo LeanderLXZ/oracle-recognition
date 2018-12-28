@@ -7,10 +7,10 @@ import tensorflow as tf
 from models.capsNet_distribute import CapsNetDistribute
 
 
-class CapsNetLowMemory(CapsNetDistribute):
+class CapsNetMultiTasks(CapsNetDistribute):
 
   def __init__(self, cfg, model_arch):
-    super(CapsNetLowMemory, self).__init__(cfg, model_arch)
+    super(CapsNetMultiTasks, self).__init__(cfg, model_arch)
     self.clf_arch_info = None
     self.rec_arch_info = None
     self.batch_size = cfg.BATCH_SIZE // cfg.GPU_NUMBER // cfg.TASK_NUMBER

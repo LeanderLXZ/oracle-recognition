@@ -515,7 +515,8 @@ def img_add_no_overlap(imgs,
       col_end = 0
       row_start += img_shape[0]
       row_end += img_shape[0]
-  new_img = np.squeeze(new_img, axis=-1)
+  if img_mode == 'L':
+      new_img = np.squeeze(new_img, axis=-1)
   added = Image.fromarray(new_img.astype('uint8'), mode=img_mode)
   added = np.expand_dims(
       added.resize(img_shape[:2], resize_filter), axis=-1) / 255.
