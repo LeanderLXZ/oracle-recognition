@@ -86,7 +86,7 @@ __C.DATA_AUG_PARAM = dict(
 )
 # Keep original images if use data augment
 __C.DATA_AUG_KEEP_SOURCE = False
-# The max number of images if use data augment
+# The max number of images of a class if use data augment
 __C.MAX_IMAGE_NUM = 10000
 
 # Oracle Parameters
@@ -174,22 +174,13 @@ __C.REC_LOSS = 'mse'
 # Scaling for reconstruction loss
 __C.REC_LOSS_SCALE = 0.392  # 0.0005*32*32=0.512  # 0.0005*784=0.392
 
-# -------------------------------------------
-# Test
-
-# Evaluate on test set after training
-__C.TEST_AFTER_TRAINING = True
-
-# Evaluate on multi-objects test set after training
-__C.TEST_MO_AFTER_TRAINING = True
-
 
 # ===========================================
 # #         Training Configurations         #
 # ===========================================
 
 # Display step
-# Set None to not display
+# Set None to not display details
 __C.DISPLAY_STEP = None  # batches
 
 # Save summary step
@@ -213,8 +204,8 @@ __C.FULL_SET_EVAL_STEP = 1
 # Save models
 # 'per_epoch': save models when n epochs finished
 # 'per_batch': save models when n batches finished
-__C.SAVE_MODEL_MODE = None
-# __C.SAVE_MODEL_MODE = 'per_epoch'
+# __C.SAVE_MODEL_MODE = None
+__C.SAVE_MODEL_MODE = 'per_epoch'
 # None: not save models
 __C.SAVE_MODEL_STEP = 5
 # Maximum number of recent checkpoints to keep.
@@ -225,6 +216,15 @@ __C.EVAL_WITH_FULL_TRAIN_SET = False
 
 # Show details of training progress
 __C.SHOW_TRAINING_DETAILS = False
+
+# -------------------------------------------
+# Test
+
+# Evaluate on test set after training
+__C.TEST_AFTER_TRAINING = True
+
+# Evaluate on multi-objects test set after training
+__C.TEST_MO_AFTER_TRAINING = True
 
 
 # ===========================================
@@ -247,8 +247,7 @@ __C.TEST_SAVE_IMAGE_STEP = 10  # batches
 
 # Batch size of testing
 # should be same as training batch_size
-# if None, testing will not use mini-batch.
-__C.TEST_BATCH_SIZE = 256
+__C.TEST_BATCH_SIZE = __C.BATCH_SIZE
 
 # -------------------------------------------
 # Multi-objects detection
@@ -307,10 +306,7 @@ __C.TEST_LOG_PATH = '../test_logs'
 __C.VAR_ON_CPU = True
 
 # Number of GPUs
-__C.GPU_NUMBER = 8
-
-# Batch size on a single GPU
-__C.GPU_BATCH_SIZE = __C.BATCH_SIZE // __C.GPU_NUMBER
+__C.GPU_NUMBER = 2
 
 # The decay to use for the moving average.
 __C.MOVING_AVERAGE_DECAY = 0.9999

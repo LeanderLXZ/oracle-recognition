@@ -146,6 +146,7 @@ __C.WEIGHTS_STDDEV = 0.01
 # 'momentum': MomentumOptimizer()
 __C.OPTIMIZER = 'adam'
 
+# Momentum Optimizer
 # Boundaries of learning rate
 __C.LR_BOUNDARIES = [82, 123, 300]
 # Stage of learning rate
@@ -241,7 +242,7 @@ __C.TEST_CKP_IDX = None
 __C.TEST_WITH_REC = True
 
 # Saving testing reconstruction images
-# None: not save images
+# If None, do not save images.
 __C.TEST_SAVE_IMAGE_STEP = 10  # batches
 
 # Batch size of testing
@@ -306,9 +307,6 @@ __C.VAR_ON_CPU = True
 
 # Number of GPUs
 __C.GPU_NUMBER = 2
-
-# Batch size on a single GPU
-__C.GPU_BATCH_SIZE = __C.BATCH_SIZE // __C.GPU_NUMBER
 
 # The decay to use for the moving average.
 __C.MOVING_AVERAGE_DECAY = 0.9999

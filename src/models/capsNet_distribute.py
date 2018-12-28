@@ -13,10 +13,10 @@ class CapsNetDistribute(CapsNet):
     super(CapsNetDistribute, self).__init__(cfg, model_arch)
     self.clf_arch_info = None
     self.rec_arch_info = None
-    self.batch_size = cfg.GPU_BATCH_SIZE
+    self.batch_size = cfg.BATCH_SIZE // cfg.GPU_NUMBER
 
-  def _tower_loss(self, inputs, labels, image_size, is_training=None):
-    """Calculate the total loss on a single tower running the models.
+  def _get_loss(self, inputs, labels, image_size, is_training=None):
+    """Calculate the loss running the models.
 
     Args:
       inputs: inputs. 4D tensor
@@ -81,6 +81,7 @@ class CapsNetDistribute(CapsNet):
       grad_and_var = (grad, v)
       average_grads.append(grad_and_var)
 
+    # average_grads: [(grad0, var0), (grad1, var1), ..., (gradM, varM)]
     return average_grads
 
   def _average_metrics(self, loss_all, acc_all, preds_all,
@@ -123,14 +124,30 @@ class CapsNetDistribute(CapsNet):
       reconstructed_images = tf.concat(
           rec_images_all, axis=0, name='total_rec_images')
       assert reconstructed_images.get_shape() == (
-        self.cfg.GPU_BATCH_SIZE * n_tower,
-        *rec_images_all[0].get_shape().as_list()[1:])
+        self.cfg.BATCH_SIZE, *rec_images_all[0].get_shape().as_list()[1:])
     else:
       classifier_loss, reconstruct_loss, \
           reconstructed_images = None, None, None
 
     return loss, accuracy, preds, classifier_loss, \
         reconstruct_loss, reconstructed_images
+
+  def _calc_on_gpu(self, gpu_idx, x_splits_tower, y_splits_tower,
+                   image_size, is_training, optimizer):
+
+    # Dequeues one batch for the GPU
+    x_tower, y_tower = x_splits_tower[gpu_idx], y_splits_tower[gpu_idx]
+
+    # Calculate the loss for one tower.
+    loss_tower, acc_tower, preds_tower, clf_loss_tower, rec_loss_tower, \
+        rec_images_tower = self._get_loss(
+            x_tower, y_tower, image_size, is_training=is_training)
+
+    # Calculate the gradients on this tower.
+    grads_tower = optimizer.compute_gradients(loss_tower)
+
+    return grads_tower, loss_tower, acc_tower, clf_loss_tower, \
+        rec_loss_tower, rec_images_tower, preds_tower
 
   def build_graph(self, image_size=(None, None, None),
                   num_class=None, n_train_samples=None):
@@ -163,48 +180,38 @@ class CapsNetDistribute(CapsNet):
                                   global_step=global_step)
 
       # Split data for each tower
-      x_splits = tf.split(
+      x_splits_tower = tf.split(
           axis=0, num_or_size_splits=self.cfg.GPU_NUMBER, value=inputs)
-      y_splits = tf.split(
+      y_splits_tower = tf.split(
           axis=0, num_or_size_splits=self.cfg.GPU_NUMBER, value=labels)
 
       # Calculate the gradients for each models tower.
-      tower_grads = []
-      loss_all = []
-      acc_all = []
-      clf_loss_all = []
-      rec_loss_all = []
-      rec_images_all = []
-      preds_all = []
+      grads_all, loss_all, acc_all, clf_loss_all, \
+          rec_loss_all, rec_images_all, preds_all = \
+          [], [], [], [], [], [], []
       for i in range(self.cfg.GPU_NUMBER):
         with tf.variable_scope(tf.get_variable_scope(), reuse=bool(i != 0)):
           with tf.device('/gpu:%d' % i):
             with tf.name_scope('tower_%d' % i):
-
-              # Dequeues one batch for the GPU
-              x_tower, y_tower = x_splits[i], y_splits[i]
-
-              # Calculate the loss for one tower.
-              loss_, accuracy_, preds_, classifier_loss_, reconstruct_loss_, \
-                  reconstructed_images_ = self._tower_loss(
-                      x_tower, y_tower, image_size, is_training=is_training)
-
-              # Calculate the gradients on this tower.
-              grads = optimizer.compute_gradients(loss_)
+              grads_tower, loss_tower, acc_tower, clf_loss_tower, \
+                  rec_loss_tower, rec_images_tower, preds_tower = \
+                  self._calc_on_gpu(
+                      i, x_splits_tower, y_splits_tower,
+                      image_size, is_training, optimizer)
 
               # Keep track of the gradients across all towers.
-              tower_grads.append(grads)
+              grads_all.append(grads_tower)
 
               # Collect metrics of each tower
-              loss_all.append(loss_)
-              acc_all.append(accuracy_)
-              clf_loss_all.append(classifier_loss_)
-              rec_loss_all.append(reconstruct_loss_)
-              rec_images_all.append(reconstructed_images_)
-              preds_all.append(preds_)
+              loss_all.append(loss_tower)
+              acc_all.append(acc_tower)
+              clf_loss_all.append(clf_loss_tower)
+              rec_loss_all.append(rec_loss_tower)
+              rec_images_all.append(rec_images_tower)
+              preds_all.append(preds_tower)
 
       # Calculate the mean of each gradient.
-      grads = self._average_gradients(tower_grads)
+      grads = self._average_gradients(grads_all)
 
       # Calculate means of metrics
       loss, accuracy, preds, classifier_loss, reconstruct_loss, \
