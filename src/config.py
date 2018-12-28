@@ -19,6 +19,7 @@ def _auto_version(c):
 
 __C = EasyDict()
 
+
 # ===========================================
 # #             Hyperparameters             #
 # ===========================================
@@ -108,6 +109,7 @@ __C.REPEAT = False
 # Number of parts for saving large pickle files
 __C.LARGE_DATA_PART_NUM = 1
 
+
 # ===========================================
 # #            Model Architecture           #
 # ===========================================
@@ -178,6 +180,7 @@ __C.REC_LOSS_SCALE = 0.392  # 0.0005*32*32=0.512  # 0.0005*784=0.392
 # Evaluate on test set after training
 __C.TEST_AFTER_TRAINING = True
 
+
 # ===========================================
 # #         Training Configurations         #
 # ===========================================
@@ -210,15 +213,16 @@ __C.FULL_SET_EVAL_STEP = 1
 __C.SAVE_MODEL_MODE = None
 # __C.SAVE_MODEL_MODE = 'per_epoch'
 # None: not save models
-__C.SAVE_MODEL_STEP = 10
+__C.SAVE_MODEL_STEP = 5
 # Maximum number of recent checkpoints to keep.
-__C.MAX_TO_KEEP_CKP = 5
+__C.MAX_TO_KEEP_CKP = 3
 
 # Calculate the train loss of full data set, which may take lots of time.
 __C.EVAL_WITH_FULL_TRAIN_SET = False
 
 # Show details of training progress
 __C.SHOW_TRAINING_DETAILS = False
+
 
 # ===========================================
 # #          Testing Configurations         #
@@ -264,6 +268,7 @@ __C.MOD_PRED_THRESHOLD = 0.5
 # Save test prediction vectors
 __C.SAVE_TEST_PRED = True
 
+
 # ===========================================
 # #                  Others                 #
 # ===========================================
@@ -288,6 +293,7 @@ __C.CHECKPOINT_PATH = '../checkpoints'
 
 # Path for saving testing logs
 __C.TEST_LOG_PATH = '../test_logs'
+
 
 # ===========================================
 # #        Multi-GPUs Configurations        #
