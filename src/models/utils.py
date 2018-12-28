@@ -464,25 +464,32 @@ def download_and_extract_cifar10(url, save_path, file_name, extract_path):
   shutil.rmtree(extracted_dir_path)
 
 
-def img_add_overlap(imgs, merge=False, vec=None, gamma=0):
+def img_add_overlap(imgs,
+                    merge=False,
+                    vec=None,
+                    gamma=0):
   """Add images together with overlap."""
   if merge:
     c = 1 / len(imgs)
   else:
     c = 1
   added = np.zeros_like(imgs[0])
-  for i, src_img in enumerate(imgs):
+  for i, img in enumerate(imgs):
     if vec:
-      added += src_img * (1 / vec[i]) * c
+      added += img * (1 / vec[i]) * c
     else:
-      added += src_img * c
+      added += img * c
   added += gamma
   added[added > 1] = 1
   added[added < 0] = 0
   return added
 
 
-def img_add_no_overlap(imgs, num_mul_obj, img_mode='L', resize_filter=None):
+def img_add_no_overlap(imgs,
+                       num_mul_obj,
+                       vec=None,
+                       img_mode='L',
+                       resize_filter=None):
   """Add images together without overlap."""
   img_shape = np.array(imgs).shape[1:]
   save_size = \
@@ -497,7 +504,9 @@ def img_add_no_overlap(imgs, num_mul_obj, img_mode='L', resize_filter=None):
 
   # Combine images
   row_start, row_end, col_start, col_end = 0, img_shape[0], 0, 0
-  for img in imgs:
+  for i, img in enumerate(imgs):
+    if vec:
+      img = img * (1 / vec[i])
     col_end += img_shape[1]
     new_img[row_start:row_end, col_start:col_end, :] = img
     col_start += img_shape[1]
@@ -556,7 +565,8 @@ def save_imgs(real_imgs,
               silent=False,
               epoch_i=None,
               test_flag=False,
-              colorful=False):
+              colorful=False,
+              append_info=None):
   """Save images to jpg files."""
   # Image shape
   img_shape = real_imgs.shape[1:]
@@ -623,17 +633,20 @@ def save_imgs(real_imgs,
 
   if test_flag:
     if step:
-      save_image_path = join(img_path, 'test_batch_{}.jpg'.format(step))
+      save_image_path = join(img_path, 'test_batch_{}'.format(step))
     else:
-      save_image_path = join(img_path, 'test.jpg')
+      save_image_path = join(img_path, 'test')
   else:
     if epoch_i:
       save_image_path = join(
           img_path,
-          'train_epoch_{}_batch_{}.jpg'.format(epoch_i, step))
+          'train_epoch_{}_batch_{}'.format(epoch_i, step))
     else:
       save_image_path = join(
-          img_path, 'train_batch_{}.jpg'.format(step))
+          img_path, 'train_batch_{}'.format(step))
+
+  save_image_path = join(
+      save_image_path, '{}.jpg'.format(append_info))
 
   if not silent:
     thin_line()

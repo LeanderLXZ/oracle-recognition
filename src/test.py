@@ -6,6 +6,7 @@ import time
 import argparse
 import tensorflow as tf
 import numpy as np
+from PIL import Image
 from tqdm import tqdm
 from os.path import join, isdir
 # from sklearn.metrics import \
@@ -522,28 +523,50 @@ class TestMultiObjects(object):
     # Get colorful overlapped images
     real_imgs_ = utils.img_black_to_color(
         self.x_test[test_img_idx], same=True)
-    rec_imgs_ = []
+    rec_imgs_overlap = []
+    rec_imgs_no_overlap = []
     for idx, imgs in enumerate(rec_images_):
       imgs_colored = utils.img_black_to_color(imgs)
-      imgs_merged = utils.img_add_overlap(
-          imgs_colored, merge=True,
+      imgs_overlap = utils.img_add_overlap(
+          imgs=imgs_colored,
+          merge=True,
           vec=preds_vec_[idx],
           # vec=None,
           gamma=0)
-      rec_imgs_.append(imgs_merged)
-    rec_imgs_ = np.array(rec_imgs_)
-    assert real_imgs_.shape == rec_imgs_.shape
+      imgs_no_overlap = utils.img_add_no_overlap(
+          imgs=imgs_colored,
+          num_mul_obj=self.cfg.NUM_MULTI_OBJECT,
+          vec=preds_vec_[idx],
+          img_mode='RGB',
+          resize_filter=Image.ANTIALIAS)
+      rec_imgs_overlap.append(imgs_overlap)
+      rec_imgs_no_overlap.append(imgs_no_overlap)
+    rec_imgs_overlap = np.array(rec_imgs_overlap)
+    rec_imgs_no_overlap = np.array(rec_imgs_no_overlap)
 
     # Save images
     utils.save_imgs(
         real_imgs=real_imgs_,
-        rec_imgs=rec_imgs_,
+        rec_imgs=rec_imgs_overlap,
         img_path=self.test_image_path,
         database_name=self.cfg.DATABASE_NAME,
         max_img_in_col=self.cfg.MAX_IMAGE_IN_COL,
         silent=False,
         test_flag=True,
-        colorful=True)
+        colorful=True,
+        append_info='_overlap'
+    )
+    utils.save_imgs(
+        real_imgs=real_imgs_,
+        rec_imgs=rec_imgs_no_overlap,
+        img_path=self.test_image_path,
+        database_name=self.cfg.DATABASE_NAME,
+        max_img_in_col=self.cfg.MAX_IMAGE_IN_COL,
+        silent=False,
+        test_flag=True,
+        colorful=True,
+        append_info='_no_overlap'
+    )
 
   def test(self):
     """Test models."""
