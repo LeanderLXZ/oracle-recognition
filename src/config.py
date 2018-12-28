@@ -76,20 +76,22 @@ __C.USE_DATA_AUG = True
 # Parameters for data augment
 __C.DATA_AUG_PARAM = dict(
     rotation_range=40,
-    width_shift_range=0.25,
-    height_shift_range=0.25,
+    width_shift_range=0.4,
+    height_shift_range=0.4,
     # shear_range=0.1,
-    zoom_range=[0.5, 1.0],
+    zoom_range=[1.0, 2.0],
     horizontal_flip=True,
     fill_mode='nearest'
 )
+# Keep original images if use data augment
+__C.DATA_AUG_KEEP_SOURCE = False
+# The max number of images if use data augment
+__C.MAX_IMAGE_NUM = 10000
 
 # Oracle Parameters
 # Number of radicals to use for training
 # Max = 148
 __C.NUM_RADICALS = 20
-# The max number of images if use data augment
-__C.MAX_IMAGE_NUM = 5000
 
 # Preprocessing images of superpositions of multi-objects
 # If None, one image only shows one object.
@@ -100,6 +102,8 @@ __C.NUM_MULTI_OBJECT = 2
 __C.NUM_MULTI_IMG = 10000
 # If overlap, the multi-objects will be overlapped in a image.
 __C.OVERLAP = False
+# If Repeat, repetitive labels will appear in a image.
+__C.REPEAT = False
 
 # Number of parts for saving large pickle files
 __C.LARGE_DATA_PART_NUM = 1

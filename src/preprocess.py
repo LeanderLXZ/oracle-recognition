@@ -53,7 +53,7 @@ class DataPreProcess(object):
     else:
       raise ValueError('Wrong database name!')
 
-  def _load_data(self):
+  def _load_data(self, show_img=False):
     """
     Load data set from files.
     """
@@ -69,19 +69,32 @@ class DataPreProcess(object):
     self.y_test = utils.load_data_from_pkl(
         join(self.source_data_path, 'test_labels.p'))
 
-    # TODO: data augment
+    # Data augment
+    if self.cfg.USE_DATA_AUG:
+      utils.thin_line()
+      print('Augmenting data...'.format(self.data_base_name))
 
-  def _resize_imgs(self):
-    """Resize images"""
-    self.img_size = self.cfg.IMAGE_SIZE
-    self.x = utils.img_resize(
-        self.x, self.cfg.IMAGE_SIZE, img_mode=self.img_mode,
-        resize_filter=Image.ANTIALIAS)
-    self.x_test = utils.img_resize(
-        self.x_test, self.cfg.IMAGE_SIZE, img_mode=self.img_mode,
-        resize_filter=Image.ANTIALIAS)
+      x_y_dict = self._get_x_y_dict(self.x, self.y)
+      x_new = []
+      y_new = []
+      for y_ in x_y_dict.keys():
+        x_ = x_y_dict[y_]
+        x_ = self._augment_data(
+            x_,
+            self.cfg.DATA_AUG_PARAM,
+            img_num=self.cfg.MAX_IMAGE_NUM,
+            add_self=self.cfg.DATA_AUG_KEEP_SOURCE)
+        x_new.append(x_)
+        y_new.extend([int(y_) for _ in range(len(x_))])
 
-  def _load_oracle_radicals(self):
+      self.x = np.array(
+          x_new, dtype=np.float32).reshape((-1, *self.x[0].shape))
+      self.y = np.array(y_new, dtype=np.int)
+
+    if show_img:
+      self._grid_show_imgs(self.x, self.y, 25, mode='L')
+
+  def _load_oracle_radicals(self, show_img=False):
     """
     Load oracle data set from files.
     """
@@ -126,6 +139,31 @@ class DataPreProcess(object):
     print('Images shape: {}\nLabels shape: {}'.format(
         self.x.shape, self.y.shape))
     assert len(self.x) == len(self.y)
+
+    if show_img:
+      self._grid_show_imgs(self.x, self.y, 25, mode='L')
+
+  @staticmethod
+  def _get_x_y_dict(x, y, y_encoded=False):
+    """Get y:x dictionary."""
+    if y_encoded:
+      # [[1, 0, ..., 0], ..., [0, 1, ..., 0]] -> [1, ..., 2]
+      y = [np.argmax(y_) for y_ in y]
+    classes = set(y)
+    x_y_dict = {c: [] for c in classes}
+    for idx, y_ in enumerate(y):
+      x_y_dict[y_].append(x[idx])
+    return x_y_dict
+
+  def _resize_imgs(self):
+    """Resize images"""
+    self.img_size = self.cfg.IMAGE_SIZE
+    self.x = utils.img_resize(
+        self.x, self.cfg.IMAGE_SIZE, img_mode=self.img_mode,
+        resize_filter=Image.ANTIALIAS)
+    self.x_test = utils.img_resize(
+        self.x_test, self.cfg.IMAGE_SIZE, img_mode=self.img_mode,
+        resize_filter=Image.ANTIALIAS)
 
   def _resize_oracle_img(self, img):
     """
@@ -228,45 +266,55 @@ class DataPreProcess(object):
     for _ in tqdm(range(self.cfg.NUM_MULTI_IMG),
                   total=self.cfg.NUM_MULTI_IMG,
                   ncols=100, unit=' images'):
-      # generate superposition images
-      img_idx_ = np.random.choice(len(self.x_test), self.cfg.NUM_MULTI_OBJECT)
-      imgs_ = list(self.x_test[img_idx_])
 
-      # TODO: No repetitive labels
+      # Get images for merging
+      if self.cfg.REPEAT:
+        # Repetitive labels
+        mul_img_idx_ = np.random.choice(
+            len(self.x_test), self.cfg.NUM_MULTI_OBJECT, replace=False)
+        mul_imgs = list(self.x_test[mul_img_idx_])
+        mul_y = [0 if y_ == 0 else 1 for y_ in np.sum(
+            self.y_test[mul_img_idx_], axis=0)]
+      else:
+        # No repetitive labels
+        x_y_dict = self._get_x_y_dict(self.x_test, self.y_test, y_encoded=True)
+        y_list = np.random.choice(
+            list(x_y_dict.keys()), self.cfg.NUM_MULTI_OBJECT, replace=False)
+        mul_imgs = []
+        mul_y = []
+        for y_ in y_list:
+          x_ = x_y_dict[y_]
+          x_ = x_[np.random.choice(len(x_))]
+          mul_imgs.append(x_)
+          mul_y.append(y_)
+        mul_y = [1 if i in mul_y else 0 for i in range(len(x_y_dict.keys()))]
 
       # Data augment
       if data_aug:
-        imgs_ = np.array(self._augment_data(
-            imgs_, self.cfg.DATA_AUG_PARAM,
-            img_num=len(imgs_), add_self=True))
+        mul_imgs = np.array(self._augment_data(
+            mul_imgs,
+            self.cfg.DATA_AUG_PARAM,
+            img_num=len(mul_imgs),
+            add_self=False))
 
       # Merge images
       if self.cfg.OVERLAP:
-        mul_img_ = utils.img_add_overlap(imgs_, merge=False, gamma=0)
+        mul_imgs = utils.img_add_overlap(mul_imgs, merge=False, gamma=0)
       else:
-        mul_img_ = utils.img_add_no_overlap(
-            imgs_, self.cfg.NUM_MULTI_OBJECT,
+        mul_imgs = utils.img_add_no_overlap(
+            mul_imgs, self.cfg.NUM_MULTI_OBJECT,
             img_mode=self.img_mode, resize_filter=Image.ANTIALIAS)
 
-      self.x_test_mul.append(mul_img_)
-
-      # labels
-      mul_y = [0 if y_ == 0 else 1 for y_ in np.sum(
-          self.y_test[img_idx_], axis=0)]
+      self.x_test_mul.append(mul_imgs)
       self.y_test_mul.append(mul_y)
 
     self.x_test_mul = np.array(self.x_test_mul)
     self.y_test_mul = np.array(self.y_test_mul)
 
     if show_img:
-      num_img_show = 25
-      sample_idx_ = np.random.choice(
-          self.cfg.NUM_MULTI_IMG, num_img_show, replace=False)
-      utils.square_grid_show_imgs(self.x_test_mul[sample_idx_], mode='L')
       y_show = np.argsort(
-          self.y_test_mul[sample_idx_], axis=1)[:, -self.cfg.NUM_MULTI_OBJECT:]
-      size = math.floor(np.sqrt(num_img_show))
-      print(y_show.reshape(size, size, -1))
+          self.y_test_mul, axis=1)[:, -self.cfg.NUM_MULTI_OBJECT:]
+      self._grid_show_imgs(self.x_test_mul, y_show, 25, mode='L')
 
   def _train_valid_split(self):
     """
@@ -326,6 +374,9 @@ class DataPreProcess(object):
     else:
       raise ValueError('Wrong database name!')
 
+    if self.cfg.USE_DATA_AUG:
+      train_num = n_classes * self.cfg.MAX_IMAGE_NUM
+
     if self.cfg.DPP_TEST_AS_VALID:
       valid_num = test_num
     else:
@@ -376,6 +427,15 @@ class DataPreProcess(object):
       utils.save_data_to_pkl(
           self.y_test_mul, join(self.preprocessed_path, 'y_test_mul.p'))
 
+  @staticmethod
+  def _grid_show_imgs(x, y, n_img_show, mode='L'):
+    sample_idx_ = np.random.choice(
+        len(y), n_img_show, replace=False)
+    utils.square_grid_show_imgs(x[sample_idx_], mode=mode)
+    y_show = y[sample_idx_]
+    size = math.floor(np.sqrt(n_img_show))
+    print(y_show.reshape(size, size, -1))
+
   def pipeline(self):
     """
     Pipeline of preprocessing data.
@@ -391,13 +451,16 @@ class DataPreProcess(object):
     self.preprocessed_path = join(self.cfg.DPP_DATA_PATH, self.data_base_name)
     self.source_data_path = join(self.cfg.SOURCE_DATA_PATH, self.data_base_name)
 
+    show_img = True
+    # show_img = False
+
     # Load data
     if self.data_base_name == 'mnist' or self.data_base_name == 'cifar10':
-      self._load_data()
+      self._load_data(show_img=show_img)
       if self.cfg.RESIZE_IMG:
         self._resize_imgs()
     elif self.data_base_name == 'radical':
-      self._load_oracle_radicals()
+      self._load_oracle_radicals(show_img=show_img)
       self._train_test_split()
 
     # Scaling images to (0, 1)
@@ -411,7 +474,7 @@ class DataPreProcess(object):
 
     # Generate multi-objects test images
     if self.cfg.NUM_MULTI_OBJECT:
-      self._generate_multi_obj_img(show_img=False, data_aug=False)
+      self._generate_multi_obj_img(show_img=show_img, data_aug=False)
 
     # Split data set into train/valid
     self._train_valid_split()

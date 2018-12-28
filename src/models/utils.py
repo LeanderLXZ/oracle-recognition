@@ -645,7 +645,7 @@ def save_imgs(real_imgs,
 def square_grid_show_imgs(images, mode=None):
   """Save images as a square grid."""
   # Get maximum size for square grid of images
-  save_size = math.floor(np.sqrt(images.shape[0]))
+  img_size = math.floor(np.sqrt(images.shape[0]))
 
   # Scale to 0-255
   images = (
@@ -654,8 +654,8 @@ def square_grid_show_imgs(images, mode=None):
 
   # Put images in a square arrangement
   images_in_square = np.reshape(
-      images[:save_size * save_size],
-      (save_size, save_size, images.shape[1], images.shape[2], images.shape[3]))
+      images[:img_size * img_size],
+      (img_size, img_size, images.shape[1], images.shape[2], images.shape[3]))
 
   # images_in_square.shape = (5, 5, 28, 28, 1)
 
@@ -667,7 +667,7 @@ def square_grid_show_imgs(images, mode=None):
 
   # Combine images to grid image
   new_im = Image.new(mode,
-                     (images.shape[1] * save_size, images.shape[2] * save_size))
+                     (images.shape[1] * img_size, images.shape[2] * img_size))
   for row_i, row_images in enumerate(images_in_square):
     for col_i, image in enumerate(row_images):
       im = Image.fromarray(image, mode)
