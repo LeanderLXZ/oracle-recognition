@@ -41,7 +41,8 @@ class CapsNetMultiTasks(CapsNetDistribute):
     assert acc_tower.get_shape() == ()
 
     preds_tower = tf.concat(preds_tower, axis=0, name='preds_tower')
-    assert preds_tower.get_shape()[0] == self.cfg.BATCH_SIZE
+    assert preds_tower.get_shape()[0] == \
+        self.cfg.BATCH_SIZE // self.cfg.GPU_NUMBER
 
     if self.cfg.WITH_REC:
       clf_loss_tower = tf.divide(
@@ -54,9 +55,8 @@ class CapsNetMultiTasks(CapsNetDistribute):
 
       rec_images_tower = tf.concat(
           rec_images_tower, axis=0, name='rec_images_tower')
-      assert rec_images_tower.get_shape() == (
-        self.cfg.BATCH_SIZE // self.cfg.GPU_NUMBER,
-        *rec_images_tower[0].get_shape().as_list()[1:])
+      assert rec_images_tower.get_shape().as_list()[0] == \
+          self.cfg.BATCH_SIZE // self.cfg.GPU_NUMBER
     else:
       clf_loss_tower, rec_loss_tower, rec_images_tower = None, None, None
 
