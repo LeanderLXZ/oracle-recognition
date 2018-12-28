@@ -77,7 +77,9 @@ class DataPreProcess(object):
       x_y_dict = self._get_x_y_dict(self.x, self.y)
       x_new = []
       y_new = []
-      for y_ in x_y_dict.keys():
+      for y_ in tqdm(x_y_dict.keys(),
+                     len(x_y_dict.keys()),
+                     ncols=100, unit=' class'):
         x_ = x_y_dict[y_]
         x_ = self._augment_data(
             x_,
