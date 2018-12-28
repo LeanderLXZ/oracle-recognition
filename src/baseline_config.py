@@ -85,7 +85,7 @@ __C.DATA_AUG_PARAM = dict(
 )
 # Keep original images if use data augment
 __C.DATA_AUG_KEEP_SOURCE = False
-# The max number of images if use data augment
+# The max number of images of a class if use data augment
 __C.MAX_IMAGE_NUM = 10000
 
 # Oracle Parameters
