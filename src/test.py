@@ -8,8 +8,8 @@ import tensorflow as tf
 import numpy as np
 from tqdm import tqdm
 from os.path import join, isdir
-from sklearn.metrics import \
-  precision_score, recall_score, f1_score, accuracy_score
+# from sklearn.metrics import \
+#   precision_score, recall_score, f1_score, accuracy_score
 
 from config import config
 from baseline_config import basel_config
@@ -401,12 +401,12 @@ class TestMultiObjects(object):
         return ((1 + (beta ** 2)) * p * r) / ((beta ** 2) * p + r)
 
     # Calculate scores manually
-    precision_manual = []
-    recall_manual = []
-    accuracy_manual = []
-    f1score_manual = []
-    f05score_manual = []
-    f2score_manual = []
+    precision = []
+    recall = []
+    accuracy = []
+    f1score = []
+    f05score = []
+    f2score = []
     for y_pred, y_true in zip(preds, self.y_test):
       # true positive
       tp = np.sum(np.multiply(y_true, y_pred))
@@ -417,40 +417,35 @@ class TestMultiObjects(object):
       # true negative
       tn = np.sum(np.logical_and(np.equal(y_true, 0), np.equal(y_pred, 0)))
       precision_ = tp / (tp + fp)
-      precision_manual.append(precision_)
+      accuracy_ = (tp + tn) / (tp + fp + tn + fn)
       recall_ = tp / (tp + fn)
-      recall_manual.append(recall_)
-      accuracy_manual.append((tp + tn) / (tp + fp + tn + fn))
-      f1score_manual.append(_f_beta_score(precision_, recall_, 1.))
-      f05score_manual.append(_f_beta_score(precision_, recall_, 0.5))
-      f2score_manual.append(_f_beta_score(precision_, recall_, 2.))
-    precision_manual = np.mean(precision_manual)
-    recall_manual = np.mean(recall_manual)
-    accuracy_manual = np.mean(accuracy_manual)
-    f1score_manual = np.mean(f1score_manual)
-    f05score_manual = np.mean(f05score_manual)
-    f2score_manual = np.mean(f2score_manual)
+      precision.append(precision_)
+      accuracy.append(accuracy_)
+      recall.append(recall_)
+      f1score.append(_f_beta_score(precision_, recall_, 1.))
+      f05score.append(_f_beta_score(precision_, recall_, 0.5))
+      f2score.append(_f_beta_score(precision_, recall_, 2.))
+    precision = np.mean(precision)
+    recall = np.mean(recall)
+    accuracy = np.mean(accuracy)
+    f1score = np.mean(f1score)
+    f05score = np.mean(f05score)
+    f2score = np.mean(f2score)
 
     # Calculate scores by using scikit-learn tools
-    precision = precision_score(self.y_test, preds, average='samples')
-    recall = recall_score(self.y_test, preds, average='samples')
-    accuracy = accuracy_score(self.y_test, preds)
-    f1score = f1_score(self.y_test, preds, average='samples')
+    # precision = precision_score(self.y_test, preds, average='samples')
+    # recall = recall_score(self.y_test, preds, average='samples')
+    # accuracy = accuracy_score(self.y_test, preds)
+    # f1score = f1_score(self.y_test, preds, average='samples')
 
     # Print evaluation information
     utils.print_multi_obj_eval(
-        precision_manual, recall_manual,
-        accuracy_manual, f1score_manual,
-        f05score_manual, f2score_manual,
-        precision, recall, accuracy, f1score)
+        precision, recall, accuracy, f1score, f05score, f2score)
 
     # Save evaluation scores of multi-objects detection.
     utils.save_multi_obj_scores(
-        self.test_log_path,
-        precision_manual, recall_manual,
-        accuracy_manual, f1score_manual,
-        f05score_manual, f2score_manual,
-        precision, recall, accuracy, f1score)
+        self.test_log_path, precision, recall,
+        accuracy, f1score, f05score, f2score)
 
   def _save_images(self,
                    sess,

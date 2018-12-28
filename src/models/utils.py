@@ -170,22 +170,16 @@ def print_full_set_eval(epoch_i, epochs, step, start_time,
   print('Full_Set_Valid_Accuracy: {:.2f}%'.format(acc_valid * 100))
 
 
-def print_multi_obj_eval(precision_manual, recall_manual,
-                         accuracy_manual, f1score_manual,
-                         f05score_manual, f2score_manual,
-                         precision, recall, accuracy, f1score):
+def print_multi_obj_eval(precision, recall, accuracy,
+                         f1score, f05score, f2score):
   """Print information of multi-objects detection evaluation."""
   thin_line()
-  print('Precision Manual: {:.4f} \n'.format(precision_manual),
-        'Recall Manual: {:.4f} \n'.format(recall_manual),
-        'Accuracy Manual: {:.4f} \n'.format(accuracy_manual),
-        'F_1 Score Manual: {:.4f} \n'.format(f1score_manual),
-        'F_0.5 Score Manual: {:.4f} \n'.format(f05score_manual),
-        'F_2 Score Manual: {:.4f} \n'.format(f2score_manual),
-        'Precision: {:.4f} \n'.format(precision),
+  print('Precision: {:.4f} \n'.format(precision),
         'Recall: {:.4f} \n'.format(recall),
         'Accuracy: {:.4f} \n'.format(accuracy),
-        'F_1 Score: {:.4f}'.format(f1score),
+        'F_1 Score: {:.4f} \n'.format(f1score),
+        'F_0.5 Score: {:.4f} \n'.format(f05score),
+        'F_2 Score: {:.4f} \n'.format(f2score),
         )
 
 
@@ -278,10 +272,8 @@ def save_test_log(file_path, loss_test, acc_test,
     f.write('=' * 55)
 
 
-def save_multi_obj_scores(file_path, precision_manual, recall_manual,
-                          accuracy_manual, f1score_manual,
-                          f05score_manual, f2score_manual,
-                          precision, recall, accuracy, f1score):
+def save_multi_obj_scores(file_path, precision, recall,
+                          accuracy, f1score, f05score, f2score):
   """Save evaluation scores of multi-objects detection."""
   file_path = os.path.join(file_path, 'multi_obj_scores.txt')
   thin_line()
@@ -292,17 +284,12 @@ def save_multi_obj_scores(file_path, precision_manual, recall_manual,
     f.write('=' * 55 + '\n')
     f.write('Time: {}\n'.format(local_time))
     f.write('-' * 55 + '\n')
-    f.write('Precision Manual: {:.4f} \n'.format(precision_manual))
-    f.write('Recall Manual: {:.4f} \n'.format(recall_manual))
-    f.write('Accuracy Manual: {:.4f} \n'.format(accuracy_manual))
-    f.write('F_1 Score Manual: {:.4f} \n'.format(f1score_manual))
-    f.write('F_0.5 Score Manual: {:.4f} \n'.format(f05score_manual))
-    f.write('F_2 Score Manual: {:.4f} \n'.format(f2score_manual))
-    f.write('-' * 55 + '\n')
     f.write('Precision: {:.4f} \n'.format(precision))
     f.write('Recall: {:.4f} \n'.format(recall))
     f.write('Accuracy: {:.4f} \n'.format(accuracy))
     f.write('F_1 Score: {:.4f} \n'.format(f1score))
+    f.write('F_0.5 Score: {:.4f} \n'.format(f05score))
+    f.write('F_2 Score: {:.4f} \n'.format(f2score))
     f.write('=' * 55)
 
 
