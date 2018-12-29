@@ -15,6 +15,66 @@ class CapsNetMultiTasks(CapsNetDistribute):
     self.rec_arch_info = None
     self.batch_size = cfg.BATCH_SIZE // cfg.GPU_NUMBER // cfg.TASK_NUMBER
 
+  @staticmethod
+  def _sum_gradients(tower_grads):
+    """Calculate the average gradient for each shared variable across all towers.
+
+    This function provides a synchronization point across all towers.
+
+    Args:
+      tower_grads: List of lists of (gradient, variable) tuples. The outer list
+                   is over individual gradients. The inner list is over the
+                   gradient calculation for each tower.
+        - shape: [[(grad0_gpu0, var0_gpu0), ..., (gradM_gpu0, varM_gpu0)],
+                   ...,
+                  [(grad0_gpuN, var0_gpuN), ..., (gradM_gpuN, varM_gpuN)]]
+
+    Returns:
+      List of pairs of (gradient, variable) where the gradient has been averaged
+      across all towers.
+    """
+    sum_grads = []
+    for grad_and_vars in zip(*tower_grads):
+      # Each grad_and_vars looks like:
+      # ((grad0_gpu0, var0_gpu0), ... , (grad0_gpuN, var0_gpuN))
+      grads = []
+      for grad, _ in grad_and_vars:
+        # Add 0 dimension to the gradients to represent the tower.
+        expanded_grad = tf.expand_dims(grad, 0)
+        # Append on a 'tower' dimension which we will average over.
+        grads.append(expanded_grad)
+
+      # grads: [[grad0_gpu0], [grad0_gpu1], ..., [grad0_gpuN]]
+      # Sum over the 'tower' dimension.
+      grad = tf.concat(axis=0, values=grads)
+      grad = tf.reduce_sum(grad, 0)
+
+      # The Variables are redundant because they are shared across towers.
+      # So we will just return the first tower's pointer to the Variable.
+      v = grad_and_vars[0][1]  # varI_gpu0
+      grad_and_var = [grad, v]
+      sum_grads.append(grad_and_var)
+
+    # sum_grads: [[sum_grad0, var0], [sum_grad1, var1], ..., [sum_gradM, varM]]
+    return sum_grads
+
+  @staticmethod
+  def _average_sum_grads(grads_sum, n_tower):
+    """Calculate the average of sum_gradients.
+
+    Args:
+      grads_sum: [[sum_grad0, var0], [sum_grad1, var1], ..., [sum_gradM, varM]]
+
+    Returns:
+      List of pairs of (gradient, variable) where the gradient has been averaged
+    """
+    avg_grads = []
+    for avg_var in grads_sum:
+      avg_var.append((avg_var[0] / n_tower, avg_var[1]))
+
+    # avg_grads: [(avg_grad0, var0), (avg_grad1, var1), ..., (avg_gradM, varM)]
+    return avg_grads
+
   def _average_metrics_tower(self, loss_tower, acc_tower, preds_tower,
                              clf_loss_tower, rec_loss_tower, rec_images_tower):
     """Calculate average of metrics of a tower.
@@ -76,8 +136,8 @@ class CapsNetMultiTasks(CapsNetDistribute):
         axis=0, num_or_size_splits=self.cfg.TASK_NUMBER, value=y_tower)
 
     loss_tower, acc_tower, preds_tower, clf_loss_tower, \
-        rec_loss_tower, rec_images_tower, grads_tower = \
-        [], [], [], [], [], [], []
+        rec_loss_tower, rec_images_tower, grads_tower_sum = \
+        [], [], [], [], [], [], None
     for i in range(self.cfg.TASK_NUMBER):
       with tf.variable_scope(tf.get_variable_scope(), reuse=bool(i != 0)):
         with tf.name_scope('task_%d' % i):
@@ -95,7 +155,10 @@ class CapsNetMultiTasks(CapsNetDistribute):
           grads_task = optimizer.compute_gradients(loss_task)
 
           # Keep track of the gradients across all towers.
-          grads_tower.append(grads_task)
+          if i == 0:
+            grads_tower_sum = grads_task
+          else:
+            grads_tower_sum = self._sum_gradients([grads_tower_sum, grads_task])
 
           # Collect metrics of each tower
           loss_tower.append(loss_task)
@@ -106,7 +169,7 @@ class CapsNetMultiTasks(CapsNetDistribute):
           preds_tower.append(preds_task)
 
     # Calculate the mean of each gradient.
-    grads_tower = self._average_gradients(grads_tower)
+    grads_tower = self._average_sum_grads(grads_tower_sum, self.cfg.TASK_NUMBER)
 
     # Calculate means of metrics
     loss_tower, acc_tower, preds_tower, clf_loss_tower, rec_loss_tower, \
