@@ -70,7 +70,7 @@ class CapsNetMultiTasks(CapsNetDistribute):
     """
     avg_grads = []
     for avg_var in grads_sum:
-      avg_var.append((avg_var[0] / n_tower, avg_var[1]))
+      avg_grads.append((avg_var[0] / n_tower, avg_var[1]))
 
     # avg_grads: [(avg_grad0, var0), (avg_grad1, var1), ..., (avg_gradM, varM)]
     return avg_grads
@@ -123,11 +123,8 @@ class CapsNetMultiTasks(CapsNetDistribute):
     return loss_tower, acc_tower, preds_tower, \
         clf_loss_tower, rec_loss_tower, rec_images_tower
 
-  def _calc_on_gpu(self, gpu_idx, x_splits_tower, y_splits_tower,
+  def _calc_on_gpu(self, gpu_idx, x_tower, y_tower,
                    image_size, is_training, optimizer):
-
-    # Dequeues one batch for the GPU
-    x_tower, y_tower = x_splits_tower[gpu_idx], y_splits_tower[gpu_idx]
 
     # Split data for each tower
     x_splits_task = tf.split(
@@ -136,14 +133,16 @@ class CapsNetMultiTasks(CapsNetDistribute):
         axis=0, num_or_size_splits=self.cfg.TASK_NUMBER, value=y_tower)
 
     loss_tower, acc_tower, preds_tower, clf_loss_tower, \
-        rec_loss_tower, rec_images_tower, grads_tower_sum = \
-        [], [], [], [], [], [], None
+        rec_loss_tower, rec_images_tower = [], [], [], [], [], []
+    # grads_tower = []
+    grads_tower_sum = None
     for i in range(self.cfg.TASK_NUMBER):
+      # Dequeues one task
+      x_task, y_task = x_splits_task[gpu_idx], y_splits_task[gpu_idx]
+
       with tf.variable_scope(tf.get_variable_scope(), reuse=bool(i != 0)):
         with tf.name_scope('task_%d' % i):
-
-          # Dequeues one task
-          x_task, y_task = x_splits_task[gpu_idx], y_splits_task[gpu_idx]
+          print('Task ', i)
 
           # Calculate the loss for one tower.
           loss_task, acc_task, preds_task, clf_loss_task, \
@@ -155,10 +154,13 @@ class CapsNetMultiTasks(CapsNetDistribute):
           grads_task = optimizer.compute_gradients(loss_task)
 
           # Keep track of the gradients across all towers.
+          # grads_tower.append(grads_task)
+
           if i == 0:
             grads_tower_sum = grads_task
           else:
-            grads_tower_sum = self._sum_gradients([grads_tower_sum, grads_task])
+            grads_tower_sum = self._sum_gradients(
+                [grads_tower_sum, grads_task])
 
           # Collect metrics of each tower
           loss_tower.append(loss_task)
@@ -169,7 +171,9 @@ class CapsNetMultiTasks(CapsNetDistribute):
           preds_tower.append(preds_task)
 
     # Calculate the mean of each gradient.
-    grads_tower = self._average_sum_grads(grads_tower_sum, self.cfg.TASK_NUMBER)
+    # grads_tower = self._average_gradients(grads_tower)
+    grads_tower = self._average_sum_grads(
+        grads_tower_sum, self.cfg.TASK_NUMBER)
 
     # Calculate means of metrics
     loss_tower, acc_tower, preds_tower, clf_loss_tower, rec_loss_tower, \
@@ -221,14 +225,16 @@ class CapsNetMultiTasks(CapsNetDistribute):
           rec_loss_all, rec_images_all, preds_all = \
           [], [], [], [], [], [], []
       for i in range(self.cfg.GPU_NUMBER):
+        # Dequeues one batch for the GPU
+        x_tower, y_tower = x_splits_tower[i], y_splits_tower[i]
         with tf.variable_scope(tf.get_variable_scope(), reuse=bool(i != 0)):
           with tf.device('/gpu:%d' % i):
             with tf.name_scope('tower_%d' % i):
+              print('Gpu ', i)
               grads_tower, loss_tower, acc_tower, clf_loss_tower, \
                   rec_loss_tower, rec_images_tower, preds_tower = \
-                  self._calc_on_gpu(
-                      i, x_splits_tower, y_splits_tower,
-                      image_size, is_training, optimizer)
+                  self._calc_on_gpu(i, x_tower, y_tower,
+                                    image_size, is_training, optimizer)
 
               # Keep track of the gradients across all towers.
               grads_all.append(grads_tower)
@@ -277,3 +283,15 @@ class CapsNetMultiTasks(CapsNetDistribute):
       return global_step, train_graph, inputs, labels, is_training, \
           train_op, saver, summary_op, loss, accuracy, classifier_loss, \
           reconstruct_loss, reconstructed_images
+
+
+if __name__ == '__main__':
+
+  from baseline_config import config as basel_cfg
+  from baseline_arch import basel_arch
+  step_, train_graph_, inputs_, labels_, is_training_, \
+      optimizer_, saver_, summary_, loss_, accuracy_, \
+      clf_loss_, rec_loss_, rec_images_ = \
+      CapsNetMultiTasks(basel_cfg, basel_arch).build_graph(
+          image_size=(28, 28, 1),
+          num_class=10)
