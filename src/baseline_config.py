@@ -50,7 +50,7 @@ __C.LR_DECAY_RATE = 0.96
 __C.EPOCHS = 50
 
 # Batch size
-__C.BATCH_SIZE = 4096
+__C.BATCH_SIZE = 16384
 
 
 # ===========================================
@@ -309,7 +309,7 @@ __C.VAR_ON_CPU = True
 __C.GPU_NUMBER = 2
 
 # Number of multi-tasks
-__C.TASK_NUMBER = 8
+__C.TASK_NUMBER = __C.BATCH_SIZE // __C.GPU_NUMBER // 64
 
 # The decay to use for the moving average.
 __C.MOVING_AVERAGE_DECAY = 0.9999
@@ -317,4 +317,4 @@ __C.MOVING_AVERAGE_DECAY = 0.9999
 # ===========================================
 
 # get config by: from baseline_config import basel_config
-basel_config = __C
+config = __C

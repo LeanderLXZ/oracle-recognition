@@ -18,7 +18,7 @@ from sklearn.model_selection import train_test_split
 from models import utils
 from config import config as cfg_1
 from config_pipeline import config as cfg_2
-from baseline_config import basel_config
+from baseline_config import config as basel_cfg
 
 from keras.preprocessing.image import ImageDataGenerator
 import keras.backend.tensorflow_backend as KTF
@@ -503,7 +503,7 @@ if __name__ == '__main__':
   if args.baseline:
     utils.thick_line()
     print('Running baseline model.')
-    DataPreProcess(basel_config, global_seed, 'mnist').pipeline()
+    DataPreProcess(basel_cfg, global_seed, 'mnist').pipeline()
   else:
     utils.thick_line()
     print('Input [ 1 ] to preprocess the Oracle Radicals database.')

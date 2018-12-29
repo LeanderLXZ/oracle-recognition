@@ -11,7 +11,7 @@ from os import environ
 from os.path import join, isdir
 
 from config import config
-from baseline_config import basel_config
+from baseline_config import config as basel_cfg
 from models import utils
 from models.capsNet import CapsNet
 from models.capsNet_distribute import CapsNetDistribute
@@ -593,7 +593,7 @@ if __name__ == '__main__':
     print('Running baseline model.')
     utils.thick_line()
     arch_ = basel_arch
-    config_ = basel_config
+    config_ = basel_cfg
   else:
     arch_ = caps_arch
     config_ = config

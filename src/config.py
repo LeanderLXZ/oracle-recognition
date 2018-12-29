@@ -309,7 +309,7 @@ __C.VAR_ON_CPU = True
 __C.GPU_NUMBER = 2
 
 # Number of tasks
-__C.TASK_NUMBER = 16
+__C.TASK_NUMBER = __C.BATCH_SIZE // __C.GPU_NUMBER // 64
 
 # The decay to use for the moving average.
 __C.MOVING_AVERAGE_DECAY = 0.9999

@@ -15,7 +15,7 @@ from os.path import join, isdir
 #   precision_score, recall_score, f1_score, accuracy_score
 
 from config import config
-from baseline_config import basel_config
+from baseline_config import config as basel_cfg
 from models import utils
 
 
@@ -673,7 +673,7 @@ if __name__ == '__main__':
   if args.baseline:
     utils.thick_line()
     print('Running baseline model.')
-    config_ = basel_config
+    config_ = basel_cfg
   else:
     config_ = config
 
