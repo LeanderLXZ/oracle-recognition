@@ -78,8 +78,8 @@ class DataPreProcess(object):
       x_new = []
       y_new = []
       for y_ in tqdm(x_y_dict.keys(),
-                     len(x_y_dict.keys()),
-                     ncols=100, unit=' class'):
+                     ncols=100,
+                     unit=' class'):
         x_ = x_y_dict[y_]
         x_ = self._augment_data(
             x_,
@@ -265,10 +265,7 @@ class DataPreProcess(object):
     self.x_test_mul = []
     self.y_test_mul = []
 
-    for _ in tqdm(range(self.cfg.NUM_MULTI_IMG),
-                  total=self.cfg.NUM_MULTI_IMG,
-                  ncols=100, unit=' images'):
-
+    for _ in tqdm(range(self.cfg.NUM_MULTI_IMG), ncols=100, unit=' images'):
       # Get images for merging
       if self.cfg.REPEAT:
         # Repetitive labels
