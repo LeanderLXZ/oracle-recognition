@@ -28,8 +28,8 @@ __C = EasyDict()
 # 'radical': Oracle Radicals
 # 'mnist': MNIST
 # 'cifar10' CIFAR-10
-#  __C.DATABASE_NAME = 'radical'
-__C.DATABASE_NAME = 'mnist'
+__C.DATABASE_NAME = 'radical'
+# __C.DATABASE_NAME = 'mnist'
 
 # Training version
 # Set None to auto generate version
@@ -92,7 +92,7 @@ __C.MAX_IMAGE_NUM = 10000
 # Oracle Parameters
 # Number of radicals to use for training
 # Max = 148
-__C.NUM_RADICALS = 20
+__C.NUM_RADICALS = 10
 
 # Preprocessing images of superpositions of multi-objects
 # If None, one image only shows one object.

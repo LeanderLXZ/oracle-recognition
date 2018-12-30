@@ -414,17 +414,14 @@ class Main(object):
     valid_summary_path = join(self.summary_path, 'valid')
     utils.check_dir([train_summary_path, valid_summary_path])
 
-    print(1)
+    utils.thin_line()
+    print('Generating TensorFLow summary writer...')
     train_writer = tf.summary.FileWriter(train_summary_path, sess.graph)
-
-    print(2)
     valid_writer = tf.summary.FileWriter(valid_summary_path)
 
-    print(3)
     sess.run(tf.global_variables_initializer())
     step = 0
 
-    print(4)
     for epoch_i in range(self.cfg.EPOCHS):
 
       epoch_start_time = time.time()
@@ -533,19 +530,6 @@ class Main(object):
           .format(time.time() - self.start_time))
     utils.thick_line()
 
-    # Evaluate on test set after training
-    if self.cfg.TEST_AFTER_TRAINING:
-      self._test_after_training()
-
-    # Evaluate on multi-objects test set after training
-    if self.cfg.TEST_MO_AFTER_TRAINING:
-      self._test_after_training(multi_obj=True)
-
-    utils.thick_line()
-    print('All task finished! Total time: {:.2f}'
-          .format(time.time() - self.start_time))
-    utils.thick_line()
-
   def train(self):
     """Training models."""
     session_cfg = tf.ConfigProto(allow_soft_placement=True)
@@ -558,6 +542,19 @@ class Main(object):
     else:
       with tf.Session(graph=self.train_graph, config=session_cfg) as sess:
         self._trainer(sess)
+
+    # Evaluate on test set after training
+    if self.cfg.TEST_AFTER_TRAINING:
+      self._test_after_training()
+
+    # Evaluate on multi-objects test set after training
+    if self.cfg.TEST_MO_AFTER_TRAINING:
+      self._test_after_training(multi_obj=True)
+
+    utils.thick_line()
+    print('All task finished! Total time: {:.2f}'
+          .format(time.time() - self.start_time))
+    utils.thick_line()
 
 
 if __name__ == '__main__':

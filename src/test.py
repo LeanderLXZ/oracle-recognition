@@ -463,6 +463,19 @@ class TestMultiObjects(object):
     f05score = np.mean(f05score)
     f2score = np.mean(f2score)
 
+    # true positive
+    tp = np.sum(np.multiply(preds, self.y_test))
+    print('TRUE POSITIVE: ', tp)
+    # false positive
+    fp = np.sum(np.logical_and(np.equal(self.y_test, 0), np.equal(preds, 1)))
+    print('FALSE POSITIVE: ', fp)
+    # false negative
+    fn = np.sum(np.logical_and(np.equal(self.y_test, 1), np.equal(preds, 0)))
+    print('TRUE NEGATIVE: ', fn)
+    # true negative
+    tn = np.sum(np.logical_and(np.equal(self.y_test, 0), np.equal(preds, 0)))
+    print('FALSE NEGATIVE: ', tn)
+
     # Calculate scores by using scikit-learn tools
     # precision = precision_score(self.y_test, preds, average='samples')
     # recall = recall_score(self.y_test, preds, average='samples')
