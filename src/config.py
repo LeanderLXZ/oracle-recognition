@@ -312,7 +312,8 @@ __C.GPU_NUMBER = 2
 __C.TASK_NUMBER = __C.BATCH_SIZE // __C.GPU_NUMBER // 64
 
 # The decay to use for the moving average.
-__C.MOVING_AVERAGE_DECAY = 0.9999
+# If None, not use
+__C.MOVING_AVERAGE_DECAY = None  # 0.9999
 
 # ===========================================
 

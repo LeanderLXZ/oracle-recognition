@@ -413,12 +413,18 @@ class Main(object):
     train_summary_path = join(self.summary_path, 'train')
     valid_summary_path = join(self.summary_path, 'valid')
     utils.check_dir([train_summary_path, valid_summary_path])
+
+    print(1)
     train_writer = tf.summary.FileWriter(train_summary_path, sess.graph)
+
+    print(2)
     valid_writer = tf.summary.FileWriter(valid_summary_path)
 
+    print(3)
     sess.run(tf.global_variables_initializer())
     step = 0
 
+    print(4)
     for epoch_i in range(self.cfg.EPOCHS):
 
       epoch_start_time = time.time()

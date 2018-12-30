@@ -144,31 +144,32 @@ class CapsNetMultiTasks(CapsNetDistribute):
       x_task, y_task = x_splits_task[gpu_idx], y_splits_task[gpu_idx]
 
       with tf.variable_scope(tf.get_variable_scope(), reuse=bool(i != 0)):
-        # Calculate the loss for one task.
-        loss_task, acc_task, preds_task, clf_loss_task, \
-            rec_loss_task, rec_images_task = \
-            self._get_loss(x_task, y_task,
-                           image_size, is_training=is_training)
+        with tf.name_scope('task_%d' % i):
+          # Calculate the loss for one task.
+          loss_task, acc_task, preds_task, clf_loss_task, \
+              rec_loss_task, rec_images_task = \
+              self._get_loss(x_task, y_task,
+                             image_size, is_training=is_training)
 
-        # Calculate the gradients on this task.
-        grads_task = optimizer.compute_gradients(loss_task)
+          # Calculate the gradients on this task.
+          grads_task = optimizer.compute_gradients(loss_task)
 
-        # Keep track of the gradients across all tasks.
-        # grads_tower.append(grads_task)
+          # Keep track of the gradients across all tasks.
+          # grads_tower.append(grads_task)
 
-        if i == 0:
-          grads_tower_sum = grads_task
-        else:
-          grads_tower_sum = self._sum_gradients(
-              [grads_tower_sum, grads_task])
+          if i == 0:
+            grads_tower_sum = grads_task
+          else:
+            grads_tower_sum = self._sum_gradients(
+                [grads_tower_sum, grads_task])
 
-        # Collect metrics of each task
-        loss_tower.append(loss_task)
-        acc_tower.append(acc_task)
-        clf_loss_tower.append(clf_loss_task)
-        rec_loss_tower.append(rec_loss_task)
-        rec_images_tower.append(rec_images_task)
-        preds_tower.append(preds_task)
+          # Collect metrics of each task
+          loss_tower.append(loss_task)
+          acc_tower.append(acc_task)
+          clf_loss_tower.append(clf_loss_task)
+          rec_loss_tower.append(rec_loss_task)
+          rec_images_tower.append(rec_images_task)
+          preds_tower.append(preds_task)
 
     # Calculate the mean of each gradient.
     # grads_tower = self._average_gradients(grads_tower)
@@ -235,7 +236,7 @@ class CapsNetMultiTasks(CapsNetDistribute):
         with tf.variable_scope(tf.get_variable_scope(), reuse=bool(i != 0)):
           with tf.device('/gpu:%d' % i):
             with tf.name_scope('tower_%d' % i):
-              print('Gpu ', i)
+
               grads_tower, loss_tower, acc_tower, clf_loss_tower, \
                   rec_loss_tower, rec_images_tower, preds_tower = \
                   self._calc_on_gpu(i, x_tower, y_tower,
@@ -261,17 +262,26 @@ class CapsNetMultiTasks(CapsNetDistribute):
               loss_all, acc_all, preds_all, clf_loss_all,
               rec_loss_all, rec_images_all)
 
+      # Show variables
+      utils.thin_line()
+      print('Variables: ')
+      for v in tf.global_variables():
+        print(v)
+
       # Apply the gradients to adjust the shared variables.
       apply_gradient_op = optimizer.apply_gradients(grads)
 
       # Track the moving averages of all trainable variables.
-      variable_averages = tf.train.ExponentialMovingAverage(
-          self.cfg.MOVING_AVERAGE_DECAY)
-      variables_averages_op = variable_averages.apply(
-          tf.trainable_variables())
+      if self.cfg.MOVING_AVERAGE_DECAY:
+        variable_averages = tf.train.ExponentialMovingAverage(
+            self.cfg.MOVING_AVERAGE_DECAY)
+        variables_averages_op = variable_averages.apply(
+            tf.trainable_variables())
 
-      # Group all updates to into a single train op.
-      train_op = tf.group(apply_gradient_op, variables_averages_op)
+        # Group all updates to into a single train op.
+        train_op = tf.group(apply_gradient_op, variables_averages_op)
+      else:
+        train_op = apply_gradient_op
 
       # Create a saver.
       saver = tf.train.Saver(tf.global_variables(),

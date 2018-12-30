@@ -132,11 +132,8 @@ class CapsNetDistribute(CapsNet):
     return loss, accuracy, preds, classifier_loss, \
         reconstruct_loss, reconstructed_images
 
-  def _calc_on_gpu(self, gpu_idx, x_splits_tower, y_splits_tower,
+  def _calc_on_gpu(self, gpu_idx, x_tower, y_tower,
                    image_size, is_training, optimizer):
-
-    # Dequeues one batch for the GPU
-    x_tower, y_tower = x_splits_tower[gpu_idx], y_splits_tower[gpu_idx]
 
     # Calculate the loss for one tower.
     loss_tower, acc_tower, preds_tower, clf_loss_tower, rec_loss_tower, \
@@ -190,14 +187,18 @@ class CapsNetDistribute(CapsNet):
           rec_loss_all, rec_images_all, preds_all = \
           [], [], [], [], [], [], []
       for i in range(self.cfg.GPU_NUMBER):
+
+        # Dequeues one batch for the GPU
+        x_tower, y_tower = x_splits_tower[i], y_splits_tower[i]
+
         with tf.variable_scope(tf.get_variable_scope(), reuse=bool(i != 0)):
           with tf.device('/gpu:%d' % i):
             with tf.name_scope('tower_%d' % i):
+
               grads_tower, loss_tower, acc_tower, clf_loss_tower, \
                   rec_loss_tower, rec_images_tower, preds_tower = \
-                  self._calc_on_gpu(
-                      i, x_splits_tower, y_splits_tower,
-                      image_size, is_training, optimizer)
+                  self._calc_on_gpu(i, x_tower, y_tower,
+                                    image_size, is_training, optimizer)
 
               # Keep track of the gradients across all towers.
               grads_all.append(grads_tower)
@@ -223,13 +224,16 @@ class CapsNetDistribute(CapsNet):
       apply_gradient_op = optimizer.apply_gradients(grads)
 
       # Track the moving averages of all trainable variables.
-      variable_averages = tf.train.ExponentialMovingAverage(
-          self.cfg.MOVING_AVERAGE_DECAY)
-      variables_averages_op = variable_averages.apply(
-          tf.trainable_variables())
+      if self.cfg.MOVING_AVERAGE_DECAY:
+        variable_averages = tf.train.ExponentialMovingAverage(
+            self.cfg.MOVING_AVERAGE_DECAY)
+        variables_averages_op = variable_averages.apply(
+            tf.trainable_variables())
 
-      # Group all updates to into a single train op.
-      train_op = tf.group(apply_gradient_op, variables_averages_op)
+        # Group all updates to into a single train op.
+        train_op = tf.group(apply_gradient_op, variables_averages_op)
+      else:
+        train_op = apply_gradient_op
 
       # Create a saver.
       saver = tf.train.Saver(tf.global_variables(),

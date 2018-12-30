@@ -50,7 +50,7 @@ __C.LR_DECAY_RATE = 0.96
 __C.EPOCHS = 50
 
 # Batch size
-__C.BATCH_SIZE = 8192
+__C.BATCH_SIZE = 2048
 
 
 # ===========================================
@@ -309,10 +309,11 @@ __C.VAR_ON_CPU = True
 __C.GPU_NUMBER = 2
 
 # Number of multi-tasks
-__C.TASK_NUMBER = __C.BATCH_SIZE // __C.GPU_NUMBER // 64
+__C.TASK_NUMBER = 16
 
 # The decay to use for the moving average.
-__C.MOVING_AVERAGE_DECAY = 0.9999
+# If None, not use
+__C.MOVING_AVERAGE_DECAY = None  # 0.9999
 
 # ===========================================
 
