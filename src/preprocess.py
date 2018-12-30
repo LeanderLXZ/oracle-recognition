@@ -357,12 +357,16 @@ class DataPreProcess(object):
       test_num = 10000
       n_classes = 10
       img_size = (*self.img_size, 1)
+      if self.cfg.USE_DATA_AUG:
+        train_num = n_classes * self.cfg.MAX_IMAGE_NUM
 
     elif self.data_base_name == 'cifar10':
       train_num = 50000
       test_num = 10000
       n_classes = 10
       img_size = (*self.img_size, 3)
+      if self.cfg.USE_DATA_AUG:
+        train_num = n_classes * self.cfg.MAX_IMAGE_NUM
 
     elif self.data_base_name == 'radical':
       train_num = len(self.x_train)
