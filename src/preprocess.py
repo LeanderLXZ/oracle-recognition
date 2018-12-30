@@ -353,38 +353,23 @@ class DataPreProcess(object):
     assert self.y_test.min() >= 0, self.y_test.min()
 
     if self.data_base_name == 'mnist':
-      train_num = 60000
-      test_num = 10000
       n_classes = 10
       img_size = (*self.img_size, 1)
-      if self.cfg.USE_DATA_AUG:
-        train_num = n_classes * self.cfg.MAX_IMAGE_NUM
 
     elif self.data_base_name == 'cifar10':
-      train_num = 50000
-      test_num = 10000
       n_classes = 10
       img_size = (*self.img_size, 3)
-      if self.cfg.USE_DATA_AUG:
-        train_num = n_classes * self.cfg.MAX_IMAGE_NUM
 
     elif self.data_base_name == 'radical':
-      train_num = len(self.x_train)
-      test_num = len(self.y_train)
       n_classes = \
           148 if self.cfg.NUM_RADICALS is None else self.cfg.NUM_RADICALS
       img_size = (*self.cfg.IMAGE_SIZE, 1)
     else:
       raise ValueError('Wrong database name!')
 
-    if self.cfg.USE_DATA_AUG:
-      train_num = n_classes * self.cfg.MAX_IMAGE_NUM
-
-    if self.cfg.DPP_TEST_AS_VALID:
-      valid_num = test_num
-    else:
-      train_num = (train_num - test_num) * (1 - self.cfg.VALID_SIZE)
-      valid_num = (train_num - test_num) * self.cfg.VALID_SIZE
+    train_num = len(self.x_train)
+    test_num = len(self.x_test)
+    valid_num = len(self.x_valid)
 
     assert self.x_train.shape == (train_num, *img_size), self.x_train.shape
     assert self.y_train.shape == (train_num, n_classes), self.y_train.shape
