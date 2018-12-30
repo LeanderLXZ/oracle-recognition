@@ -301,7 +301,7 @@ class TestMultiObjects(object):
     test_log_path_ = join(
         self.cfg.TEST_LOG_PATH,
         '{}-{}'.format(self.version, self.ckp_idx))
-    test_log_path = test_log_path_
+    test_log_path = test_log_path_ + '_multi_obj'
     i_append_info = 0
     while isdir(test_log_path):
       i_append_info += 1
