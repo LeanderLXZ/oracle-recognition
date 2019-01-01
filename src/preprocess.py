@@ -103,16 +103,19 @@ class DataPreProcess(object):
     """
     utils.thin_line()
     print('Loading radicals data set...')
-    classes = sorted(os.listdir(self.source_data_path))
+    classes = os.listdir(self.source_data_path)
     if '.DS_Store' in classes:
       classes.remove('.DS_Store')
+    classes = sorted([int(i) for i in classes])
+    print(classes[:self.cfg.NUM_RADICALS])
 
     self.x = []
     self.y = []
-    for cls_name in tqdm(
+    for cls_ in tqdm(
           classes[:self.cfg.NUM_RADICALS], ncols=100, unit='class'):
 
       # Load images from raw data pictures
+      cls_name = str(cls_)
       class_dir = join(self.source_data_path, cls_name)
       images = os.listdir(class_dir)
       x_tensor = []
@@ -174,7 +177,7 @@ class DataPreProcess(object):
       reshaped_img = np.divide(reshaped_img, 255.)
 
       x_test_oracle.append(reshaped_img)
-      y_test_oracle.append(label)
+      y_test_oracle.append(label[:self.cfg.NUM_RADICALS])
 
     self.x_test_oracle = np.array(x_test_oracle)
     self.y_test_oracle = np.array(y_test_oracle, dtype=np.int64)
