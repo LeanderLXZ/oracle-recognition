@@ -30,7 +30,8 @@ class Test(object):
                epoch_train=None,
                step_train=None,
                clf_arch_info=None,
-               rec_arch_info=None):
+               rec_arch_info=None,
+               append_info=''):
 
     # Config
     self.cfg = cfg
@@ -40,7 +41,7 @@ class Test(object):
     self.is_training = is_training
     self.epoch_train = epoch_train
     self.step_train = step_train
-    self.append_info = ''
+    self.append_info = append_info
 
     # Get paths for testing
     self.checkpoint_path, self.test_log_path, self.test_image_path = \
@@ -311,7 +312,8 @@ class TestMultiObjects(Test):
                epoch_train=None,
                step_train=None,
                clf_arch_info=None,
-               rec_arch_info=None):
+               rec_arch_info=None,
+               append_info='_multi_obj'):
     super(TestMultiObjects, self).__init__(cfg,
                                            multi_gpu=multi_gpu,
                                            version=version,
@@ -320,8 +322,9 @@ class TestMultiObjects(Test):
                                            epoch_train=epoch_train,
                                            step_train=step_train,
                                            clf_arch_info=clf_arch_info,
-                                           rec_arch_info=rec_arch_info)
-    self.append_info = '_multi_obj'
+                                           rec_arch_info=rec_arch_info,
+                                           append_info=append_info)
+    self.append_info = append_info
 
   def _get_tensors(self, loaded_graph):
     """Get inputs, labels, loss, and accuracy tensor from <loaded_graph>."""
@@ -678,8 +681,8 @@ class TestOracle(TestMultiObjects):
                                            epoch_train=epoch_train,
                                            step_train=step_train,
                                            clf_arch_info=clf_arch_info,
-                                           rec_arch_info=rec_arch_info)
-    self.append_info = '_oracle'
+                                           rec_arch_info=rec_arch_info,
+                                           append_info='_oracle')
 
 
 if __name__ == '__main__':
