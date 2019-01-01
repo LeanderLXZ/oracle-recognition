@@ -8,6 +8,7 @@ import math
 import argparse
 from PIL import Image
 import numpy as np
+import pandas as pd
 import sklearn.utils
 from copy import copy
 from tqdm import tqdm
@@ -96,12 +97,12 @@ class DataPreProcess(object):
     if show_img:
       self._grid_show_imgs(self.x, self.y, 25, mode='L')
 
-  def _load_oracle_radicals(self, show_img=False):
+  def _load_radicals(self, show_img=False):
     """
-    Load oracle data set from files.
+    Load radicals data set from files.
     """
     utils.thin_line()
-    print('Loading {} data set...'.format(self.data_base_name))
+    print('Loading radicals data set...')
     classes = sorted(os.listdir(self.source_data_path))
     if '.DS_Store' in classes:
       classes.remove('.DS_Store')
@@ -144,6 +145,39 @@ class DataPreProcess(object):
 
     if show_img:
       self._grid_show_imgs(self.x, self.y, 25, mode='L')
+
+  def _load_oracles(self, show_img=False):
+    """
+    Load oracles data set from files.
+    """
+    utils.thin_line()
+    print('Loading oracles data set...')
+
+    x_test_oracle = []
+    y_test_oracle = []
+    df = pd.read_csv(join(self.cfg.SOURCE_DATA_PATH,
+                          'recognized_oracles_labels.csv'))
+    for _, row in tqdm(df.iterrows(), ncols=100, unit=' images'):
+      img_path = row['file_path']
+      label = pd.eval(row['label'])
+
+      # Load image
+      img = Image.open(join(self.cfg.SOURCE_DATA_PATH, img_path)).convert('L')
+      # Resize image
+      reshaped_img = self._resize_oracle_img(img)
+      # Change background
+      reshaped_img = 255 - reshaped_img
+      # Scaling
+      reshaped_img = np.divide(reshaped_img, 255.)
+
+      x_test_oracle.append(reshaped_img)
+      y_test_oracle.append(label)
+
+    self.x_test_oracle = np.array(x_test_oracle)
+    self.y_test_oracle = np.array(y_test_oracle, dtype=np.int64)
+
+    if show_img:
+      self._grid_show_imgs(self.x_test_oracle, self.y_test_oracle, 25, mode='L')
 
   @staticmethod
   def _get_x_y_dict(x, y, y_encoded=False):
@@ -415,6 +449,12 @@ class DataPreProcess(object):
       utils.save_data_to_pkl(
           self.y_test_mul, join(self.preprocessed_path, 'y_test_multi_obj.p'))
 
+    if self.data_base_name == 'radical':
+      utils.save_data_to_pkl(
+          self.x_test_oracle, join(self.preprocessed_path, 'x_test_oracle.p'))
+      utils.save_data_to_pkl(
+          self.y_test_oracle, join(self.preprocessed_path, 'y_test_oracle.p'))
+
   @staticmethod
   def _grid_show_imgs(x, y, n_img_show, mode='L'):
     sample_idx_ = np.random.choice(
@@ -440,7 +480,7 @@ class DataPreProcess(object):
     self.source_data_path = join(self.cfg.SOURCE_DATA_PATH, self.data_base_name)
 
     # show_img = True
-    show_img = False
+    show_img = True
 
     # Load data
     if self.data_base_name == 'mnist' or self.data_base_name == 'cifar10':
@@ -448,8 +488,9 @@ class DataPreProcess(object):
       if self.cfg.RESIZE_IMG:
         self._resize_imgs()
     elif self.data_base_name == 'radical':
-      self._load_oracle_radicals(show_img=show_img)
+      self._load_radicals(show_img=show_img)
       self._train_test_split()
+      self._load_oracles(show_img=show_img)
 
     # Scaling images to (0, 1)
     self._scaling()

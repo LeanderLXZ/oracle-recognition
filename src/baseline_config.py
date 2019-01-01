@@ -230,7 +230,7 @@ __C.TEST_SO_MODE = 'per_epoch'
 __C.TEST_MO_MODE = 'per_epoch'
 
 # Evaluate on Oracles test set after
-__C.TEST_ORACLE_MODE = None
+__C.TEST_ORACLE_MODE = 'per_epoch'
 
 
 # ===========================================
@@ -290,6 +290,9 @@ __C.SOURCE_DATA_PATH = '../data/source_data'
 
 # Preprocessed data path
 __C.DPP_DATA_PATH = '../data/preprocessed_data'
+
+# Oracle labels path
+__C.ORAClE_LABEL_PATH = __C.SOURCE_DATA_PATH + '/recognized_oracles_labels.csv'
 
 # Path for saving logs
 __C.TRAIN_LOG_PATH = '../train_logs'
