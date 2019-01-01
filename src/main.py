@@ -653,6 +653,5 @@ if __name__ == '__main__':
 
   if args.batch_size:
     config_.BATCH_SIZE = args.batch_size
-    print(type(config_.BATCH_SIZE))
 
   Main(config_, arch_, mode=mode_).train()
