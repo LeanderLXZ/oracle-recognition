@@ -297,7 +297,7 @@ class CapsNetMultiTasks(CapsNetDistribute):
 
       return global_step, train_graph, inputs, labels, is_training, \
           train_op, saver, summary_op, loss, accuracy, classifier_loss, \
-          reconstruct_loss, reconstructed_images
+          reconstruct_loss, reconstructed_images, preds
 
 
 if __name__ == '__main__':

@@ -18,7 +18,7 @@ from models.capsNet_distribute import CapsNetDistribute
 from models.capsNet_multi_tasks import CapsNetMultiTasks
 from baseline_arch import basel_arch
 from capsNet_arch import caps_arch
-from test import Test, TestMultiObjects
+from test import Test, TestMultiObjects, TestOracle
 
 
 class Main(object):
@@ -60,13 +60,16 @@ class Main(object):
     tf.reset_default_graph()
     self.step, self.train_graph, self.inputs, self.labels, self.is_training, \
         self.optimizer, self.saver, self.summary, self.loss, self.accuracy,\
-        self.clf_loss, self.rec_loss, self.rec_images = model.build_graph(
+        self.clf_loss, self.rec_loss, self.rec_images, self.preds = \
+        model.build_graph(
             image_size=self.x_train.shape[1:],
             num_class=self.y_train.shape[1])
 
     # Save config
+    self.clf_arch_info = model.clf_arch_info
+    self.rec_arch_info = model.rec_arch_info
     utils.save_config_log(
-        self.train_log_path, cfg, model.clf_arch_info, model.rec_arch_info)
+        self.train_log_path, cfg, self.clf_arch_info, self.rec_arch_info)
 
   def _get_paths(self):
     """Get paths from configuration."""
@@ -393,16 +396,45 @@ class Main(object):
       print('Saving models to {}...'.format(save_path))
     saver.save(sess, save_path, global_step=step)
 
-  def _test_after_training(self, multi_obj=False):
-    """Evaluate on the test set after training."""
-    if multi_obj:
-      test_ = TestMultiObjects
-    else:
-      test_ = Test
-    test_(cfg=self.cfg,
+  def _test(self, sess, mode='single'):
+    """Evaluate on the test set."""
+    utils.thick_line()
+    print('Testing on test set...')
+    start_time_test = time.time()
+
+    if mode == 'single':
+      Test(
+          cfg=self.cfg,
           multi_gpu=self.multi_gpu,
           version=self.cfg.VERSION,
-          load_last_ckp=True).test()
+          clf_arch_info=self.clf_arch_info,
+          rec_arch_info=self.rec_arch_info
+      ).tester(
+          sess, self.inputs, self.labels, self.loss, self.accuracy,
+          self.clf_loss, self.rec_loss, self.rec_images, start_time_test
+      )
+    elif mode == 'multi_obj':
+      TestMultiObjects(
+          cfg=self.cfg,
+          multi_gpu=self.multi_gpu,
+          version=self.cfg.VERSION,
+          clf_arch_info=self.clf_arch_info,
+          rec_arch_info=self.rec_arch_info
+      ).tester_mo(
+          sess, self.inputs, self.labels,
+          self.preds, self.rec_images, start_time_test
+      )
+    elif mode == 'oracle':
+      TestOracle(
+          cfg=self.cfg,
+          multi_gpu=self.multi_gpu,
+          version=self.cfg.VERSION,
+          clf_arch_info=self.clf_arch_info,
+          rec_arch_info=self.rec_arch_info
+      ).tester_mo(
+          sess, self.inputs, self.labels,
+          self.preds, self.rec_images, start_time_test
+      )
 
   def _trainer(self, sess):
 
@@ -515,10 +547,22 @@ class Main(object):
         if (epoch_i + 1) % self.cfg.SAVE_MODEL_STEP == 0:
           self._save_model(sess, self.saver, epoch_i)
 
-      # Evaluate per epoch
+      # Evaluate on valid set per epoch
       if self.cfg.FULL_SET_EVAL_MODE == 'per_epoch':
         if (epoch_i + 1) % self.cfg.FULL_SET_EVAL_STEP == 0:
           self._eval_on_full_set(sess, epoch_i, step-1)
+
+      # Evaluate on test set per epoch
+      if self.cfg.TEST_SO_MODE == 'per_epoch':
+        self._test(sess, mode='single')
+
+      # Evaluate on multi-objects test set per epoch
+      if self.cfg.TEST_MO_MODE == 'per_epoch':
+        self._test(sess, mode='multi_obj')
+
+      # Evaluate on Oracles test set per epoch
+      if self.cfg.TEST_ORACLE_MODE == 'per_epoch':
+        self._test(sess, mode='oracle')
 
       utils.thin_line()
       print('Epoch {}/{} done! Using time: {:.2f}'
@@ -527,6 +571,23 @@ class Main(object):
 
     utils.thick_line()
     print('Training finished! Using time: {:.2f}'
+          .format(time.time() - self.start_time))
+    utils.thick_line()
+
+    # Evaluate on test set after training
+    if self.cfg.TEST_SO_MODE == 'after_training':
+      self._test(sess, mode='single')
+
+    # Evaluate on multi-objects test set after training
+    if self.cfg.TEST_MO_MODE == 'after_training':
+      self._test(sess, mode='multi_obj')
+
+    # Evaluate on Oracles test set after training
+    if self.cfg.TEST_ORACLE_MODE == 'after_training':
+      self._test(sess, mode='oracle')
+
+    utils.thick_line()
+    print('All task finished! Total time: {:.2f}'
           .format(time.time() - self.start_time))
     utils.thick_line()
 
@@ -542,19 +603,6 @@ class Main(object):
     else:
       with tf.Session(graph=self.train_graph, config=session_cfg) as sess:
         self._trainer(sess)
-
-    # Evaluate on test set after training
-    if self.cfg.TEST_AFTER_TRAINING:
-      self._test_after_training()
-
-    # Evaluate on multi-objects test set after training
-    if self.cfg.TEST_MO_AFTER_TRAINING:
-      self._test_after_training(multi_obj=True)
-
-    utils.thick_line()
-    print('All task finished! Total time: {:.2f}'
-          .format(time.time() - self.start_time))
-    utils.thick_line()
 
 
 if __name__ == '__main__':

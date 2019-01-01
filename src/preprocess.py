@@ -411,9 +411,9 @@ class DataPreProcess(object):
 
     if self.cfg.NUM_MULTI_OBJECT:
       utils.save_data_to_pkl(
-          self.x_test_mul, join(self.preprocessed_path, 'x_test_mul.p'))
+          self.x_test_mul, join(self.preprocessed_path, 'x_test_multi_obj.p'))
       utils.save_data_to_pkl(
-          self.y_test_mul, join(self.preprocessed_path, 'y_test_mul.p'))
+          self.y_test_mul, join(self.preprocessed_path, 'y_test_multi_obj.p'))
 
   @staticmethod
   def _grid_show_imgs(x, y, n_img_show, mode='L'):

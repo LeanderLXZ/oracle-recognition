@@ -186,31 +186,35 @@ def print_multi_obj_eval(precision, recall, accuracy,
 def save_config_log(file_path, cfg, clf_arch_info=None, rec_arch_info=None):
   """Save configuration of training."""
   file_path = os.path.join(file_path, 'config_log.txt')
-  thick_line()
-  print('Saving {}...'.format(file_path))
 
-  with open(file_path, 'a') as f:
-    local_time = time.strftime('%Y/%m/%d-%H:%M:%S', time.localtime(time.time()))
-    f.write('=' * 55 + '\n')
-    f.write('Time: {}\n'.format(local_time))
-    f.write('=' * 55 + '\n')
-    for key in cfg.keys():
-      f.write('{}: {}\n'.format(key, cfg[key]))
-    if clf_arch_info is not None:
+  if not os.path.isfile(file_path):
+    thick_line()
+    print('Saving {}...'.format(file_path))
+    with open(file_path, 'a') as f:
+      local_time = time.strftime('%Y/%m/%d-%H:%M:%S',
+                                 time.localtime(time.time()))
       f.write('=' * 55 + '\n')
-      f.write('Classifier Architecture:\n')
-      f.write('-' * 55 + '\n')
-      for i, (clf_name, clf_params, clf_shape) in enumerate(clf_arch_info):
-        f.write('[{}] {}\n\tParameters: {}\n\tOutput tensor shape: {}\n'.format(
-            i, clf_name, clf_params, clf_shape))
-    if rec_arch_info is not None:
+      f.write('Time: {}\n'.format(local_time))
       f.write('=' * 55 + '\n')
-      f.write('Reconstruction Architecture:\n')
-      f.write('-' * 55 + '\n')
-      for j, (rec_name, rec_params, rec_shape) in enumerate(rec_arch_info):
-        f.write('[{}] {}\n\tParameters: {}\n\tOutput tensor shape: {}\n'.format(
-            j, rec_name, rec_params, rec_shape))
-    f.write('=' * 55)
+      for key in cfg.keys():
+        f.write('{}: {}\n'.format(key, cfg[key]))
+      if clf_arch_info is not None:
+        f.write('=' * 55 + '\n')
+        f.write('Classifier Architecture:\n')
+        f.write('-' * 55 + '\n')
+        for i, (clf_name, clf_params, clf_shape) in enumerate(clf_arch_info):
+          f.write(
+              '[{}] {}\n\tParameters: {}\n\tOutput tensor shape: {}\n'.format(
+                  i, clf_name, clf_params, clf_shape))
+      if rec_arch_info is not None:
+        f.write('=' * 55 + '\n')
+        f.write('Reconstruction Architecture:\n')
+        f.write('-' * 55 + '\n')
+        for j, (rec_name, rec_params, rec_shape) in enumerate(rec_arch_info):
+          f.write(
+              '[{}] {}\n\tParameters: {}\n\tOutput tensor shape: {}\n'.format(
+                  j, rec_name, rec_params, rec_shape))
+      f.write('=' * 55)
 
 
 def save_log(file_path, epoch_i, step, using_time,
@@ -264,12 +268,48 @@ def save_test_log(file_path, loss_test, acc_test,
     f.write('=' * 55 + '\n')
     f.write('Time: {}\n'.format(local_time))
     f.write('-' * 55 + '\n')
-    f.write('Test_Loss: {:.4f}\n'.format(loss_test))
-    f.write('Test_Accuracy: {:.2f}%\n'.format(acc_test * 100))
+    f.write('Test Loss: {:.4f}\n'.format(loss_test))
+    f.write('Test Accuracy: {:.2f}%\n'.format(acc_test * 100))
     if with_rec:
-      f.write('Test_Train_Loss: {:.4f}\n'.format(clf_loss_test))
-      f.write('Test_REC_LOSS: {:.4f}\n'.format(rec_loss_test))
+      f.write('Test Classifier Loss: {:.4f}\n'.format(clf_loss_test))
+      f.write('Test Reconstruction Loss: {:.4f}\n'.format(rec_loss_test))
     f.write('=' * 55)
+
+
+def save_test_log_is_training(file_path, epoch, step, loss_test, acc_test,
+                              clf_loss_test, rec_loss_test, with_rec):
+  """Save losses and accuracies of testing."""
+  file_path = os.path.join(file_path, 'test_log.txt')
+
+  if with_rec:
+    if not os.path.isfile(file_path):
+      with open(file_path, 'w') as f:
+        header = ['Local_Time', 'Epoch', 'Batch', 'Test_Loss', 'Test_Accuracy']
+        writer = csv.writer(f)
+        writer.writerow(header)
+
+    with open(file_path, 'a') as f:
+      local_time = time.strftime(
+          '%Y/%m/%d-%H:%M:%S', time.localtime(time.time()))
+      log = [local_time, epoch, step, loss_test, acc_test]
+      writer = csv.writer(f)
+      writer.writerow(log)
+  else:
+    if not os.path.isfile(file_path):
+      with open(file_path, 'w') as f:
+        header = ['Local_Time', 'Epoch', 'Batch', 'Test_Loss',
+                  'Test_Classifier_Loss', 'Test_Reconstruction_Loss',
+                  'Test_Accuracy']
+        writer = csv.writer(f)
+        writer.writerow(header)
+
+    with open(file_path, 'a') as f:
+      local_time = time.strftime(
+          '%Y/%m/%d-%H:%M:%S', time.localtime(time.time()))
+      log = [local_time, epoch, step, loss_test,
+             clf_loss_test, rec_loss_test, acc_test]
+      writer = csv.writer(f)
+      writer.writerow(log)
 
 
 def save_multi_obj_scores(file_path, precision, recall,
@@ -293,6 +333,27 @@ def save_multi_obj_scores(file_path, precision, recall,
     f.write('=' * 55)
 
 
+def save_multi_obj_scores_is_training(file_path, epoch, step, precision, recall,
+                                      accuracy, f1score, f05score, f2score):
+  """Save evaluation scores of multi-objects detection."""
+  file_path = os.path.join(file_path, 'multi_obj_scores.txt')
+
+  if not os.path.isfile(file_path):
+    with open(file_path, 'w') as f:
+      header = ['Local_Time', 'Epoch', 'Batch', 'Precision', 'Recall',
+                'Accuracy', 'F_1 Score', 'F_0.5 Score', 'F_2 Score']
+      writer = csv.writer(f)
+      writer.writerow(header)
+
+  with open(file_path, 'a') as f:
+    local_time = time.strftime(
+        '%Y/%m/%d-%H:%M:%S', time.localtime(time.time()))
+    log = [local_time, epoch, step, precision, recall,
+           accuracy, f1score, f05score, f2score]
+    writer = csv.writer(f)
+    writer.writerow(log)
+
+
 def save_test_pred(file_path, labels, preds, preds_vec):
   """Save predictions of multi-objects detection."""
   check_dir([file_path])
@@ -300,23 +361,28 @@ def save_test_pred(file_path, labels, preds, preds_vec):
   thin_line()
   print('Saving {}...'.format(file_path))
 
-  preds_class = []
-  for pred_i in preds:
-    pred_idx = []
-    for idx, p in enumerate(pred_i):
-      if p > 0:
-        pred_idx.append(idx)
-    preds_class.append(pred_idx)
+  def _dummy_to_class(y):
+    _class = []
+    for y_i in y:
+      y_idx = []
+      for idx, y_ in enumerate(y_i):
+        if y_ > 0:
+          y_idx.append(idx)
+      _class.append(y_idx)
+    return _class
+
+  preds_class = _dummy_to_class(preds)
+  labels_class = _dummy_to_class(labels)
 
   if not os.path.isfile(file_path):
     with open(file_path, 'w') as f:
-      header = ['labels', 'preds_class', 'preds', 'preds_vec']
+      header = ['labels_class', 'preds_class', 'labels', 'preds', 'preds_vec']
       writer = csv.writer(f)
       writer.writerow(header)
 
   with open(file_path, 'a') as f:
     for i in range(len(labels)):
-      log = [labels[i], preds_class[i], preds[i], preds_vec[i]]
+      log = [labels_class[i], preds_class[i], labels[i], preds[i], preds_vec[i]]
       writer = csv.writer(f)
       writer.writerow(log)
 

@@ -25,33 +25,53 @@ class Test(object):
                cfg,
                multi_gpu=False,
                version=None,
-               load_last_ckp=True):
+               load_last_ckp=True,
+               is_training=False,
+               epoch_train=None,
+               step_train=None,
+               clf_arch_info=None,
+               rec_arch_info=None):
 
     # Config
     self.cfg = cfg
     self.multi_gpu = multi_gpu
     self.version = version
-
-    # Checkpoint index
-    if load_last_ckp:
-      ckp_indices = []
-      for f_name in listdir(join(self.cfg.CHECKPOINT_PATH, version)):
-        m = re.match('.*-(\d*).meta', f_name)
-        if m:
-          ckp_indices.append(int(m.group(1)))
-      self.ckp_idx = max(ckp_indices)
-    else:
-      self.ckp_idx = self.cfg.TEST_CKP_IDX
+    self.load_last_ckp = load_last_ckp
+    self.is_training = is_training
+    self.epoch_train = epoch_train
+    self.step_train = step_train
+    self.append_info = ''
 
     # Get paths for testing
-    self.checkpoint_path, self.test_log_path, self.test_image_path = \
-        self._get_paths()
+    if is_training:
+      self.test_log_path = join(cfg.TEST_LOG_PATH, version)
+      self.test_image_path = join(
+          join(self.test_log_path, 'images'),
+          'epoch-{}_batch-{}'.format(epoch_train, step_train))
+    else:
+      # Get checkpoint index
+      self.ckp_idx = self._get_ckp_idx()
+      self.checkpoint_path, self.test_log_path, self.test_image_path = \
+          self._get_paths()
 
     # Save config
-    utils.save_config_log(self.test_log_path, self.cfg)
+    utils.save_config_log(
+        self.test_log_path, self.cfg, clf_arch_info, rec_arch_info)
 
     # Load data
     self.x_test, self.y_test = self._load_data()
+
+  def _get_ckp_idx(self):
+    """Get checkpoint index."""
+    if self.load_last_ckp:
+      ckp_indices = []
+      for f_name in listdir(join(self.cfg.CHECKPOINT_PATH, self.version)):
+        m = re.match('.*-(\d*).meta', f_name)
+        if m:
+          ckp_indices.append(int(m.group(1)))
+      return max(ckp_indices)
+    else:
+      return self.cfg.TEST_CKP_IDX
 
   def _get_paths(self):
     """Get paths for testing."""
@@ -64,7 +84,7 @@ class Test(object):
     test_log_path_ = join(
         self.cfg.TEST_LOG_PATH,
         '{}-{}'.format(self.version, self.ckp_idx))
-    test_log_path = test_log_path_
+    test_log_path = test_log_path_ + self.append_info
     i_append_info = 0
     while isdir(test_log_path):
       i_append_info += 1
@@ -87,9 +107,9 @@ class Test(object):
     utils.thin_line()
     preprocessed_path_ = join(self.cfg.DPP_DATA_PATH, self.cfg.DATABASE_NAME)
     x = utils.load_data_from_pkl(
-        join(preprocessed_path_, 'x_test.p'))
+        join(preprocessed_path_, 'x_test' + self.append_info + '.p'))
     y = utils.load_data_from_pkl(
-        join(preprocessed_path_, 'y_test.p'))
+        join(preprocessed_path_, 'y_test' + self.append_info + '.p'))
     return x, y
 
   def _get_tensors(self, loaded_graph):
@@ -152,7 +172,7 @@ class Test(object):
                        inputs,
                        labels,
                        loss,
-                       accuracy,
+                       acc,
                        clf_loss,
                        rec_loss,
                        rec_images):
@@ -172,7 +192,7 @@ class Test(object):
         step += 1
         x_batch, y_batch = next(_batch_generator)
         loss_i, clf_loss_i, rec_loss_i, acc_i = \
-            sess.run([loss, clf_loss, rec_loss, accuracy],
+            sess.run([loss, clf_loss, rec_loss, acc],
                      feed_dict={inputs: x_batch, labels: y_batch})
         loss_all.append(loss_i)
         clf_loss_all.append(clf_loss_i)
@@ -193,7 +213,7 @@ class Test(object):
                     ncols=100, unit=' batches'):
         x_batch, y_batch = next(_batch_generator)
         loss_i, acc_i = \
-            sess.run([loss, accuracy],
+            sess.run([loss, acc],
                      feed_dict={inputs: x_batch, labels: y_batch})
         loss_all.append(loss_i)
         acc_all.append(acc_i)
@@ -203,6 +223,42 @@ class Test(object):
     acc_ = sum(acc_all) / len(acc_all)
 
     return loss_, clf_loss_, rec_loss_, acc_
+
+  def tester(self, sess, inputs, labels, loss, acc,
+             clf_loss, rec_loss, rec_images, start_time):
+
+    utils.thin_line()
+    print('Calculating loss and accuracy of test set...')
+
+    # Get losses and accuracies
+    loss_test, clf_loss_test, rec_loss_test, acc_test = \
+        self._eval_on_batches(
+            sess, inputs, labels, loss, acc,
+            clf_loss, rec_loss, rec_images)
+
+    # Print losses and accuracy
+    utils.thin_line()
+    print('Test Loss: {:.4f}'.format(loss_test))
+    if self.cfg.TEST_WITH_REC:
+      print('Test Classifier Loss: {:.4f}\n'.format(clf_loss_test),
+            'Test Reconstruction Loss: {:.4f}'.format(rec_loss_test))
+    print('Test Accuracy: {:.2f}%'.format(acc_test * 100))
+
+    # Save test log
+    if self.is_training:
+      utils.save_test_log_is_training(
+          self.test_log_path, self.epoch_train, self.step_train,
+          loss_test, acc_test, clf_loss_test, rec_loss_test,
+          self.cfg.TEST_WITH_REC)
+    else:
+      utils.save_test_log(
+          self.test_log_path, loss_test, acc_test, clf_loss_test,
+          rec_loss_test, self.cfg.TEST_WITH_REC)
+
+    utils.thin_line()
+    print('Testing finished! Using time: {:.2f}'
+          .format(time.time() - start_time))
+    utils.thick_line()
 
   def test(self):
     """Test models."""
@@ -221,113 +277,39 @@ class Test(object):
 
       # Get Tensors from loaded models
       if self.cfg.TEST_WITH_REC:
-        inputs, labels, loss, accuracy, \
+        inputs, labels, loss, acc, \
             clf_loss, rec_loss, rec_images = \
             self._get_tensors(loaded_graph)
       else:
-        inputs, labels, loss, accuracy = self._get_tensors(loaded_graph)
+        inputs, labels, loss, acc = self._get_tensors(loaded_graph)
         clf_loss, rec_loss, rec_images = None, None, None
 
-      utils.thin_line()
-      print('Calculating loss and accuracy of test set...')
-
-      # Get losses and accuracies
-      loss_test, clf_loss_test, rec_loss_test, acc_test = \
-          self._eval_on_batches(
-              sess, inputs, labels, loss, accuracy,
-              clf_loss, rec_loss, rec_images)
-
-      # Print losses and accuracy
-      utils.thin_line()
-      print('Test_Loss: {:.4f}'.format(loss_test))
-      if self.cfg.TEST_WITH_REC:
-        print('Test_clf_loss: {:.4f}\n'.format(clf_loss_test),
-              'Test_REC_LOSS: {:.4f}'.format(rec_loss_test))
-      print('Test_Accuracy: {:.2f}%'.format(acc_test * 100))
-
-      # Save test log
-      utils.save_test_log(
-          self.test_log_path, loss_test, acc_test, clf_loss_test,
-          rec_loss_test, self.cfg.TEST_WITH_REC)
-
-      utils.thin_line()
-      print('Testing finished! Using time: {:.2f}'
-            .format(time.time() - start_time))
-      utils.thick_line()
+      self.tester(sess, inputs, labels, loss, acc,
+                  clf_loss, rec_loss, rec_images, start_time)
 
 
-class TestMultiObjects(object):
+class TestMultiObjects(Test):
 
   def __init__(self,
                cfg,
                multi_gpu=False,
                version=None,
-               load_last_ckp=True):
-
-    # Config
-    self.cfg = cfg
-    self.multi_gpu = multi_gpu
-    self.version = version
-
-    # Checkpoint index
-    if load_last_ckp:
-      ckp_indices = []
-      for f_name in listdir(join(self.cfg.CHECKPOINT_PATH, version)):
-        m = re.match('.*-(\d*).meta', f_name)
-        if m:
-          ckp_indices.append(int(m.group(1)))
-      self.ckp_idx = max(ckp_indices)
-    else:
-      self.ckp_idx = self.cfg.TEST_CKP_IDX
-
-    # Get paths for testing
-    self.checkpoint_path, self.test_log_path, self.test_image_path = \
-        self._get_paths()
-
-    # Save config
-    utils.save_config_log(self.test_log_path, self.cfg)
-
-    # Load data
-    self.x_test, self.y_test = self._load_data()
-
-  def _get_paths(self):
-    """Get paths for testing."""
-    # Get checkpoint path
-    checkpoint_path = join(
-        self.cfg.CHECKPOINT_PATH,
-        '{}/models.ckpt-{}'.format(self.version, self.ckp_idx))
-
-    # Get log path, append information if the directory exist.
-    test_log_path_ = join(
-        self.cfg.TEST_LOG_PATH,
-        '{}-{}'.format(self.version, self.ckp_idx))
-    test_log_path = test_log_path_ + '_multi_obj'
-    i_append_info = 0
-    while isdir(test_log_path):
-      i_append_info += 1
-      test_log_path = test_log_path_ + '({})'.format(i_append_info)
-
-    # Path for saving images
-    test_image_path = join(test_log_path, 'images')
-
-    # Check directory of paths
-    utils.check_dir([test_log_path])
-    if self.cfg.TEST_WITH_REC:
-      if self.cfg.TEST_SAVE_IMAGE_STEP:
-        utils.check_dir([test_image_path])
-
-    return checkpoint_path, test_log_path, test_image_path
-
-  def _load_data(self):
-    utils.thick_line()
-    print('Loading data...')
-    utils.thin_line()
-    preprocessed_path_ = join(self.cfg.DPP_DATA_PATH, self.cfg.DATABASE_NAME)
-    x = utils.load_data_from_pkl(
-        join(preprocessed_path_, 'x_test_mul.p'))
-    y = utils.load_data_from_pkl(
-        join(preprocessed_path_, 'y_test_mul.p'))
-    return x, y
+               load_last_ckp=True,
+               is_training=False,
+               epoch_train=None,
+               step_train=None,
+               clf_arch_info=None,
+               rec_arch_info=None):
+    super(TestMultiObjects, self).__init__(cfg,
+                                           multi_gpu=multi_gpu,
+                                           version=version,
+                                           load_last_ckp=load_last_ckp,
+                                           is_training=is_training,
+                                           epoch_train=epoch_train,
+                                           step_train=step_train,
+                                           clf_arch_info=clf_arch_info,
+                                           rec_arch_info=rec_arch_info)
+    self.append_info = '_multi_obj'
 
   def _get_tensors(self, loaded_graph):
     """Get inputs, labels, loss, and accuracy tensor from <loaded_graph>."""
@@ -487,17 +469,22 @@ class TestMultiObjects(object):
         precision, recall, accuracy, f1score, f05score, f2score)
 
     # Save evaluation scores of multi-objects detection.
-    utils.save_multi_obj_scores(
-        self.test_log_path, precision, recall,
-        accuracy, f1score, f05score, f2score)
+    if self.is_training:
+      utils.save_multi_obj_scores_is_training(
+          self.test_log_path, self.epoch_train, self.step_train,
+          precision, recall, accuracy, f1score, f05score, f2score)
+    else:
+      utils.save_multi_obj_scores(
+          self.test_log_path, precision, recall,
+          accuracy, f1score, f05score, f2score)
 
-  def _save_images(self,
-                   sess,
-                   rec_images,
-                   inputs,
-                   labels,
-                   preds_binary,
-                   preds_vector):
+  def _save_images_mo(self,
+                      sess,
+                      rec_images,
+                      inputs,
+                      labels,
+                      preds_binary,
+                      preds_vector):
     """Save reconstructed images."""
     utils.thin_line()
     print('Getting reconstruction images...')
@@ -611,6 +598,29 @@ class TestMultiObjects(object):
         append_info='_no_overlap'
     )
 
+  def tester_mo(self, sess, inputs, labels, preds, rec_images, start_time):
+
+    utils.thin_line()
+    print('Calculating loss and accuracy of test set...')
+
+    # Get losses and accuracies
+    preds_vec_test = self._get_preds_vector(sess, inputs, preds)
+
+    # Get binary predictions
+    preds_binary = self._get_preds_binary(preds_vec=preds_vec_test)
+
+    # Get evaluation scores for multi-objects detection.
+    self._get_multi_obj_scores(preds_binary)
+
+    # Save reconstruction images of multi-objects detection
+    self._save_images_mo(sess, rec_images, inputs,
+                         labels, preds_binary, preds_vec_test)
+
+    utils.thin_line()
+    print('Testing finished! Using time: {:.2f}'
+          .format(time.time() - start_time))
+    utils.thick_line()
+
   def test(self):
     """Test models."""
     start_time = time.time()
@@ -633,26 +643,31 @@ class TestMultiObjects(object):
         inputs, labels, preds = self._get_tensors(loaded_graph)
         rec_images = None
 
-      utils.thin_line()
-      print('Calculating loss and accuracy of test set...')
+      self.tester_mo(sess, inputs, labels, preds, rec_images, start_time)
 
-      # Get losses and accuracies
-      preds_vec_test = self._get_preds_vector(sess, inputs, preds)
 
-      # Get binary predictions
-      preds_binary = self._get_preds_binary(preds_vec=preds_vec_test)
+class TestOracle(TestMultiObjects):
 
-      # Get evaluation scores for multi-objects detection.
-      self._get_multi_obj_scores(preds_binary)
-
-      # Save reconstruction images of multi-objects detection
-      self._save_images(sess, rec_images, inputs,
-                        labels, preds_binary, preds_vec_test)
-
-      utils.thin_line()
-      print('Testing finished! Using time: {:.2f}'
-            .format(time.time() - start_time))
-      utils.thick_line()
+  def __init__(self,
+               cfg,
+               multi_gpu=False,
+               version=None,
+               load_last_ckp=True,
+               is_training=False,
+               epoch_train=None,
+               step_train=None,
+               clf_arch_info=None,
+               rec_arch_info=None):
+    super(TestMultiObjects, self).__init__(cfg,
+                                           multi_gpu=multi_gpu,
+                                           version=version,
+                                           load_last_ckp=load_last_ckp,
+                                           is_training=is_training,
+                                           epoch_train=epoch_train,
+                                           step_train=step_train,
+                                           clf_arch_info=clf_arch_info,
+                                           rec_arch_info=rec_arch_info)
+    self.append_info = '_oracle'
 
 
 if __name__ == '__main__':
@@ -664,6 +679,8 @@ if __name__ == '__main__':
                       help="Use baseline configurations.")
   parser.add_argument('-mo', '--multi_obj', action="store_true",
                       help="Test multi objects detection.")
+  parser.add_argument('-m', '--mgpu', action="store_true",
+                      help="Test multi-gpu version.")
   parser.add_argument('-m', '--mgpu', action="store_true",
                       help="Test multi-gpu version.")
   args = parser.parse_args()
