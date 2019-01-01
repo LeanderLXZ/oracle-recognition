@@ -69,7 +69,13 @@ class Test(object):
     """Get paths for testing."""
     if self.is_training:
       # Get log path
-      test_log_path = join(self.cfg.TEST_LOG_PATH, self.version)
+      test_log_path_ = join(
+          self.cfg.TEST_LOG_PATH, self.version) + self.append_info
+      test_log_path = test_log_path_
+      i_append_info = 0
+      while isdir(test_log_path):
+        i_append_info += 1
+        test_log_path = test_log_path_ + '({})'.format(i_append_info)
 
       # Path for saving images
       test_image_path = join(
@@ -89,8 +95,8 @@ class Test(object):
       # Get log path, append information if the directory exist.
       test_log_path_ = join(
           self.cfg.TEST_LOG_PATH,
-          '{}-{}'.format(self.version, ckp_idx))
-      test_log_path = test_log_path_ + self.append_info
+          '{}-{}'.format(self.version, ckp_idx)) + self.append_info
+      test_log_path = test_log_path_
       i_append_info = 0
       while isdir(test_log_path):
         i_append_info += 1

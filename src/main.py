@@ -44,8 +44,8 @@ class Main(object):
 
     # Get paths from configuration
     self.preprocessed_path, self.train_log_path, \
-        self.test_log_path, self.summary_path, self.checkpoint_path, \
-        self.train_image_path, self.test_image_path = self._get_paths()
+        self.summary_path, self.checkpoint_path, \
+        self.train_image_path = self._get_paths()
 
     # Load data
     self.x_train, self.y_train, self.x_valid, self.y_valid = self._load_data()
@@ -74,7 +74,6 @@ class Main(object):
   def _get_paths(self):
     """Get paths from configuration."""
     train_log_path_ = join(self.cfg.TRAIN_LOG_PATH, self.cfg.VERSION)
-    test_log_path_ = join(self.cfg.TEST_LOG_PATH, self.cfg.VERSION)
     summary_path_ = join(self.cfg.SUMMARY_PATH, self.cfg.VERSION)
     checkpoint_path_ = join(self.cfg.CHECKPOINT_PATH, self.cfg.VERSION)
     preprocessed_path = join(self.cfg.DPP_DATA_PATH, self.cfg.DATABASE_NAME)
@@ -89,15 +88,12 @@ class Main(object):
     if i_append_info > 0:
       summary_path = summary_path_ + '({})'.format(i_append_info)
       checkpoint_path = checkpoint_path_ + '({})'.format(i_append_info)
-      test_log_path = test_log_path_ + '({})'.format(i_append_info)
     else:
       summary_path = summary_path_
       checkpoint_path = checkpoint_path_
-      test_log_path = test_log_path_
 
     # Images saving path
     train_image_path = join(train_log_path, 'images')
-    test_image_path = join(test_log_path, 'images')
 
     # Check directory of paths
     utils.check_dir([train_log_path, checkpoint_path])
@@ -105,8 +101,8 @@ class Main(object):
       if self.cfg.SAVE_IMAGE_STEP:
         utils.check_dir([train_image_path])
 
-    return preprocessed_path, train_log_path, test_log_path, \
-        summary_path, checkpoint_path, train_image_path, test_image_path
+    return preprocessed_path, train_log_path, \
+        summary_path, checkpoint_path, train_image_path
 
   def _load_data(self):
     """Load preprocessed data."""
