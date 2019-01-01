@@ -47,7 +47,7 @@ __C.LR_DECAY_STEPS = 2000
 __C.LR_DECAY_RATE = 0.96
 
 # Epochs
-__C.EPOCHS = 1
+__C.EPOCHS = 10
 
 # Batch size
 __C.BATCH_SIZE = 2048
@@ -224,10 +224,10 @@ __C.SHOW_TRAINING_DETAILS = False
 # None: Do not test
 
 # Evaluate on single-object test set
-__C.TEST_SO_MODE = 'per_epoch'  # 'after_training'  # 'per_epoch'
+__C.TEST_SO_MODE = 'after_training'  # 'per_epoch'
 
 # Evaluate on multi-objects test set
-__C.TEST_MO_MODE = 'per_epoch'  # 'after_training'  # 'per_epoch'
+__C.TEST_MO_MODE = 'after_training'  # 'per_epoch'
 
 # Evaluate on Oracles test set after
 __C.TEST_ORACLE_MODE = None  # 'after_training'  # 'per_epoch'
