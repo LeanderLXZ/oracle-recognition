@@ -613,6 +613,9 @@ if __name__ == '__main__':
                       choices=[0, 1], type=int, metavar='',
                       help="Run single-gpu version."
                            "Choose the GPU from: {!s}".format([0, 1]))
+  parser.add_argument('-bs', '--batch_size', nargs="+",
+                      type=int, metavar='',
+                      help="Set batch size.")
   parser.add_argument('-m', '--mgpu', action="store_true",
                       help="Run multi-gpu version.")
   parser.add_argument('-t', '--mtask', action="store_true",
@@ -647,5 +650,8 @@ if __name__ == '__main__':
   else:
     arch_ = caps_arch
     config_ = config
+
+  if args.batch_size:
+    config_.BATCH_SIZE = args.batch_size
 
   Main(config_, arch_, mode=mode_).train()
