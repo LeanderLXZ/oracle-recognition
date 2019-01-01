@@ -678,18 +678,23 @@ if __name__ == '__main__':
   parser.add_argument('-b', '--baseline', action="store_true",
                       help="Use baseline configurations.")
   parser.add_argument('-mo', '--multi_obj', action="store_true",
-                      help="Test multi objects detection.")
+                      help="Test multi-objects detection.")
   parser.add_argument('-m', '--mgpu', action="store_true",
                       help="Test multi-gpu version.")
-  parser.add_argument('-m', '--mgpu', action="store_true",
-                      help="Test multi-gpu version.")
+  parser.add_argument('-o', '--oracle', action="store_true",
+                      help="Test oracles detection.")
   args = parser.parse_args()
 
   if args.multi_obj:
     utils.thick_line()
-    print('Testing multi objects detection.')
+    print('Testing multi-objects detection.')
     utils.thick_line()
     Test_ = TestMultiObjects
+  elif args.oracle:
+    utils.thick_line()
+    print('Testing oracles detection.')
+    utils.thick_line()
+    Test_ = TestOracle
   else:
     Test_ = Test
 
