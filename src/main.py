@@ -400,7 +400,6 @@ class Main(object):
             mode='single'):
     """Evaluate on the test set."""
     utils.thick_line()
-    print('Testing on test set...')
     start_time_test = time.time()
 
     test_params = dict(
@@ -415,16 +414,19 @@ class Main(object):
     )
 
     if mode == 'single':
+      print('Testing on Single-object test set...')
       Test(**test_params).tester(
           sess, self.inputs, self.labels, self.loss, self.accuracy,
           self.clf_loss, self.rec_loss, self.rec_images, start_time_test
       )
     elif mode == 'multi_obj':
+      print('Testing on Multi-object test set...')
       TestMultiObjects(**test_params).tester_mo(
           sess, self.inputs, self.labels,
           self.preds, self.rec_images, start_time_test
       )
     elif mode == 'oracle':
+      print('Testing on Oracles test set...')
       TestOracle(**test_params).tester_mo(
           sess, self.inputs, self.labels,
           self.preds, self.rec_images, start_time_test

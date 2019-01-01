@@ -30,8 +30,7 @@ class Test(object):
                epoch_train=None,
                step_train=None,
                clf_arch_info=None,
-               rec_arch_info=None,
-               append_info=''):
+               rec_arch_info=None):
 
     # Config
     self.cfg = cfg
@@ -41,7 +40,7 @@ class Test(object):
     self.is_training = is_training
     self.epoch_train = epoch_train
     self.step_train = step_train
-    self.append_info = append_info
+    self.append_info = self.info[0]
 
     # Get paths for testing
     self.checkpoint_path, self.test_log_path, self.test_image_path = \
@@ -53,6 +52,11 @@ class Test(object):
 
     # Load data
     self.x_test, self.y_test = self._load_data()
+
+  @property
+  def info(self):
+    """Get information of the class."""
+    return '', 'Single-object'
 
   def _get_ckp_idx(self):
     """Get checkpoint index."""
@@ -74,9 +78,10 @@ class Test(object):
           self.cfg.TEST_LOG_PATH, self.version) + self.append_info
       test_log_path = test_log_path_
       i_append_info = 0
-      while isdir(test_log_path):
-        i_append_info += 1
-        test_log_path = test_log_path_ + '({})'.format(i_append_info)
+      if self.epoch_train == 0:
+        while isdir(test_log_path):
+          i_append_info += 1
+          test_log_path = test_log_path_ + '({})'.format(i_append_info)
 
       # Path for saving images
       if self.epoch_train == 'end':
@@ -280,7 +285,7 @@ class Test(object):
     loaded_graph = tf.Graph()
 
     utils.thick_line()
-    print('Testing on test set...')
+    print('Testing on {} test set...'.format(self.info[1]))
 
     with tf.Session(graph=loaded_graph) as sess:
 
@@ -312,8 +317,7 @@ class TestMultiObjects(Test):
                epoch_train=None,
                step_train=None,
                clf_arch_info=None,
-               rec_arch_info=None,
-               append_info='_multi_obj'):
+               rec_arch_info=None):
     super(TestMultiObjects, self).__init__(cfg,
                                            multi_gpu=multi_gpu,
                                            version=version,
@@ -322,9 +326,12 @@ class TestMultiObjects(Test):
                                            epoch_train=epoch_train,
                                            step_train=step_train,
                                            clf_arch_info=clf_arch_info,
-                                           rec_arch_info=rec_arch_info,
-                                           append_info=append_info)
-    self.append_info = append_info
+                                           rec_arch_info=rec_arch_info)
+
+  @property
+  def info(self):
+    """Get information of the class."""
+    return '_multi_obj', 'Multi-object'
 
   def _get_tensors(self, loaded_graph):
     """Get inputs, labels, loss, and accuracy tensor from <loaded_graph>."""
@@ -643,7 +650,7 @@ class TestMultiObjects(Test):
     loaded_graph = tf.Graph()
 
     utils.thick_line()
-    print('Testing on test set...')
+    print('Testing on {} test set...'.format(self.info[1]))
 
     with tf.Session(graph=loaded_graph) as sess:
 
@@ -681,8 +688,12 @@ class TestOracle(TestMultiObjects):
                                            epoch_train=epoch_train,
                                            step_train=step_train,
                                            clf_arch_info=clf_arch_info,
-                                           rec_arch_info=rec_arch_info,
-                                           append_info='_oracle')
+                                           rec_arch_info=rec_arch_info)
+
+  @property
+  def info(self):
+    """Get information of the class."""
+    return '_oracle', 'Oracle'
 
 
 if __name__ == '__main__':
