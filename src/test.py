@@ -73,23 +73,23 @@ class Test(object):
 
       # Path for saving images
       test_image_path = join(
-          join(self.test_log_path, 'images'),
+          join(test_log_path, 'images'),
           'epoch-{}_batch-{}'.format(self.epoch_train, self.step_train))
 
       checkpoint_path = None
 
     else:
-      self.ckp_idx = self._get_ckp_idx()
+      ckp_idx = self._get_ckp_idx()
 
       # Get checkpoint path
       checkpoint_path = join(
           self.cfg.CHECKPOINT_PATH,
-          '{}/models.ckpt-{}'.format(self.version, self.ckp_idx))
+          '{}/models.ckpt-{}'.format(self.version, ckp_idx))
 
       # Get log path, append information if the directory exist.
       test_log_path_ = join(
           self.cfg.TEST_LOG_PATH,
-          '{}-{}'.format(self.version, self.ckp_idx))
+          '{}-{}'.format(self.version, ckp_idx))
       test_log_path = test_log_path_ + self.append_info
       i_append_info = 0
       while isdir(test_log_path):
