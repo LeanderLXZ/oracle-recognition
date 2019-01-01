@@ -78,9 +78,12 @@ class Test(object):
         test_log_path = test_log_path_ + '({})'.format(i_append_info)
 
       # Path for saving images
-      test_image_path = join(
-          join(test_log_path, 'images'),
-          'epoch-{}_batch-{}'.format(self.epoch_train, self.step_train))
+      if self.epoch_train == 'end':
+        test_image_path = join(test_log_path, 'images')
+      else:
+        test_image_path = join(
+            join(test_log_path, 'images'),
+            'epoch-{}_batch-{}'.format(self.epoch_train, self.step_train))
 
       checkpoint_path = None
 
@@ -106,10 +109,7 @@ class Test(object):
       test_image_path = join(test_log_path, 'images')
 
     # Check directory of paths
-    utils.check_dir([test_log_path])
-    if self.cfg.TEST_WITH_REC:
-      if self.cfg.TEST_SAVE_IMAGE_STEP:
-        utils.check_dir([test_image_path])
+    utils.check_dir([test_log_path, test_image_path])
 
     return checkpoint_path, test_log_path, test_image_path
 
@@ -257,7 +257,7 @@ class Test(object):
     print('Test Accuracy: {:.2f}%'.format(acc_test * 100))
 
     # Save test log
-    if self.is_training:
+    if self.is_training and (self.epoch_train != 'end'):
       utils.save_test_log_is_training(
           self.test_log_path, self.epoch_train, self.step_train,
           loss_test, acc_test, clf_loss_test, rec_loss_test,
@@ -481,7 +481,7 @@ class TestMultiObjects(Test):
         precision, recall, accuracy, f1score, f05score, f2score)
 
     # Save evaluation scores of multi-objects detection.
-    if self.is_training:
+    if self.is_training and (self.epoch_train != 'end'):
       utils.save_multi_obj_scores_is_training(
           self.test_log_path, self.epoch_train, self.step_train,
           precision, recall, accuracy, f1score, f05score, f2score)

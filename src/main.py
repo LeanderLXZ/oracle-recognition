@@ -571,6 +571,23 @@ class Main(object):
           .format(time.time() - self.start_time))
     utils.thick_line()
 
+    # Evaluate on test set after training
+    if self.cfg.TEST_SO_MODE == 'after_training':
+      self._test(sess, is_training=True, epoch='end', mode='single')
+
+    # Evaluate on multi-objects test set after training
+    if self.cfg.TEST_MO_MODE == 'after_training':
+      self._test(sess, is_training=True, epoch='end', mode='multi_obj')
+
+    # Evaluate on Oracles test set after training
+    if self.cfg.TEST_ORACLE_MODE == 'after_training':
+      self._test(sess, is_training=True, epoch='end', mode='oracle')
+
+    utils.thick_line()
+    print('All task finished! Total time: {:.2f}'
+          .format(time.time() - self.start_time))
+    utils.thick_line()
+
   def train(self):
     """Training models."""
     session_cfg = tf.ConfigProto(allow_soft_placement=True)
@@ -583,23 +600,6 @@ class Main(object):
     else:
       with tf.Session(graph=self.train_graph, config=session_cfg) as sess:
         self._trainer(sess)
-
-    # Evaluate on test set after training
-    if self.cfg.TEST_SO_MODE == 'after_training':
-      self._test(sess, is_training=False, mode='single')
-
-    # Evaluate on multi-objects test set after training
-    if self.cfg.TEST_MO_MODE == 'after_training':
-      self._test(sess, is_training=False, mode='multi_obj')
-
-    # Evaluate on Oracles test set after training
-    if self.cfg.TEST_ORACLE_MODE == 'after_training':
-      self._test(sess, is_training=False, mode='oracle')
-
-    utils.thick_line()
-    print('All task finished! Total time: {:.2f}'
-          .format(time.time() - self.start_time))
-    utils.thick_line()
 
 
 if __name__ == '__main__':
