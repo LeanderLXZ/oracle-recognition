@@ -107,7 +107,7 @@ class DataPreProcess(object):
     if '.DS_Store' in classes:
       classes.remove('.DS_Store')
     classes = sorted([int(i) for i in classes])
-    print(classes[:self.cfg.NUM_RADICALS])
+    print('Number of classes: ', self.cfg.NUM_RADICALS)
 
     self.x = []
     self.y = []
@@ -295,6 +295,7 @@ class DataPreProcess(object):
         self.x_test, self.y_test, random_state=self.seed)
 
   def _generate_multi_obj_img(self,
+                              x_y_dict=None,
                               show_img=False,
                               data_aug=False):
     """
@@ -304,6 +305,7 @@ class DataPreProcess(object):
     print('Generating images of superpositions of multi-objects...')
     self.x_test_mul = []
     self.y_test_mul = []
+    y_list = list(x_y_dict.keys())
 
     for _ in tqdm(range(self.cfg.NUM_MULTI_IMG), ncols=100, unit=' images'):
       # Get images for merging
@@ -316,12 +318,11 @@ class DataPreProcess(object):
             self.y_test[mul_img_idx_], axis=0)]
       else:
         # No repetitive labels
-        x_y_dict = self._get_x_y_dict(self.x_test, self.y_test, y_encoded=True)
-        y_list = np.random.choice(
-            list(x_y_dict.keys()), self.cfg.NUM_MULTI_OBJECT, replace=False)
+        y_list_ = np.random.choice(
+            y_list, self.cfg.NUM_MULTI_OBJECT, replace=False)
         mul_imgs = []
         mul_y = []
-        for y_ in y_list:
+        for y_ in y_list_:
           x_ = x_y_dict[y_]
           x_ = x_[np.random.choice(len(x_))]
           mul_imgs.append(x_)
@@ -509,7 +510,9 @@ class DataPreProcess(object):
 
     # Generate multi-objects test images
     if self.cfg.NUM_MULTI_OBJECT:
-      self._generate_multi_obj_img(show_img=show_img, data_aug=False)
+      x_y_dict = self._get_x_y_dict(self.x_test, self.y_test, y_encoded=True)
+      self._generate_multi_obj_img(
+          x_y_dict=x_y_dict, show_img=show_img, data_aug=False)
 
     # Split data set into train/valid
     self._train_valid_split()
