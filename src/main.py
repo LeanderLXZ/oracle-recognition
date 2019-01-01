@@ -616,6 +616,9 @@ if __name__ == '__main__':
   parser.add_argument('-bs', '--batch_size',
                       type=int, metavar='',
                       help="Set batch size.")
+  parser.add_argument('-tn', '--task_number',
+                      type=int, metavar='',
+                      help="Set task number.")
   parser.add_argument('-m', '--mgpu', action="store_true",
                       help="Run multi-gpu version.")
   parser.add_argument('-t', '--mtask', action="store_true",
@@ -653,5 +656,8 @@ if __name__ == '__main__':
 
   if args.batch_size:
     config_.BATCH_SIZE = args.batch_size
+
+  if args.task_number:
+    config_.TASK_NUMBER = args.task_number
 
   Main(config_, arch_, mode=mode_).train()
