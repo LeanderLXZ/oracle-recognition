@@ -43,16 +43,8 @@ class Test(object):
     self.append_info = ''
 
     # Get paths for testing
-    if is_training:
-      self.test_log_path = join(cfg.TEST_LOG_PATH, version)
-      self.test_image_path = join(
-          join(self.test_log_path, 'images'),
-          'epoch-{}_batch-{}'.format(epoch_train, step_train))
-    else:
-      # Get checkpoint index
-      self.ckp_idx = self._get_ckp_idx()
-      self.checkpoint_path, self.test_log_path, self.test_image_path = \
-          self._get_paths()
+    self.checkpoint_path, self.test_log_path, self.test_image_path = \
+        self._get_paths()
 
     # Save config
     utils.save_config_log(
@@ -75,23 +67,37 @@ class Test(object):
 
   def _get_paths(self):
     """Get paths for testing."""
-    # Get checkpoint path
-    checkpoint_path = join(
-        self.cfg.CHECKPOINT_PATH,
-        '{}/models.ckpt-{}'.format(self.version, self.ckp_idx))
+    if self.is_training:
+      # Get log path
+      test_log_path = join(self.cfg.TEST_LOG_PATH, self.version)
 
-    # Get log path, append information if the directory exist.
-    test_log_path_ = join(
-        self.cfg.TEST_LOG_PATH,
-        '{}-{}'.format(self.version, self.ckp_idx))
-    test_log_path = test_log_path_ + self.append_info
-    i_append_info = 0
-    while isdir(test_log_path):
-      i_append_info += 1
-      test_log_path = test_log_path_ + '({})'.format(i_append_info)
+      # Path for saving images
+      test_image_path = join(
+          join(self.test_log_path, 'images'),
+          'epoch-{}_batch-{}'.format(self.epoch_train, self.step_train))
 
-    # Path for saving images
-    test_image_path = join(test_log_path, 'images')
+      checkpoint_path = None
+
+    else:
+      self.ckp_idx = self._get_ckp_idx()
+
+      # Get checkpoint path
+      checkpoint_path = join(
+          self.cfg.CHECKPOINT_PATH,
+          '{}/models.ckpt-{}'.format(self.version, self.ckp_idx))
+
+      # Get log path, append information if the directory exist.
+      test_log_path_ = join(
+          self.cfg.TEST_LOG_PATH,
+          '{}-{}'.format(self.version, self.ckp_idx))
+      test_log_path = test_log_path_ + self.append_info
+      i_append_info = 0
+      while isdir(test_log_path):
+        i_append_info += 1
+        test_log_path = test_log_path_ + '({})'.format(i_append_info)
+
+      # Path for saving images
+      test_image_path = join(test_log_path, 'images')
 
     # Check directory of paths
     utils.check_dir([test_log_path])
