@@ -157,7 +157,10 @@ class DataPreProcess(object):
     y_test_oracle = []
     df = pd.read_csv(join(self.cfg.SOURCE_DATA_PATH,
                           'recognized_oracles_labels.csv'))
-    for _, row in tqdm(df.iterrows(), ncols=100, unit=' images'):
+    for _, row in tqdm(df.iterrows(),
+                       total=len(df),
+                       ncols=100,
+                       unit=' images'):
       img_path = row['file_path']
       label = pd.eval(row['label'])
 
@@ -480,7 +483,7 @@ class DataPreProcess(object):
     self.source_data_path = join(self.cfg.SOURCE_DATA_PATH, self.data_base_name)
 
     # show_img = True
-    show_img = True
+    show_img = False
 
     # Load data
     if self.data_base_name == 'mnist' or self.data_base_name == 'cifar10':
