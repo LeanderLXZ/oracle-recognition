@@ -396,42 +396,40 @@ class Main(object):
       print('Saving models to {}...'.format(save_path))
     saver.save(sess, save_path, global_step=step)
 
-  def _test(self, sess, mode='single'):
+  def _test(self,
+            sess,
+            is_training=False,
+            epoch=None,
+            step=None,
+            mode='single'):
     """Evaluate on the test set."""
     utils.thick_line()
     print('Testing on test set...')
     start_time_test = time.time()
 
+    test_params = dict(
+        cfg=self.cfg,
+        multi_gpu=self.multi_gpu,
+        version=self.cfg.VERSION,
+        is_training=is_training,
+        epoch_train=epoch,
+        step_train=step,
+        clf_arch_info=self.clf_arch_info,
+        rec_arch_info=self.rec_arch_info
+    )
+
     if mode == 'single':
-      Test(
-          cfg=self.cfg,
-          multi_gpu=self.multi_gpu,
-          version=self.cfg.VERSION,
-          clf_arch_info=self.clf_arch_info,
-          rec_arch_info=self.rec_arch_info
-      ).tester(
+      Test(**test_params).tester(
           sess, self.inputs, self.labels, self.loss, self.accuracy,
           self.clf_loss, self.rec_loss, self.rec_images, start_time_test
       )
     elif mode == 'multi_obj':
-      TestMultiObjects(
-          cfg=self.cfg,
-          multi_gpu=self.multi_gpu,
-          version=self.cfg.VERSION,
-          clf_arch_info=self.clf_arch_info,
-          rec_arch_info=self.rec_arch_info
-      ).tester_mo(
+      TestMultiObjects(**test_params).tester_mo(
           sess, self.inputs, self.labels,
           self.preds, self.rec_images, start_time_test
       )
     elif mode == 'oracle':
-      TestOracle(
-          cfg=self.cfg,
-          multi_gpu=self.multi_gpu,
-          version=self.cfg.VERSION,
-          clf_arch_info=self.clf_arch_info,
-          rec_arch_info=self.rec_arch_info
-      ).tester_mo(
+      TestOracle(**test_params).tester_mo(
           sess, self.inputs, self.labels,
           self.preds, self.rec_images, start_time_test
       )
@@ -554,15 +552,18 @@ class Main(object):
 
       # Evaluate on test set per epoch
       if self.cfg.TEST_SO_MODE == 'per_epoch':
-        self._test(sess, mode='single')
+        self._test(sess, is_training=True,
+                   epoch=epoch_i, step=step, mode='single')
 
       # Evaluate on multi-objects test set per epoch
       if self.cfg.TEST_MO_MODE == 'per_epoch':
-        self._test(sess, mode='multi_obj')
+        self._test(sess, is_training=True,
+                   epoch=epoch_i, step=step, mode='multi_obj')
 
       # Evaluate on Oracles test set per epoch
       if self.cfg.TEST_ORACLE_MODE == 'per_epoch':
-        self._test(sess, mode='oracle')
+        self._test(sess, is_training=True,
+                   epoch=epoch_i, step=step, mode='oracle')
 
       utils.thin_line()
       print('Epoch {}/{} done! Using time: {:.2f}'
@@ -571,23 +572,6 @@ class Main(object):
 
     utils.thick_line()
     print('Training finished! Using time: {:.2f}'
-          .format(time.time() - self.start_time))
-    utils.thick_line()
-
-    # Evaluate on test set after training
-    if self.cfg.TEST_SO_MODE == 'after_training':
-      self._test(sess, mode='single')
-
-    # Evaluate on multi-objects test set after training
-    if self.cfg.TEST_MO_MODE == 'after_training':
-      self._test(sess, mode='multi_obj')
-
-    # Evaluate on Oracles test set after training
-    if self.cfg.TEST_ORACLE_MODE == 'after_training':
-      self._test(sess, mode='oracle')
-
-    utils.thick_line()
-    print('All task finished! Total time: {:.2f}'
           .format(time.time() - self.start_time))
     utils.thick_line()
 
@@ -603,6 +587,23 @@ class Main(object):
     else:
       with tf.Session(graph=self.train_graph, config=session_cfg) as sess:
         self._trainer(sess)
+
+    # Evaluate on test set after training
+    if self.cfg.TEST_SO_MODE == 'after_training':
+      self._test(sess, is_training=False, mode='single')
+
+    # Evaluate on multi-objects test set after training
+    if self.cfg.TEST_MO_MODE == 'after_training':
+      self._test(sess, is_training=False, mode='multi_obj')
+
+    # Evaluate on Oracles test set after training
+    if self.cfg.TEST_ORACLE_MODE == 'after_training':
+      self._test(sess, is_training=False, mode='oracle')
+
+    utils.thick_line()
+    print('All task finished! Total time: {:.2f}'
+          .format(time.time() - self.start_time))
+    utils.thick_line()
 
 
 if __name__ == '__main__':
