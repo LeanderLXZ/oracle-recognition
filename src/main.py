@@ -609,11 +609,11 @@ if __name__ == '__main__':
   parser = argparse.ArgumentParser(
     description="Training the model."
   )
-  parser.add_argument('-g', '--gpu', nargs="+",
+  parser.add_argument('-g', '--gpu', nargs=1,
                       choices=[0, 1], type=int, metavar='',
                       help="Run single-gpu version."
                            "Choose the GPU from: {!s}".format([0, 1]))
-  parser.add_argument('-bs', '--batch_size', nargs="+",
+  parser.add_argument('-bs', '--batch_size', nargs=1,
                       type=int, metavar='',
                       help="Set batch size.")
   parser.add_argument('-m', '--mgpu', action="store_true",
