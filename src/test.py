@@ -242,6 +242,12 @@ class Test(object):
           clf_loss_all.append(clf_loss_i)
           rec_loss_all.append(rec_loss_i)
           acc_all.append(acc_i)
+
+          # Save reconstruct images
+          if self.cfg.TEST_SAVE_IMAGE_STEP:
+            if step % self.cfg.TEST_SAVE_IMAGE_STEP == 0:
+              self._save_images(sess, rec_images, inputs, labels,
+                                x_batch, y_batch, step)
         else:
           # The last batch which has less examples
           for i in range(self.cfg.TEST_BATCH_SIZE - len_batch):
@@ -252,12 +258,6 @@ class Test(object):
           pred_i = pred_i[:len_batch]
 
         pred_all.extend(list(pred_i))
-
-        # Save reconstruct images
-        if self.cfg.TEST_SAVE_IMAGE_STEP:
-          if step % self.cfg.TEST_SAVE_IMAGE_STEP == 0:
-            self._save_images(sess, rec_images, inputs, labels,
-                              x_batch, y_batch, step)
 
       clf_loss_ = sum(clf_loss_all) / len(clf_loss_all)
       rec_loss_ = sum(rec_loss_all) / len(rec_loss_all)
