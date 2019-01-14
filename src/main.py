@@ -556,9 +556,10 @@ class Main(object):
                    epoch=epoch_i, step=step, mode='multi_obj')
 
       # Evaluate on Oracles test set per epoch
-      if self.cfg.TEST_ORACLE_MODE == 'per_epoch':
-        self._test(sess, is_training=True,
-                   epoch=epoch_i, step=step, mode='oracle')
+      if self.cfg.DATABASE_NAME == 'radical':
+        if self.cfg.TEST_ORACLE_MODE == 'per_epoch':
+          self._test(sess, is_training=True,
+                     epoch=epoch_i, step=step, mode='oracle')
 
       utils.thin_line()
       print('Epoch {}/{} done! Using time: {:.2f}'
@@ -579,8 +580,9 @@ class Main(object):
       self._test(sess, is_training=True, epoch='end', mode='multi_obj')
 
     # Evaluate on Oracles test set after training
-    if self.cfg.TEST_ORACLE_MODE == 'after_training':
-      self._test(sess, is_training=True, epoch='end', mode='oracle')
+    if self.cfg.DATABASE_NAME == 'radical':
+      if self.cfg.TEST_ORACLE_MODE == 'after_training':
+        self._test(sess, is_training=True, epoch='end', mode='oracle')
 
     utils.thick_line()
     print('All task finished! Total time: {:.2f}'
