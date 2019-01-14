@@ -223,7 +223,7 @@ class Test(object):
     clf_loss_all = []
     rec_loss_all = []
     step = 0
-    _batch_generator = utils.get_batches(
+    _batch_generator = utils.get_batches_all(
         self.x_test, self.y_test, self.cfg.TEST_BATCH_SIZE)
     n_batch = (len(self.x_test) // self.cfg.TEST_BATCH_SIZE) + 1
 
@@ -422,7 +422,7 @@ class TestMultiObjects(Test):
     utils.thin_line()
     print('Getting prediction vectors...')
     pred_all = []
-    _batch_generator = utils.get_batches_all(
+    _batch_generator = utils.get_batches_all_x(
         self.x_test, self.cfg.TEST_BATCH_SIZE)
     n_batch = (len(self.x_test) // self.cfg.TEST_BATCH_SIZE) + 1
 
