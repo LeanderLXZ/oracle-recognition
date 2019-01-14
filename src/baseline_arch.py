@@ -34,19 +34,11 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
   ))
   model.add(CapsLayer(
       cfg,
-      num_caps=10,
-      vec_dim=8,
-      route_epoch=3,
-      batch_size=batch_size,
-      idx=0
-  ))
-  model.add(CapsLayer(
-      cfg,
       num_caps=num_classes,
       vec_dim=16,
       route_epoch=3,
       batch_size=batch_size,
-      idx=1
+      idx=0
   ))
 
   return model.top_layer, model.info

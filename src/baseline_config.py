@@ -318,11 +318,11 @@ __C.VAR_ON_CPU = True
 __C.GPU_NUMBER = 2
 
 # Number of multi-tasks
-__C.TASK_NUMBER = 8
+__C.TASK_NUMBER = 16
 
 # The decay to use for the moving average.
 # If None, not use
-__C.MOVING_AVERAGE_DECAY = None  # 0.9999
+__C.MOVING_AVERAGE_DECAY = 0.9999
 
 # ===========================================
 
