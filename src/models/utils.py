@@ -259,7 +259,7 @@ def save_log(file_path, epoch_i, step, using_time,
 def save_test_log(file_path, loss_test, acc_test,
                   clf_loss_test, rec_loss_test, with_rec):
   """Save losses and accuracies of testing."""
-  file_path = os.path.join(file_path, 'test_log.txt')
+  file_path = os.path.join(file_path, 'test_log.csv')
   thin_line()
   print('Saving {}...'.format(file_path))
 
@@ -279,7 +279,7 @@ def save_test_log(file_path, loss_test, acc_test,
 def save_test_log_is_training(file_path, epoch, step, loss_test, acc_test,
                               clf_loss_test, rec_loss_test, with_rec):
   """Save losses and accuracies of testing."""
-  file_path = os.path.join(file_path, 'test_log.txt')
+  file_path = os.path.join(file_path, 'test_log.csv')
 
   if with_rec:
     if not os.path.isfile(file_path):
@@ -315,7 +315,7 @@ def save_test_log_is_training(file_path, epoch, step, loss_test, acc_test,
 def save_multi_obj_scores(file_path, precision, recall,
                           accuracy, f1score, f05score, f2score):
   """Save evaluation scores of multi-objects detection."""
-  file_path = os.path.join(file_path, 'multi_obj_scores.txt')
+  file_path = os.path.join(file_path, 'multi_obj_scores.csv')
   thin_line()
   print('Saving {}...'.format(file_path))
 
@@ -336,7 +336,7 @@ def save_multi_obj_scores(file_path, precision, recall,
 def save_multi_obj_scores_is_training(file_path, epoch, step, precision, recall,
                                       accuracy, f1score, f05score, f2score):
   """Save evaluation scores of multi-objects detection."""
-  file_path = os.path.join(file_path, 'multi_obj_scores.txt')
+  file_path = os.path.join(file_path, 'multi_obj_scores.csv')
 
   if not os.path.isfile(file_path):
     with open(file_path, 'w') as f:
@@ -354,37 +354,84 @@ def save_multi_obj_scores_is_training(file_path, epoch, step, precision, recall,
     writer.writerow(log)
 
 
-def save_test_pred(file_path, labels, preds, preds_vec):
+def dummy_to_class(y):
+  _class = []
+  for y_i in y:
+    y_idx = []
+    for idx, y_ in enumerate(y_i):
+      if y_ > 0:
+        y_idx.append(idx)
+    _class.append(y_idx)
+  return _class
+
+
+def save_test_pred(file_path, labels, preds, preds_vec,
+                   save_num=None, pred_is_int=False):
   """Save predictions of multi-objects detection."""
   check_dir([file_path])
   file_path = os.path.join(file_path, 'pred_log.csv')
   thin_line()
   print('Saving {}...'.format(file_path))
 
-  def _dummy_to_class(y):
-    _class = []
-    for y_i in y:
-      y_idx = []
-      for idx, y_ in enumerate(y_i):
-        if y_ > 0:
-          y_idx.append(idx)
-      _class.append(y_idx)
-    return _class
+  if save_num:
+    save_idx = np.random.choice(len(labels), save_num, replace=False)
+    labels, preds, preds_vec = \
+        labels[save_idx], preds[save_idx], preds_vec[save_idx]
 
-  preds_class = _dummy_to_class(preds)
-  labels_class = _dummy_to_class(labels)
+  if not pred_is_int:
+    preds_class = dummy_to_class(preds)
+  else:
+    preds_class = preds
+  labels_class = dummy_to_class(labels)
 
   if not os.path.isfile(file_path):
     with open(file_path, 'w') as f:
-      header = ['labels_class', 'preds_class', 'labels', 'preds', 'preds_vec']
+      header = ['sample_idx', 'labels_class', 'preds_class',
+                'labels', 'preds', 'preds_vec']
       writer = csv.writer(f)
       writer.writerow(header)
 
   with open(file_path, 'a') as f:
+    writer = csv.writer(f)
     for i in range(len(labels)):
-      log = [labels_class[i], preds_class[i], labels[i], preds[i], preds_vec[i]]
-      writer = csv.writer(f)
+      log = [i, labels_class[i], preds_class[i],
+             labels[i], preds[i], preds_vec[i]]
       writer.writerow(log)
+
+
+def save_test_pred_is_training(file_path, epoch, step, labels, preds, preds_vec,
+                               save_num=None, pred_is_int=False):
+  """Save predictions of multi-objects detection."""
+  check_dir([file_path])
+  file_path = os.path.join(file_path, 'pred_log.csv')
+  thin_line()
+  print('Saving {}...'.format(file_path))
+
+  if save_num:
+    save_idx = np.random.choice(len(labels), save_num, replace=False)
+    labels, preds, preds_vec = \
+        labels[save_idx], preds[save_idx], preds_vec[save_idx]
+
+  if not pred_is_int:
+    preds_class = dummy_to_class(preds)
+  else:
+    preds_class = preds
+  labels_class = dummy_to_class(labels)
+
+  if not os.path.isfile(file_path):
+    with open(file_path, 'w') as f:
+      header = ['Epoch', 'Batch', 'sample_idx', 'labels_class',
+                'preds_class', 'labels', 'preds', 'preds_vec']
+      writer = csv.writer(f)
+      writer.writerow(header)
+
+  with open(file_path, 'a') as f:
+    writer = csv.writer(f)
+    for i in range(len(labels)):
+      log = [epoch, step, i, labels_class[i],
+             preds_class[i], labels[i], preds[i], preds_vec[i]]
+      writer.writerow(log)
+    writer.writerow(['', '', '', '', '', '', '', ''])
 
 
 def _read32(bytestream):

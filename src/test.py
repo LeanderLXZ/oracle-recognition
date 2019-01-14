@@ -143,25 +143,46 @@ class Test(object):
       if self.multi_gpu:
         accuracy_ = loaded_graph.get_tensor_by_name("total_acc:0")
         loss_ = loaded_graph.get_tensor_by_name("total_loss:0")
+        preds_ = loaded_graph.get_tensor_by_name('total_preds:0')
         if self.cfg.TEST_WITH_REC:
           clf_loss_ = loaded_graph.get_tensor_by_name("total_clf_loss:0")
           rec_loss_ = loaded_graph.get_tensor_by_name("total_rec_loss:0")
           rec_images_ = loaded_graph.get_tensor_by_name("total_rec_images:0")
-          return inputs_, labels_, loss_, accuracy_, \
+          return inputs_, labels_, preds_, loss_, accuracy_, \
               clf_loss_, rec_loss_, rec_images_
         else:
-          return inputs_, labels_, loss_, accuracy_
+          return inputs_, labels_, preds_, loss_, accuracy_
       else:
         accuracy_ = loaded_graph.get_tensor_by_name("accuracy:0")
         loss_ = loaded_graph.get_tensor_by_name("loss:0")
+        preds_ = loaded_graph.get_tensor_by_name('preds:0')
         if self.cfg.TEST_WITH_REC:
           clf_loss_ = loaded_graph.get_tensor_by_name("clf_loss:0")
           rec_loss_ = loaded_graph.get_tensor_by_name("rec_loss:0")
           rec_images_ = loaded_graph.get_tensor_by_name("rec_images:0")
-          return inputs_, labels_, loss_, accuracy_, \
+          return inputs_, labels_, preds_, loss_, accuracy_, \
               clf_loss_, rec_loss_, rec_images_
         else:
-          return inputs_, labels_, loss_, accuracy_
+          return inputs_, labels_, preds_, loss_, accuracy_
+
+  def _get_preds_int(self, preds_vec):
+    """Get integer predictions."""
+    utils.thin_line()
+    print('Converting prediction vectors to ints...')
+
+    preds = np.argmax(np.array(preds_vec), axis=1)
+
+    # Save preds
+    if self.cfg.SAVE_TEST_PRED:
+      if self.is_training and (self.epoch_train != 'end'):
+        utils.save_test_pred_is_training(
+            self.test_log_path, self.epoch_train, self.step_train,
+            self.y_test, preds, preds_vec, save_num=20, pred_is_int=True)
+      else:
+        utils.save_test_pred(self.test_log_path, self.y_test,
+                             preds, preds_vec, pred_is_int=True)
+
+    return preds
 
   def _save_images(self,
                    sess,
@@ -189,12 +210,14 @@ class Test(object):
                        sess,
                        inputs,
                        labels,
+                       preds,
                        loss,
                        acc,
                        clf_loss,
                        rec_loss,
                        rec_images):
     """Calculate losses and accuracies of full train set."""
+    pred_all = []
     loss_all = []
     acc_all = []
     clf_loss_all = []
@@ -202,20 +225,33 @@ class Test(object):
     step = 0
     _batch_generator = utils.get_batches(
         self.x_test, self.y_test, self.cfg.TEST_BATCH_SIZE)
-    n_batch = len(self.y_test) // self.cfg.TEST_BATCH_SIZE
+    n_batch = (len(self.x_test) // self.cfg.TEST_BATCH_SIZE) + 1
 
     if self.cfg.TEST_WITH_REC:
       for _ in tqdm(range(n_batch), total=n_batch,
                     ncols=100, unit=' batch'):
         step += 1
         x_batch, y_batch = next(_batch_generator)
-        loss_i, clf_loss_i, rec_loss_i, acc_i = \
-            sess.run([loss, clf_loss, rec_loss, acc],
-                     feed_dict={inputs: x_batch, labels: y_batch})
-        loss_all.append(loss_i)
-        clf_loss_all.append(clf_loss_i)
-        rec_loss_all.append(rec_loss_i)
-        acc_all.append(acc_i)
+        len_batch = len(x_batch)
+
+        if len_batch == self.cfg.TEST_BATCH_SIZE:
+          pred_i, loss_i, clf_loss_i, rec_loss_i, acc_i = \
+              sess.run([preds, loss, clf_loss, rec_loss, acc],
+                       feed_dict={inputs: x_batch, labels: y_batch})
+          loss_all.append(loss_i)
+          clf_loss_all.append(clf_loss_i)
+          rec_loss_all.append(rec_loss_i)
+          acc_all.append(acc_i)
+        else:
+          # The last batch which has less examples
+          for i in range(self.cfg.TEST_BATCH_SIZE - len_batch):
+            x_batch = np.append(x_batch, np.expand_dims(
+                np.zeros_like(x_batch[0]), axis=0), axis=0)
+          assert len(x_batch) == self.cfg.TEST_BATCH_SIZE
+          pred_i = sess.run(preds, feed_dict={inputs: x_batch})
+          pred_i = pred_i[:len_batch]
+
+        pred_all.extend(list(pred_i))
 
         # Save reconstruct images
         if self.cfg.TEST_SAVE_IMAGE_STEP:
@@ -230,29 +266,49 @@ class Test(object):
       for _ in tqdm(range(n_batch), total=n_batch,
                     ncols=100, unit=' batches'):
         x_batch, y_batch = next(_batch_generator)
-        loss_i, acc_i = \
-            sess.run([loss, acc],
-                     feed_dict={inputs: x_batch, labels: y_batch})
-        loss_all.append(loss_i)
-        acc_all.append(acc_i)
+        len_batch = len(x_batch)
+
+        if len_batch == self.cfg.TEST_BATCH_SIZE:
+          pred_i, loss_i, acc_i = \
+              sess.run([preds, loss, acc],
+                       feed_dict={inputs: x_batch, labels: y_batch})
+          loss_all.append(loss_i)
+          acc_all.append(acc_i)
+        else:
+          # The last batch which has less examples
+          for i in range(self.cfg.TEST_BATCH_SIZE - len_batch):
+            x_batch = np.append(x_batch, np.expand_dims(
+                np.zeros_like(x_batch[0]), axis=0), axis=0)
+          assert len(x_batch) == self.cfg.TEST_BATCH_SIZE
+          pred_i = sess.run(preds, feed_dict={inputs: x_batch})
+          pred_i = pred_i[:len_batch]
+
+        pred_all.extend(list(pred_i))
+
       clf_loss_, rec_loss_ = None, None
 
     loss_ = sum(loss_all) / len(loss_all)
     acc_ = sum(acc_all) / len(acc_all)
 
-    return loss_, clf_loss_, rec_loss_, acc_
+    assert len(pred_all) == len(self.x_test), (len(pred_all), len(self.x_test))
+    preds_vec = np.array(pred_all)
 
-  def tester(self, sess, inputs, labels, loss, acc,
-             clf_loss, rec_loss, rec_images, start_time):
+    return preds_vec, loss_, clf_loss_, rec_loss_, acc_
+
+  def tester(self, sess, inputs, labels, preds, rec_images, start_time,
+             loss=None, acc=None, clf_loss=None, rec_loss=None):
 
     utils.thin_line()
     print('Calculating loss and accuracy of test set...')
 
     # Get losses and accuracies
-    loss_test, clf_loss_test, rec_loss_test, acc_test = \
+    preds_vec_test, loss_test, clf_loss_test, rec_loss_test, acc_test = \
         self._eval_on_batches(
-            sess, inputs, labels, loss, acc,
+            sess, inputs, labels, preds, loss, acc,
             clf_loss, rec_loss, rec_images)
+
+    # Get integer predictions
+    _ = self._get_preds_int(preds_vec=preds_vec_test)
 
     # Print losses and accuracy
     utils.thin_line()
@@ -295,15 +351,15 @@ class Test(object):
 
       # Get Tensors from loaded models
       if self.cfg.TEST_WITH_REC:
-        inputs, labels, loss, acc, \
+        inputs, labels, preds, loss, acc, \
             clf_loss, rec_loss, rec_images = \
             self._get_tensors(loaded_graph)
       else:
-        inputs, labels, loss, acc = self._get_tensors(loaded_graph)
+        inputs, labels, preds, loss, acc = self._get_tensors(loaded_graph)
         clf_loss, rec_loss, rec_images = None, None, None
 
-      self.tester(sess, inputs, labels, loss, acc,
-                  clf_loss, rec_loss, rec_images, start_time)
+      self.tester(sess, inputs, labels, preds, rec_images, start_time,
+                  loss=loss, acc=acc, clf_loss=clf_loss, rec_loss=rec_loss)
 
 
 class TestMultiObjects(Test):
@@ -420,7 +476,13 @@ class TestMultiObjects(Test):
           'Wrong Mode Name! Find {}!'.format(self.cfg.MOD_PRED_MODE))
 
     if self.cfg.SAVE_TEST_PRED:
-      utils.save_test_pred(self.test_log_path, self.y_test, preds, preds_vec)
+      if self.is_training and (self.epoch_train != 'end'):
+        utils.save_test_pred_is_training(
+            self.test_log_path, self.epoch_train, self.step_train,
+            self.y_test, preds, preds_vec, save_num=20)
+      else:
+        utils.save_test_pred(self.test_log_path, self.y_test,
+                             preds, preds_vec)
 
     return np.array(preds, dtype=int)
 
@@ -620,7 +682,8 @@ class TestMultiObjects(Test):
         append_info='_no_overlap'
     )
 
-  def tester_mo(self, sess, inputs, labels, preds, rec_images, start_time):
+  def tester(self, sess, inputs, labels, preds, rec_images, start_time,
+             loss=None, acc=None, clf_loss=None, rec_loss=None):
 
     utils.thin_line()
     print('Calculating loss and accuracy of test set...')
@@ -635,8 +698,9 @@ class TestMultiObjects(Test):
     self._get_multi_obj_scores(preds_binary)
 
     # Save reconstruction images of multi-objects detection
-    self._save_images_mo(sess, rec_images, inputs,
-                         labels, preds_binary, preds_vec_test)
+    if self.cfg.TEST_WITH_REC:
+      self._save_images_mo(sess, rec_images, inputs,
+                           labels, preds_binary, preds_vec_test)
 
     utils.thin_line()
     print('Testing finished! Using time: {:.2f}'
@@ -665,7 +729,7 @@ class TestMultiObjects(Test):
         inputs, labels, preds = self._get_tensors(loaded_graph)
         rec_images = None
 
-      self.tester_mo(sess, inputs, labels, preds, rec_images, start_time)
+      self.tester(sess, inputs, labels, preds, rec_images, start_time)
 
 
 class TestOracle(TestMultiObjects):

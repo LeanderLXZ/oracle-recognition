@@ -415,22 +415,19 @@ class Main(object):
 
     if mode == 'single':
       print('Testing on Single-object test set...')
-      Test(**test_params).tester(
-          sess, self.inputs, self.labels, self.loss, self.accuracy,
-          self.clf_loss, self.rec_loss, self.rec_images, start_time_test
-      )
+      tester_ = Test(**test_params).tester
     elif mode == 'multi_obj':
       print('Testing on Multi-object test set...')
-      TestMultiObjects(**test_params).tester_mo(
-          sess, self.inputs, self.labels,
-          self.preds, self.rec_images, start_time_test
-      )
+      tester_ = TestMultiObjects(**test_params).tester
     elif mode == 'oracle':
       print('Testing on Oracles test set...')
-      TestOracle(**test_params).tester_mo(
-          sess, self.inputs, self.labels,
-          self.preds, self.rec_images, start_time_test
-      )
+      tester_ = TestMultiObjects(**test_params).tester
+    else:
+      raise ValueError('Wrong mode name')
+
+    tester_(sess, self.inputs, self.labels, self.preds,
+            self.rec_images, start_time_test, self.loss,
+            self.accuracy, self.clf_loss, self.rec_loss)
 
   def _trainer(self, sess):
 
