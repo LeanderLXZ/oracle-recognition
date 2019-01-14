@@ -28,8 +28,8 @@ __C = EasyDict()
 # 'radical': Oracle Radicals
 # 'mnist': MNIST
 # 'cifar10' CIFAR-10
-__C.DATABASE_NAME = 'radical'
-# __C.DATABASE_NAME = 'mnist'
+# __C.DATABASE_NAME = 'radical'
+__C.DATABASE_NAME = 'mnist'
 
 # Training version
 # Set None to auto generate version
