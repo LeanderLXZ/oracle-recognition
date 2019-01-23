@@ -9,7 +9,9 @@ from models import utils
 
 class CapsNet(object):
 
-  def __init__(self, cfg, model_arch):
+  def __init__(self,
+               cfg,
+               model_arch):
 
     self.cfg = cfg
     self.batch_size = cfg.BATCH_SIZE
@@ -18,22 +20,33 @@ class CapsNet(object):
     self.clf_arch_info = None
     self.rec_arch_info = None
 
-  def _get_inputs(self, image_size, num_class):
+  def _get_inputs(self,
+                  input_size,
+                  num_class,
+                  image_size=None):
     """Get input tensors.
 
     Args:
-      image_size: the size of input images, should be 3 dimensional
+      input_size: the size of input tensor, should be 3 dimensional
       num_class: number of class of label
+      image_size: the size of ground truth images, should be 3 dimensional
     Returns:
       input tensors
     """
     _inputs = tf.placeholder(
-        tf.float32, shape=[self.cfg.BATCH_SIZE, *image_size], name='inputs')
+        tf.float32, shape=[self.cfg.BATCH_SIZE, *input_size], name='inputs')
     _labels = tf.placeholder(
         tf.float32, shape=[self.cfg.BATCH_SIZE, num_class], name='labels')
     _is_training = tf.placeholder(tf.bool, name='is_training')
 
-    return _inputs, _labels, _is_training
+    if self.cfg.TRANSFER_LEARNING == 'encode':
+      _input_imgs = tf.placeholder(
+          tf.float32,
+          shape=[self.cfg.BATCH_SIZE, *image_size], name='input_imgs')
+    else:
+      _input_imgs = _inputs
+
+    return _inputs, _labels, _input_imgs, _is_training
 
   def _optimizer(self,
                  opt_name='adam',
@@ -117,7 +130,11 @@ class CapsNet(object):
 
     return margin_loss
 
-  def _margin_loss_h(self, logits, labels, margin=0.4, down_weight=0.5):
+  def _margin_loss_h(self,
+                     logits,
+                     labels,
+                     margin=0.4,
+                     down_weight=0.5):
     """Penalizes deviations from margin for each logit.
 
     Each wrong logit costs its distance to margin. For negative logits margin is
@@ -143,7 +160,10 @@ class CapsNet(object):
     margin_loss = tf.reduce_mean(tf.reduce_sum(loss_c, axis=1))
     return margin_loss
 
-  def _reconstruct_layers(self, inputs, labels, is_training=None):
+  def _reconstruct_layers(self,
+                          inputs,
+                          labels,
+                          is_training=None):
     """Reconstruction layer
 
     Args:
@@ -191,12 +211,16 @@ class CapsNet(object):
 
     return loss
 
-  def _loss_with_rec(self, inputs, logits,
-                     labels, image_size, is_training=None):
+  def _loss_with_rec(self,
+                     input_imgs,
+                     logits,
+                     labels,
+                     image_size,
+                     is_training=None):
     """Calculate loss with reconstruction.
 
     Args:
-      inputs: input tensor
+      input_imgs: ground truth input images
         - shape (batch_size, *image_size)
       logits: output tensor of models
         - shape (batch_size, num_caps, vec_dim)
@@ -218,7 +242,7 @@ class CapsNet(object):
 
     # Reconstruction loss
     if self.cfg.REC_LOSS == 'mse':
-      inputs_flatten = tf.contrib.layers.flatten(inputs)
+      inputs_flatten = tf.contrib.layers.flatten(input_imgs)
       if self.cfg.DECODER_TYPE != 'fc':
         reconstructed_ = tf.contrib.layers.flatten(reconstructed)
       else:
@@ -228,9 +252,9 @@ class CapsNet(object):
       reconstructed_images_ = reconstructed
     elif self.cfg.REC_LOSS == 'ce':
       if self.cfg.DECODER_TYPE == 'fc':
-        inputs_ = tf.contrib.layers.flatten(inputs)
+        inputs_ = tf.contrib.layers.flatten(input_imgs)
       else:
-        inputs_ = inputs
+        inputs_ = input_imgs
       reconstruct_loss = tf.reduce_mean(
           tf.nn.sigmoid_cross_entropy_with_logits(
               labels=inputs_, logits=reconstructed))
@@ -260,12 +284,17 @@ class CapsNet(object):
 
     return loss, classifier_loss, reconstruct_loss, reconstructed_images
 
-  def _total_loss(self, inputs, logits, labels, image_size, is_training=None):
+  def _total_loss(self,
+                  input_imgs,
+                  logits,
+                  labels,
+                  image_size,
+                  is_training=None):
     """Get Losses and reconstructed images tensor."""
     if self.cfg.WITH_REC:
       loss, classifier_loss, reconstruct_loss, reconstructed_images = \
-          self._loss_with_rec(
-              inputs, logits, labels, image_size, is_training=is_training)
+        self._loss_with_rec(
+            input_imgs, logits, labels, image_size, is_training=is_training)
     else:
       loss = self._loss_without_rec(logits, labels)
       classifier_loss, reconstruct_loss, reconstructed_images = \
@@ -275,12 +304,15 @@ class CapsNet(object):
 
     return loss, classifier_loss, reconstruct_loss, reconstructed_images
 
-  def _inference(self, inputs, labels, is_training=None):
+  def _inference(self,
+                 inputs,
+                 labels,
+                 is_training=None):
     """Build inference graph.
 
     Args:
       inputs: input tensor
-        - shape (batch_size, *image_size)
+        - shape (batch_size, *input_size)
       labels: labels tensor
       is_training: Whether or not the model is in training mode.
 
@@ -309,13 +341,15 @@ class CapsNet(object):
     return logits, accuracy, preds
 
   def build_graph(self,
+                  input_size=(None, None, None),
                   image_size=(None, None, None),
                   num_class=None,
                   n_train_samples=None):
     """Build the graph of CapsNet.
 
     Args:
-      image_size: size of input images, should be 3 dimensional
+      input_size: size of input tensor, should be 3 dimensional
+      image_size: the size of ground truth images, should be 3 dimensional
       num_class: number of class of label
       n_train_samples: number of train samples
 
@@ -330,7 +364,8 @@ class CapsNet(object):
     with train_graph.as_default():
 
       # Get input placeholders
-      inputs, labels, is_training = self._get_inputs(image_size, num_class)
+      inputs, labels, input_imgs, is_training = \
+          self._get_inputs(input_size, num_class, image_size=image_size)
 
       # Global step
       global_step = tf.placeholder(tf.int16, name='global_step')
@@ -347,7 +382,7 @@ class CapsNet(object):
       # Build reconstruction part
       loss, classifier_loss, reconstruct_loss, reconstructed_images = \
           self._total_loss(
-              inputs, logits, labels, image_size, is_training=is_training)
+              input_imgs, logits, labels, image_size, is_training=is_training)
 
       # Optimizer
       if self.cfg.SHOW_TRAINING_DETAILS:
@@ -367,6 +402,6 @@ class CapsNet(object):
         tf.summary.scalar('rec_loss', reconstruct_loss)
       summary_op = tf.summary.merge_all()
 
-      return global_step, train_graph, inputs, labels, is_training, \
-          train_op, saver, summary_op, loss, accuracy, classifier_loss, \
-          reconstruct_loss, reconstructed_images, preds
+      return global_step, train_graph, inputs, labels, input_imgs, \
+          is_training, train_op, saver, summary_op, loss, accuracy, \
+          classifier_loss, reconstruct_loss, reconstructed_images, preds

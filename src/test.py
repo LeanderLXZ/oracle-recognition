@@ -51,7 +51,7 @@ class Test(object):
         self.test_log_path, self.cfg, clf_arch_info, rec_arch_info)
 
     # Load data
-    self.x_test, self.y_test = self._load_data()
+    self.x_test, self.y_test, self.imgs_test = self._load_data()
 
   @property
   def info(self):
@@ -124,11 +124,19 @@ class Test(object):
     print('Loading data...')
     utils.thin_line()
     preprocessed_path_ = join(self.cfg.DPP_DATA_PATH, self.cfg.DATABASE_NAME)
-    x = utils.load_data_from_pkl(
+
+    imgs = utils.load_data_from_pkl(
         join(preprocessed_path_, 'x_test' + self.append_info + '.p'))
+    if self.cfg.TRANSFER_LEARNING == 'encode':
+      x = utils.load_data_from_pkl(
+          join(preprocessed_path_, 'x_test' + self.append_info + '_bf.p'))
+    else:
+      x = imgs
+
     y = utils.load_data_from_pkl(
         join(preprocessed_path_, 'y_test' + self.append_info + '.p'))
-    return x, y
+
+    return x, y, imgs
 
   def _get_tensors(self, loaded_graph):
     """Get inputs, labels, loss, and accuracy tensor from <loaded_graph>."""
@@ -137,33 +145,51 @@ class Test(object):
       utils.thin_line()
       print('Loading graph and tensors...')
 
-      inputs_ = loaded_graph.get_tensor_by_name("inputs:0")
-      labels_ = loaded_graph.get_tensor_by_name("labels:0")
+      inputs_ = loaded_graph.get_tensor_by_name('inputs:0')
+      labels_ = loaded_graph.get_tensor_by_name('labels:0')
+      if self.cfg.TRANSFER_LEARNING == 'encode':
+        input_imgs_ = loaded_graph.get_tensor_by_name('input_imgs:0')
+      else:
+        input_imgs_ = inputs_
 
       if self.multi_gpu:
-        accuracy_ = loaded_graph.get_tensor_by_name("total_acc:0")
-        loss_ = loaded_graph.get_tensor_by_name("total_loss:0")
+        accuracy_ = loaded_graph.get_tensor_by_name('total_acc:0')
+        loss_ = loaded_graph.get_tensor_by_name('total_loss:0')
         preds_ = loaded_graph.get_tensor_by_name('total_preds:0')
         if self.cfg.TEST_WITH_REC:
-          clf_loss_ = loaded_graph.get_tensor_by_name("total_clf_loss:0")
-          rec_loss_ = loaded_graph.get_tensor_by_name("total_rec_loss:0")
-          rec_images_ = loaded_graph.get_tensor_by_name("total_rec_images:0")
-          return inputs_, labels_, preds_, loss_, accuracy_, \
-              clf_loss_, rec_loss_, rec_images_
+          clf_loss_ = loaded_graph.get_tensor_by_name('total_clf_loss:0')
+          rec_loss_ = loaded_graph.get_tensor_by_name('total_rec_loss:0')
+          rec_images_ = loaded_graph.get_tensor_by_name('total_rec_images:0')
+          return inputs_, labels_, input_imgs_, preds_, loss_, \
+              accuracy_, clf_loss_, rec_loss_, rec_images_
         else:
-          return inputs_, labels_, preds_, loss_, accuracy_
+          return inputs_, labels_, input_imgs_, preds_, loss_, accuracy_
       else:
-        accuracy_ = loaded_graph.get_tensor_by_name("accuracy:0")
-        loss_ = loaded_graph.get_tensor_by_name("loss:0")
+        accuracy_ = loaded_graph.get_tensor_by_name('accuracy:0')
+        loss_ = loaded_graph.get_tensor_by_name('loss:0')
         preds_ = loaded_graph.get_tensor_by_name('preds:0')
         if self.cfg.TEST_WITH_REC:
-          clf_loss_ = loaded_graph.get_tensor_by_name("clf_loss:0")
-          rec_loss_ = loaded_graph.get_tensor_by_name("rec_loss:0")
-          rec_images_ = loaded_graph.get_tensor_by_name("rec_images:0")
-          return inputs_, labels_, preds_, loss_, accuracy_, \
-              clf_loss_, rec_loss_, rec_images_
+          clf_loss_ = loaded_graph.get_tensor_by_name('clf_loss:0')
+          rec_loss_ = loaded_graph.get_tensor_by_name('rec_loss:0')
+          rec_images_ = loaded_graph.get_tensor_by_name('rec_images:0')
+          return inputs_, labels_, input_imgs_, preds_, loss_, \
+              accuracy_, clf_loss_, rec_loss_, rec_images_
         else:
-          return inputs_, labels_, preds_, loss_, accuracy_
+          return inputs_, labels_, input_imgs_, preds_, loss_, accuracy_
+
+  def _get_batch_generator(self, x, y, imgs):
+    if self.cfg.TRANSFER_LEARNING == 'encode':
+      return utils.get_batches(x, y, self.cfg.TEST_BATCH_SIZE, imgs=imgs)
+    else:
+      return utils.get_batches(x, y, self.cfg.TEST_BATCH_SIZE)
+
+  def _get_batch(self, batch_generator):
+    if self.cfg.TRANSFER_LEARNING == 'encode':
+      x_batch, y_batch, imgs_batch = next(batch_generator)
+    else:
+      x_batch, y_batch = next(batch_generator)
+      imgs_batch = x_batch
+    return x_batch, y_batch, imgs_batch
 
   def _get_preds_int(self, preds_vec):
     """Get integer predictions."""
@@ -191,13 +217,14 @@ class Test(object):
                    labels,
                    x,
                    y,
+                   imgs,
                    step=None):
     """Save reconstructed images."""
     rec_images_ = sess.run(
         rec_images, feed_dict={inputs: x, labels: y})
 
     utils.save_imgs(
-        real_imgs=x,
+        real_imgs=imgs,
         rec_imgs=rec_images_,
         img_path=self.test_image_path,
         database_name=self.cfg.DATABASE_NAME,
@@ -210,6 +237,7 @@ class Test(object):
                        sess,
                        inputs,
                        labels,
+                       input_imgs,
                        preds,
                        loss,
                        acc,
@@ -223,21 +251,23 @@ class Test(object):
     clf_loss_all = []
     rec_loss_all = []
     step = 0
-    _batch_generator = utils.get_batches_all(
-        self.x_test, self.y_test, self.cfg.TEST_BATCH_SIZE)
+    batch_generator = self._get_batch_generator(
+        self.x_test, self.y_test, self.imgs_test)
     n_batch = (len(self.x_test) // self.cfg.TEST_BATCH_SIZE) + 1
 
     if self.cfg.TEST_WITH_REC:
       for _ in tqdm(range(n_batch), total=n_batch,
                     ncols=100, unit=' batch'):
         step += 1
-        x_batch, y_batch = next(_batch_generator)
+        x_batch, y_batch, imgs_batch = self._get_batch(batch_generator)
         len_batch = len(x_batch)
 
         if len_batch == self.cfg.TEST_BATCH_SIZE:
           pred_i, loss_i, clf_loss_i, rec_loss_i, acc_i = \
               sess.run([preds, loss, clf_loss, rec_loss, acc],
-                       feed_dict={inputs: x_batch, labels: y_batch})
+                       feed_dict={inputs: x_batch,
+                                  labels: y_batch,
+                                  input_imgs: imgs_batch})
           loss_all.append(loss_i)
           clf_loss_all.append(clf_loss_i)
           rec_loss_all.append(rec_loss_i)
@@ -265,13 +295,15 @@ class Test(object):
     else:
       for _ in tqdm(range(n_batch), total=n_batch,
                     ncols=100, unit=' batches'):
-        x_batch, y_batch = next(_batch_generator)
+        x_batch, y_batch, imgs_batch = self._get_batch(batch_generator)
         len_batch = len(x_batch)
 
         if len_batch == self.cfg.TEST_BATCH_SIZE:
           pred_i, loss_i, acc_i = \
               sess.run([preds, loss, acc],
-                       feed_dict={inputs: x_batch, labels: y_batch})
+                       feed_dict={inputs: x_batch,
+                                  labels: y_batch,
+                                  input_imgs: imgs_batch})
           loss_all.append(loss_i)
           acc_all.append(acc_i)
         else:
@@ -295,8 +327,8 @@ class Test(object):
 
     return preds_vec, loss_, clf_loss_, rec_loss_, acc_
 
-  def tester(self, sess, inputs, labels, preds, rec_images, start_time,
-             loss=None, acc=None, clf_loss=None, rec_loss=None):
+  def tester(self, sess, inputs, labels, input_imgs, preds, rec_images,
+             start_time, loss=None, acc=None, clf_loss=None, rec_loss=None):
 
     utils.thin_line()
     print('Calculating loss and accuracy of test set...')
@@ -304,8 +336,8 @@ class Test(object):
     # Get losses and accuracies
     preds_vec_test, loss_test, clf_loss_test, rec_loss_test, acc_test = \
         self._eval_on_batches(
-            sess, inputs, labels, preds, loss, acc,
-            clf_loss, rec_loss, rec_images)
+            sess, inputs, labels, input_imgs, preds,
+            loss, acc, clf_loss, rec_loss, rec_images)
 
     # Get integer predictions
     _ = self._get_preds_int(preds_vec=preds_vec_test)
@@ -351,15 +383,17 @@ class Test(object):
 
       # Get Tensors from loaded models
       if self.cfg.TEST_WITH_REC:
-        inputs, labels, preds, loss, acc, \
-            clf_loss, rec_loss, rec_images = \
+        inputs, labels, input_imgs, preds, \
+            loss, acc, clf_loss, rec_loss, rec_images = \
             self._get_tensors(loaded_graph)
       else:
-        inputs, labels, preds, loss, acc = self._get_tensors(loaded_graph)
+        inputs, labels, input_imgs, preds, loss, acc = \
+            self._get_tensors(loaded_graph)
         clf_loss, rec_loss, rec_images = None, None, None
 
-      self.tester(sess, inputs, labels, preds, rec_images, start_time,
-                  loss=loss, acc=acc, clf_loss=clf_loss, rec_loss=rec_loss)
+      self.tester(sess, inputs, labels, input_imgs, preds,
+                  rec_images, start_time, loss=loss, acc=acc,
+                  clf_loss=clf_loss, rec_loss=rec_loss)
 
 
 class TestMultiObjects(Test):
@@ -398,21 +432,25 @@ class TestMultiObjects(Test):
 
       inputs_ = loaded_graph.get_tensor_by_name('inputs:0')
       labels_ = loaded_graph.get_tensor_by_name('labels:0')
+      if self.cfg.TRANSFER_LEARNING == 'encode':
+        input_imgs_ = loaded_graph.get_tensor_by_name('input_imgs:0')
+      else:
+        input_imgs_ = inputs_
 
       if self.multi_gpu:
         preds_ = loaded_graph.get_tensor_by_name('total_preds:0')
         if self.cfg.TEST_WITH_REC:
           rec_images_ = loaded_graph.get_tensor_by_name('total_rec_images:0')
-          return inputs_, labels_, preds_, rec_images_
+          return inputs_, labels_, input_imgs_, preds_, rec_images_
         else:
-          return inputs_, labels_, preds_
+          return inputs_, labels_, input_imgs_, preds_
       else:
         preds_ = loaded_graph.get_tensor_by_name('preds:0')
         if self.cfg.TEST_WITH_REC:
           rec_images_ = loaded_graph.get_tensor_by_name('rec_images:0')
-          return inputs_, labels_, preds_, rec_images_
+          return inputs_, labels_, input_imgs_, preds_, rec_images_
         else:
-          return inputs_, labels_, preds_
+          return inputs_, labels_, input_imgs_, preds_
 
   def _get_preds_vector(self,
                         sess,
@@ -636,7 +674,7 @@ class TestMultiObjects(Test):
 
     # Get colorful overlapped images
     real_imgs_ = utils.img_black_to_color(
-        self.x_test[test_img_idx], same=True)
+        self.imgs_test[test_img_idx], same=True)
     rec_imgs_overlap = []
     rec_imgs_no_overlap = []
     for idx, imgs in enumerate(rec_images_):
@@ -682,8 +720,8 @@ class TestMultiObjects(Test):
         append_info='_no_overlap'
     )
 
-  def tester(self, sess, inputs, labels, preds, rec_images, start_time,
-             loss=None, acc=None, clf_loss=None, rec_loss=None):
+  def tester(self, sess, inputs, labels, input_imgs, preds, rec_images,
+             start_time, loss=None, acc=None, clf_loss=None, rec_loss=None):
 
     utils.thin_line()
     print('Calculating loss and accuracy of test set...')
@@ -724,12 +762,14 @@ class TestMultiObjects(Test):
 
       # Get Tensors from loaded models
       if self.cfg.TEST_WITH_REC:
-        inputs, labels, preds, rec_images = self._get_tensors(loaded_graph)
+        inputs, labels, input_imgs, preds, rec_images = \
+            self._get_tensors(loaded_graph)
       else:
-        inputs, labels, preds = self._get_tensors(loaded_graph)
+        inputs, labels, input_imgs, preds = self._get_tensors(loaded_graph)
         rec_images = None
 
-      self.tester(sess, inputs, labels, preds, rec_images, start_time)
+      self.tester(sess, inputs, labels, input_imgs,
+                  preds, rec_images, start_time)
 
 
 class TestOracle(TestMultiObjects):

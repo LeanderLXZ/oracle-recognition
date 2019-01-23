@@ -125,7 +125,7 @@ class CapsNetMultiTasks(CapsNetDistribute):
     return loss_tower, acc_tower, preds_tower, \
         clf_loss_tower, rec_loss_tower, rec_images_tower
 
-  def _calc_on_gpu(self, gpu_idx, x_tower, y_tower,
+  def _calc_on_gpu(self, gpu_idx, x_tower, y_tower, imgs_tower,
                    image_size, is_training, optimizer):
 
     # Split data for each tower
@@ -133,6 +133,12 @@ class CapsNetMultiTasks(CapsNetDistribute):
         axis=0, num_or_size_splits=self.cfg.TASK_NUMBER, value=x_tower)
     y_splits_task = tf.split(
         axis=0, num_or_size_splits=self.cfg.TASK_NUMBER, value=y_tower)
+
+    if self.cfg.TRANSFER_LEARNING == 'encode':
+      imgs_splits_task = tf.split(
+          axis=0, num_or_size_splits=self.cfg.GPU_NUMBER, value=imgs_tower)
+    else:
+      imgs_splits_task = None
 
     loss_tower, acc_tower, preds_tower, clf_loss_tower, \
         rec_loss_tower, rec_images_tower = [], [], [], [], [], []
@@ -143,12 +149,17 @@ class CapsNetMultiTasks(CapsNetDistribute):
       # Dequeues one task
       x_task, y_task = x_splits_task[gpu_idx], y_splits_task[gpu_idx]
 
+      if self.cfg.TRANSFER_LEARNING == 'encode':
+        imgs_task = imgs_splits_task[i]
+      else:
+        imgs_task = x_tower
+
       with tf.variable_scope(tf.get_variable_scope(), reuse=bool(i != 0)):
         with tf.name_scope('task_%d' % i):
           # Calculate the loss for one task.
           loss_task, acc_task, preds_task, clf_loss_task, \
               rec_loss_task, rec_images_task = \
-              self._get_loss(x_task, y_task,
+              self._get_loss(x_task, y_task, imgs_task,
                              image_size, is_training=is_training)
 
           # Calculate the gradients on this task.
@@ -185,12 +196,16 @@ class CapsNetMultiTasks(CapsNetDistribute):
     return grads_tower, loss_tower, acc_tower, clf_loss_tower, \
         rec_loss_tower, rec_images_tower, preds_tower
 
-  def build_graph(self, image_size=(None, None, None),
-                  num_class=None, n_train_samples=None):
+  def build_graph(self,
+                  input_size=(None, None, None),
+                  image_size=(None, None, None),
+                  num_class=None,
+                  n_train_samples=None):
     """Build the graph of CapsNet.
 
     Args:
-      image_size: size of input images, should be 3 dimensional
+      input_size: size of input tensor, should be 3 dimensional
+      image_size: the size of ground truth images, should be 3 dimensional
       num_class: number of class of label
       n_train_samples: number of train samples
 
@@ -205,7 +220,8 @@ class CapsNetMultiTasks(CapsNetDistribute):
     with train_graph.as_default(), tf.device('/cpu:0'):
 
       # Get inputs tensor
-      inputs, labels, is_training = self._get_inputs(image_size, num_class)
+      inputs, labels, input_imgs, is_training = \
+          self._get_inputs(input_size, num_class, image_size=image_size)
 
       # Global step
       global_step = tf.placeholder(tf.int16, name='global_step')
@@ -221,6 +237,12 @@ class CapsNetMultiTasks(CapsNetDistribute):
       y_splits_tower = tf.split(
           axis=0, num_or_size_splits=self.cfg.GPU_NUMBER, value=labels)
 
+      if self.cfg.TRANSFER_LEARNING == 'encode':
+        imgs_splits_tower = tf.split(
+            axis=0, num_or_size_splits=self.cfg.GPU_NUMBER, value=input_imgs)
+      else:
+        imgs_splits_tower = None
+
       # Calculate the gradients for each models tower.
       grads_all, loss_all, acc_all, clf_loss_all, \
           rec_loss_all, rec_images_all, preds_all = \
@@ -233,13 +255,18 @@ class CapsNetMultiTasks(CapsNetDistribute):
         # Dequeues one batch for the GPU
         x_tower, y_tower = x_splits_tower[i], y_splits_tower[i]
 
+        if self.cfg.TRANSFER_LEARNING == 'encode':
+          imgs_tower = imgs_splits_tower[i]
+        else:
+          imgs_tower = x_tower
+
         with tf.variable_scope(tf.get_variable_scope(), reuse=bool(i != 0)):
           with tf.device('/gpu:%d' % i):
             with tf.name_scope('tower_%d' % i):
 
               grads_tower, loss_tower, acc_tower, clf_loss_tower, \
                   rec_loss_tower, rec_images_tower, preds_tower = \
-                  self._calc_on_gpu(i, x_tower, y_tower,
+                  self._calc_on_gpu(i, x_tower, y_tower, imgs_tower,
                                     image_size, is_training, optimizer)
 
               # Keep track of the gradients across all towers.
@@ -295,9 +322,9 @@ class CapsNetMultiTasks(CapsNetDistribute):
         tf.summary.scalar('rec_loss', reconstruct_loss)
       summary_op = tf.summary.merge_all()
 
-      return global_step, train_graph, inputs, labels, is_training, \
-          train_op, saver, summary_op, loss, accuracy, classifier_loss, \
-          reconstruct_loss, reconstructed_images, preds
+      return global_step, train_graph, inputs, labels, input_imgs, \
+          is_training, train_op, saver, summary_op, loss, accuracy, \
+          classifier_loss, reconstruct_loss, reconstructed_images, preds
 
 
 if __name__ == '__main__':

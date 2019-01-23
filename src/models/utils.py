@@ -107,11 +107,14 @@ def thick_line():
   print('=' * 55)
 
 
-def get_batches(x, y, batch_size):
+def get_batches(x, y, batch_size, imgs=None):
   """Split features and labels into batches."""
   for start in range(0, len(x) - batch_size + 1, batch_size):
     end = start + batch_size
-    yield x[start:end], y[start:end]
+    if imgs:
+      yield x[start:end], y[start:end], imgs[start:end]
+    else:
+      yield x[start:end], y[start:end]
 
 
 def get_batches_all(x, y, batch_size):

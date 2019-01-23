@@ -55,9 +55,7 @@ class DataPreProcess(object):
       raise ValueError('Wrong database name!')
 
   def _load_data(self, show_img=False):
-    """
-    Load data set from files.
-    """
+    """Load data set from files."""
     utils.thin_line()
     print('Loading {} data set...'.format(self.data_base_name))
 
@@ -98,9 +96,7 @@ class DataPreProcess(object):
       self._grid_show_imgs(self.x, self.y, 25, mode='L')
 
   def _load_radicals(self, show_img=False):
-    """
-    Load radicals data set from files.
-    """
+    """Load radicals data set from files."""
     utils.thin_line()
     print('Loading radicals data set...')
     classes = os.listdir(self.source_data_path)
@@ -150,9 +146,7 @@ class DataPreProcess(object):
       self._grid_show_imgs(self.x, self.y, 25, mode='L')
 
   def _load_oracles(self, show_img=False):
-    """
-    Load oracles data set from files.
-    """
+    """Load oracles data set from files."""
     utils.thin_line()
     print('Loading oracles data set...')
 
@@ -208,9 +202,7 @@ class DataPreProcess(object):
         resize_filter=Image.ANTIALIAS)
 
   def _resize_oracle_img(self, img):
-    """
-    Resizing an image to IMAGE_SIZE
-    """
+    """Resizing an image to IMAGE_SIZE"""
     reshaped_image = Image.new('L', self.img_size, 'white')
     img_width, img_height = img.size
 
@@ -232,9 +224,7 @@ class DataPreProcess(object):
 
   @staticmethod
   def _augment_data(tensor, data_aug_param, img_num, add_self=True):
-    """
-    Augment data set and add noises.
-    """
+    """Augment data set and add noises."""
     data_generator = ImageDataGenerator(**data_aug_param)
     if add_self:
       new_x_tensors = copy(tensor)
@@ -248,9 +238,7 @@ class DataPreProcess(object):
         new_x_tensors.append(augmented)
 
   def _train_test_split(self):
-    """
-    Split data set for training and testing.
-    """
+    """Split data set for training and testing."""
     utils.thin_line()
     print('Splitting train/test set...')
     self.x, self.x_test, self.y, self.y_test = train_test_split(
@@ -262,9 +250,7 @@ class DataPreProcess(object):
     )
 
   def _scaling(self):
-    """
-    Scaling input images to (0, 1).
-    """
+    """Scaling input images to (0, 1)."""
     utils.thin_line()
     print('Scaling features...')
     
@@ -272,9 +258,7 @@ class DataPreProcess(object):
     self.x_test = np.divide(self.x_test, 255.)
 
   def _one_hot_encoding(self):
-    """
-    One-hot-encoding labels.
-    """
+    """One-hot-encoding labels."""
     utils.thin_line()
     print('One-hot-encoding labels...')
     
@@ -284,9 +268,7 @@ class DataPreProcess(object):
     self.y_test = encoder.transform(self.y_test)
 
   def _shuffle(self):
-    """
-    Shuffle data sets.
-    """
+    """Shuffle data sets."""
     utils.thin_line()
     print('Shuffling images and labels...')
     self.x, self.y = sklearn.utils.shuffle(
@@ -298,9 +280,7 @@ class DataPreProcess(object):
                               x_y_dict=None,
                               show_img=False,
                               data_aug=False):
-    """
-    Generate images of superpositions of multi-objects
-    """
+    """Generate images of superpositions of multi-objects"""
     utils.thin_line()
     print('Generating images of superpositions of multi-objects...')
     self.x_test_mul = []
@@ -357,9 +337,7 @@ class DataPreProcess(object):
       self._grid_show_imgs(self.x_test_mul, y_show, 25, mode='L')
 
   def _train_valid_split(self):
-    """
-    Split data set for training and validation
-    """
+    """Split data set for training and validation"""
     utils.thin_line()
     print('Splitting train/valid set...')
 
@@ -376,9 +354,7 @@ class DataPreProcess(object):
       self.y_valid = self.y[train_stop:]
 
   def _check_data(self):
-    """
-    Check data format.
-    """
+    """Check data format."""
     assert self.x_train.max() <= 1, self.x_train.max()
     assert self.y_train.max() <= 1, self.y_train.max()
     assert self.x_valid.max() <= 1, self.x_valid.max()
@@ -429,14 +405,69 @@ class DataPreProcess(object):
       assert self.y_test_mul.shape == (
         self.cfg.NUM_MULTI_IMG, n_classes), self.y_test_mul.shape
 
+  def _get_bottleneck_features(self, model_name='xception'):
+    """Get bottleneck features of transfer learning models."""
+    # Check image size for transfer learning models
+    assert self.cfg.IMAGE_SIZE == (224, 224)
+
+    def _extract_features(tensor):
+
+      if model_name == 'vgg16':
+        from keras.applications.vgg16 import VGG16, preprocess_input
+        return VGG16(weights='imagenet', include_top=False).predict(
+            preprocess_input(tensor))
+      elif model_name == 'vgg19':
+        from keras.applications.vgg19 import VGG19, preprocess_input
+        return VGG19(weights='imagenet', include_top=False).predict(
+            preprocess_input(tensor))
+      elif model_name == 'resnet50':
+        from keras.applications.resnet50 import ResNet50, preprocess_input
+        return ResNet50(weights='imagenet', include_top=False).predict(
+            preprocess_input(tensor))
+      elif model_name == 'inceptionv3':
+        from keras.applications.inception_v3 import \
+          InceptionV3, preprocess_input
+        return InceptionV3(weights='imagenet', include_top=False).predict(
+            preprocess_input(tensor))
+      elif model_name == 'xception':
+        from keras.applications.xception import Xception, preprocess_input
+        return Xception(weights='imagenet', include_top=False).predict(
+            preprocess_input(tensor))
+      else:
+        raise ValueError('Wrong transfer learning model name!')
+
+    self.x_train_bf = _extract_features(self.x_train)
+    self.x_valid_bf = _extract_features(self.x_valid)
+    self.x_test_bf = _extract_features(self.x_test)
+
+    utils.thin_line()
+    print('Saving {} bottleneck features...'.format(model_name))
+    utils.check_dir([self.preprocessed_path])
+    utils.save_data_to_pkl(
+        self.x_train_bf, join(self.preprocessed_path, 'x_train_bf.p'))
+    utils.save_data_to_pkl(
+        self.x_valid_bf, join(self.preprocessed_path, 'x_valid_bf.p'))
+    utils.save_data_to_pkl(
+        self.x_test_bf, join(self.preprocessed_path, 'x_test_bf.p'))
+
+    if self.cfg.NUM_MULTI_OBJECT:
+      self.x_test_mul_bf = _extract_features(self.x_test_mul)
+      utils.save_data_to_pkl(
+          self.x_test_mul_bf,
+          join(self.preprocessed_path, 'x_test_multi_obj_bf.p'))
+
+    if self.data_base_name == 'radical':
+      self.x_test_oracle_bf = _extract_features(self.x_test_oracle)
+      utils.save_data_to_pkl(
+          self.x_test_oracle_bf,
+          join(self.preprocessed_path, 'x_test_oracle_bf.p'))
+
   def _save_data(self):
-    """
-    Save data set to pickle files.
-    """
+    """Save data set to pickle files."""
     utils.thin_line()
     print('Saving pickle files...')
-
     utils.check_dir([self.preprocessed_path])
+
     utils.save_data_to_pkl(
           self.x_train, join(self.preprocessed_path, 'x_train.p'))
     utils.save_data_to_pkl(
@@ -472,8 +503,7 @@ class DataPreProcess(object):
     print(y_show.reshape(size, size, -1))
 
   def pipeline(self):
-    """
-    Pipeline of preprocessing data.
+    """Pipeline of preprocessing data.
 
     Arg:
       data_base_name: name of data base
@@ -517,8 +547,12 @@ class DataPreProcess(object):
     # Split data set into train/valid
     self._train_valid_split()
 
-    # Check data format.
+    # Check data format
     self._check_data()
+
+    # Get and save bottleneck features
+    if self.cfg.TRANSFER_LEARNING == 'encode':
+      self._get_bottleneck_features(model_name=self.cfg.TL_MODEL)
 
     # Save data to pickles
     self._save_data()

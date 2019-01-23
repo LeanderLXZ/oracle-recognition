@@ -174,6 +174,16 @@ __C.REC_LOSS = 'mse'
 # Scaling for reconstruction loss
 __C.REC_LOSS_SCALE = 0.392  # 0.0005*32*32=0.512  # 0.0005*784=0.392
 
+# -------------------------------------------
+# Transfer Learning
+
+# Transfer learning mode
+__C.TRANSFER_LEARNING = 'encode'  # None
+
+# Transfer learning model
+# 'vgg16', 'vgg19', 'resnet50', 'inceptionv3', 'xception'
+__C.TL_MODEL = 'xception'
+
 
 # ===========================================
 # #         Training Configurations         #
