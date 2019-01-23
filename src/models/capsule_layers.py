@@ -336,6 +336,8 @@ class Conv2CapsLayer(object):
             biases_initializer=biases_initializer)
 
       # Reshape and generating a capsule layer
+      # caps shape:
+      # (batch_size, img_height, img_width, self.n_kernel * self.vec_dim)
       caps_shape = caps.get_shape().as_list()
       num_capsule = caps_shape[1] * caps_shape[2] * self.n_kernel
       caps = tf.reshape(caps, [self.batch_size, -1, self.vec_dim, 1])
@@ -362,7 +364,8 @@ class Dense2CapsLayer(object):
                num_caps=None,
                act_fn='relu',
                vec_dim=8,
-               batch_size=None):
+               batch_size=None,
+               reshape_mode='FLATTEN'):
     """Generate a Capsule layer densely.
 
     Args:
@@ -373,6 +376,7 @@ class Dense2CapsLayer(object):
       num_caps: number of output capsules, needed if identity_map is False
       vec_dim: dimensions of vectors of capsule
       batch_size: number of samples per batch
+      reshape_mode: 'FLATTEN' or 'GAP'
     """
     self.cfg = cfg
     self.identity_map = identity_map
@@ -380,6 +384,7 @@ class Dense2CapsLayer(object):
     self.act_fn = act_fn
     self.vec_dim = vec_dim
     self.batch_size = batch_size
+    self.reshape_mode = reshape_mode
     self.tensor_shape = None
 
   @property
@@ -390,7 +395,8 @@ class Dense2CapsLayer(object):
       'num_caps': self.num_caps,
       'act_fn': self.act_fn,
       'vec_dim': self.vec_dim,
-      'batch_size': self.batch_size
+      'batch_size': self.batch_size,
+      'reshape_mode': self.reshape_mode
     }
 
   def _fc_layer(self,
@@ -458,7 +464,14 @@ class Dense2CapsLayer(object):
     """
     with tf.variable_scope('dense2caps'):
       # Flatten shape: (batch_size, height * width * depth)
-      inputs_flatten = tf.contrib.layers.flatten(inputs)
+      inputs_shape = inputs.get_shape().as_list()
+      if self.reshape_mode == 'FLATTEN':
+        inputs_flatten = tf.contrib.layers.flatten(inputs)
+      elif self.reshape_mode == 'GAP':
+        inputs_flatten = tf.reduce_mean(inputs, axis=[1, 2])
+        assert inputs_flatten.get_shape() == (inputs_shape[0], inputs_shape[3])
+      else:
+        raise ValueError('Wrong reshape_mode!')
 
       if self.identity_map:
         self.num_caps = inputs_flatten.get_shape().as_list()[1]
