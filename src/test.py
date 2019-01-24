@@ -42,6 +42,12 @@ class Test(object):
     self.step_train = step_train
     self.append_info = self.info[0]
 
+    # Use encode transfer learning
+    if self.cfg.TRANSFER_LEARNING == 'encode':
+      self.tl_encode = True
+    else:
+      self.tl_encode = False
+
     # Get paths for testing
     self.checkpoint_path, self.test_log_path, self.test_image_path = \
         self._get_paths()
@@ -125,14 +131,15 @@ class Test(object):
     utils.thin_line()
     preprocessed_path_ = join(self.cfg.DPP_DATA_PATH, self.cfg.DATABASE_NAME)
 
-    imgs = utils.load_data_from_pkl(
-        join(preprocessed_path_, 'x_test' + self.append_info + '.p'))
-    if self.cfg.TRANSFER_LEARNING == 'encode':
+    if self.tl_encode:
       x = utils.load_data_from_pkl(
           join(preprocessed_path_, 'x_test' + self.append_info + '_bf.p'))
     else:
-      x = imgs
+      x = utils.load_data_from_pkl(
+          join(preprocessed_path_, 'x_test' + self.append_info + '.p'))
 
+    imgs = utils.load_data_from_pkl(
+        join(preprocessed_path_, 'imgs_test' + self.append_info + '.p'))
     y = utils.load_data_from_pkl(
         join(preprocessed_path_, 'y_test' + self.append_info + '.p'))
 
@@ -147,7 +154,7 @@ class Test(object):
 
       inputs_ = loaded_graph.get_tensor_by_name('inputs:0')
       labels_ = loaded_graph.get_tensor_by_name('labels:0')
-      if self.cfg.TRANSFER_LEARNING == 'encode':
+      if self.tl_encode:
         input_imgs_ = loaded_graph.get_tensor_by_name('input_imgs:0')
       else:
         input_imgs_ = inputs_
@@ -178,13 +185,13 @@ class Test(object):
           return inputs_, labels_, input_imgs_, preds_, loss_, accuracy_
 
   def _get_batch_generator(self, x, y, imgs):
-    if self.cfg.TRANSFER_LEARNING == 'encode':
+    if self.tl_encode:
       return utils.get_batches(x, y, self.cfg.TEST_BATCH_SIZE, imgs=imgs)
     else:
       return utils.get_batches(x, y, self.cfg.TEST_BATCH_SIZE)
 
   def _get_batch(self, batch_generator):
-    if self.cfg.TRANSFER_LEARNING == 'encode':
+    if self.tl_encode:
       x_batch, y_batch, imgs_batch = next(batch_generator)
     else:
       x_batch, y_batch = next(batch_generator)
@@ -432,7 +439,7 @@ class TestMultiObjects(Test):
 
       inputs_ = loaded_graph.get_tensor_by_name('inputs:0')
       labels_ = loaded_graph.get_tensor_by_name('labels:0')
-      if self.cfg.TRANSFER_LEARNING == 'encode':
+      if self.tl_encode:
         input_imgs_ = loaded_graph.get_tensor_by_name('input_imgs:0')
       else:
         input_imgs_ = inputs_

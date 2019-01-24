@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import print_function
 
 import os
+import gc
 import sys
 import csv
 import math
@@ -33,7 +34,9 @@ def save_data_to_pkl(data, data_path, verbose=True):
   else:
     with open(data_path, 'wb') as f:
       if verbose:
-        print('Saving {}... Size: {:.4}Mb'.format(f.name, file_size / (10**6)))
+        print('Saving {}...'.format(f.name))
+        print('Shape: {}'.format(np.array(data).shape))
+        print('Size: {:.4}Mb'.format(file_size / (10**6)))
       pickle.dump(data, f)
 
 
@@ -49,17 +52,23 @@ def save_large_data_to_pkl(data, data_path, n_parts=2, verbose=True):
   """Save large data to pickle file."""
   if verbose:
     print('Saving large file into {} parts...'.format(n_parts))
+    print('Total Size: {:.4}Gb'.format(sys.getsizeof(data) / (10**9)))
   len_part = len(data) // n_parts
   for i in range(n_parts):
     if i == n_parts - 1:
       data_part = data[i * len_part:]
     else:
       data_part = data[i * len_part:(i + 1) * len_part]
-    with open(data_path + '_{}.p'.format(i), 'wb') as f:
+    data_path_i = data_path + '_{}.p'
+    with open(data_path_i, 'wb') as f:
       if verbose:
         file_size = sys.getsizeof(data_part)
-        print('Saving {}... Size: {:.4}Mb'.format(f.name, file_size / (10**6)))
+        print('Saving {}... Part Size: {:.4}Mb'.format(
+            f.name, file_size / (10**6)))
       pickle.dump(data_part, f)
+
+    del data_part
+    gc.collect()
 
 
 def load_large_data_to_pkl(data_path, n_parts=2, verbose=True):
@@ -621,9 +630,7 @@ def img_add_no_overlap(imgs,
       np.zeros([save_size, save_size, img_shape[-1]]).astype('uint8')
 
   # Scale to 0-255
-  imgs = np.array(
-      [np.divide(((img - img.min()) * 255), (img.max() - img.min()))
-       for img in imgs])
+  imgs = imgs_scale_to_255(imgs)
 
   # Combine images
   row_start, row_end, col_start, col_end = 0, img_shape[0], 0, 0
@@ -650,14 +657,14 @@ def img_add_no_overlap(imgs,
 def img_resize(imgs, img_shape, img_mode='L', resize_filter=None):
   """Resize images"""
   resized_imgs = []
-  for img in imgs:
+  for img in tqdm(imgs, ncols=100, unit=' images'):
     if img_mode == 'L':
       img = np.squeeze(img, axis=-1)
     img = Image.fromarray(img.astype('uint8'), mode=img_mode)
     resized_img = np.expand_dims(
         img.resize(img_shape, resize_filter), axis=-1)
     resized_imgs.append(resized_img)
-  return resized_imgs
+  return np.array(resized_imgs)
 
 
 def img_black_to_color(imgs, same=False):
@@ -678,6 +685,12 @@ def img_black_to_color(imgs, same=False):
       img_colored = np.append(img_colored, img * color_coef_list[i][2], axis=2)
       imgs_.append(img_colored)
   return np.array(imgs_)
+
+
+def imgs_scale_to_255(imgs):
+  """Scale images to 0-255"""
+  return np.array(
+      [np.divide(((i - i.min()) * 255), (i.max() - i.min())) for i in imgs])
 
 
 def save_imgs(real_imgs,
@@ -702,12 +715,8 @@ def save_imgs(real_imgs,
   save_row_size = save_col_size // 2
 
   # Scale to 0-255
-  rec_images_ = np.array(
-      [np.divide(((img_ - img_.min()) * 255), (img_.max() - img_.min()))
-       for img_ in rec_imgs])
-  real_images_ = np.array(
-      [np.divide(((img_ - img_.min()) * 255), (img_.max() - img_.min()))
-       for img_ in real_imgs])
+  rec_images_ = imgs_scale_to_255(rec_imgs)
+  real_images_ = imgs_scale_to_255(real_imgs)
 
   # Put images in a square arrangement
   rec_images_in_square = np.reshape(

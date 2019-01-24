@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import time
 import os
+import gc
 import math
 import argparse
 from PIL import Image
@@ -42,17 +43,33 @@ class DataPreProcess(object):
     self.preprocessed_path = None
     self.source_data_path = None
 
-    if self.data_base_name == 'mnist':
-      self.img_size = (28, 28)
-      self.img_mode = 'L'
-    elif self.data_base_name == 'cifar10':
-      self.img_size = (32, 32)
-      self.img_mode = 'RGB'
-    elif self.data_base_name == 'radical':
-      self.img_size = self.cfg.IMAGE_SIZE
-      self.img_mode = 'L'
+    # Use encode transfer learning
+    if self.cfg.TRANSFER_LEARNING == 'encode':
+      self.tl_encode = True
     else:
-      raise ValueError('Wrong database name!')
+      self.tl_encode = False
+
+    if self.cfg.RESIZE_INPUTS:
+      self.input_size = self.cfg.INPUT_SIZE
+    else:
+      if self.data_base_name == 'mnist':
+        self.input_size = (28, 28)
+        self.img_mode = 'L'
+      elif self.data_base_name == 'cifar10':
+        self.input_size = (32, 32)
+        self.img_mode = 'RGB'
+      elif self.data_base_name == 'radical':
+        self.input_size = self.cfg.INPUT_SIZE
+        self.img_mode = 'L'
+      else:
+        raise ValueError('Wrong database name!')
+
+    if self.cfg.RESIZE_IMAGES:
+      self.image_size = self.cfg.IMAGE_SIZE
+    else:
+      self.image_size = self.input_size
+
+    self.input_size = (224, 224) if self.tl_encode else self.cfg.INPUT_SIZE
 
   def _load_data(self, show_img=False):
     """Load data set from files."""
@@ -88,6 +105,10 @@ class DataPreProcess(object):
         x_new.append(x_)
         y_new.extend([int(y_) for _ in range(len(x_))])
 
+      if self.tl_encode:
+        self.imgs = self.x
+        self.imgs_test = self.x_test
+
       self.x = np.array(
           x_new, dtype=np.float32).reshape((-1, *self.x[0].shape))
       self.y = np.array(y_new, dtype=np.int)
@@ -119,7 +140,7 @@ class DataPreProcess(object):
         # Load image
         img = Image.open(join(class_dir, img_name)).convert('L')
         # Resize image
-        reshaped_img = self._resize_oracle_img(img)
+        reshaped_img = self._resize_oracle_img(img, self.input_size)
         # Change background
         reshaped_img = 255 - reshaped_img
         # Save image to array
@@ -164,7 +185,7 @@ class DataPreProcess(object):
       # Load image
       img = Image.open(join(self.cfg.SOURCE_DATA_PATH, img_path)).convert('L')
       # Resize image
-      reshaped_img = self._resize_oracle_img(img)
+      reshaped_img = self._resize_oracle_img(img, self.input_size)
       # Change background
       reshaped_img = 255 - reshaped_img
       # Scaling
@@ -191,35 +212,25 @@ class DataPreProcess(object):
       x_y_dict[y_].append(x[idx])
     return x_y_dict
 
-  def _resize_imgs(self):
-    """Resize images"""
-    self.img_size = self.cfg.IMAGE_SIZE
-    self.x = utils.img_resize(
-        self.x, self.cfg.IMAGE_SIZE, img_mode=self.img_mode,
-        resize_filter=Image.ANTIALIAS)
-    self.x_test = utils.img_resize(
-        self.x_test, self.cfg.IMAGE_SIZE, img_mode=self.img_mode,
-        resize_filter=Image.ANTIALIAS)
-
-  def _resize_oracle_img(self, img):
-    """Resizing an image to IMAGE_SIZE"""
-    reshaped_image = Image.new('L', self.img_size, 'white')
+  def _resize_oracle_img(self, img, img_size):
+    """Resizing an image to img_size"""
+    reshaped_image = Image.new(self.img_mode, img_size, 'white')
     img_width, img_height = img.size
 
     if img_width > img_height:
-      w_s = self.img_size[0]
+      w_s = img_size[0]
       h_s = int(w_s * img_height // img_width)
       img = img.resize((w_s, h_s), Image.ANTIALIAS)
-      reshaped_image.paste(img, (0, int((self.img_size[1] - h_s) // 2)))
+      reshaped_image.paste(img, (0, int((img_size[1] - h_s) // 2)))
     else:
-      h_s = self.img_size[1]
+      h_s = img_size[1]
       w_s = int(h_s * img_width // img_height)
       img = img.resize((w_s, h_s), Image.ANTIALIAS)
-      reshaped_image.paste(img, (int((self.img_size[0] - w_s) // 2), 0))
+      reshaped_image.paste(img, (int((img_size[0] - w_s) // 2), 0))
 
     reshaped_image = np.array(reshaped_image, dtype=np.float32)
     reshaped_image = reshaped_image.reshape((*reshaped_image.shape, 1))
-    assert reshaped_image.shape == (*self.img_size, 1)
+    assert reshaped_image.shape == (*img_size, 1)
     return reshaped_image
 
   @staticmethod
@@ -353,8 +364,77 @@ class DataPreProcess(object):
       self.x_valid = self.x[train_stop:]
       self.y_valid = self.y[train_stop:]
 
+  def _resize_imgs(self, show_img=False):
+    """Resize images"""
+    def _resize(imgs, img_size, mode):
+      imgs_255 = utils.imgs_scale_to_255(imgs)
+      imgs_resized = utils.img_resize(imgs_255, img_size, img_mode=mode,
+                                      resize_filter=Image.ANTIALIAS)
+      return imgs_resized / 255.
+
+    img_shape = self.x_train.shape[1:3]
+
+    if img_shape != self.image_size:
+      utils.thin_line()
+      print('Resizing images...')
+      print('Before: {}'.format(img_shape))
+      print('After: {}'.format(self.image_size))
+
+      self.imgs_train = _resize(self.x_train, self.image_size, self.img_mode)
+      self.imgs_valid = _resize(self.x_valid, self.image_size, self.img_mode)
+      self.imgs_test = _resize(self.x_test, self.image_size, self.img_mode)
+      if self.cfg.NUM_MULTI_OBJECT:
+        self.imgs_test_mul = _resize(
+            self.x_test_mul, self.image_size, self.img_mode)
+      if self.data_base_name == 'radical':
+        self.imgs_test_oracle = _resize(
+            self.x_test_oracle, self.image_size, self.img_mode)
+
+    else:
+      self.imgs_train = self.x_train
+      self.imgs_valid = self.x_valid
+      self.imgs_test = self.x_test
+      if self.cfg.NUM_MULTI_OBJECT:
+        self.imgs_test_mul = self.x_test_mul
+      if self.data_base_name == 'radical':
+        self.imgs_test_oracle = self.x_test_oracle
+
+    if img_shape != self.input_size:
+      utils.thin_line()
+      print('Resizing inputs...')
+      print('Before: {}'.format(img_shape))
+      print('After: {}'.format(self.input_size))
+
+      self.x_train = _resize(self.x_train, self.input_size, self.img_mode)
+      self.x_valid = _resize(self.x_valid, self.input_size, self.img_mode)
+      self.x_test = _resize(self.x_test, self.input_size, self.img_mode)
+      if self.cfg.NUM_MULTI_OBJECT:
+        self.x_test_mul = _resize(
+            self.x_test_mul, self.input_size, self.img_mode)
+      if self.data_base_name == 'radical':
+        self.x_test_oracle = _resize(
+            self.x_test_oracle, self.input_size, self.img_mode)
+
+    if show_img:
+      utils.square_grid_show_imgs(np.array(
+          self.imgs_train[:25], dtype=np.float32), mode=self.img_mode)
+      utils.square_grid_show_imgs(np.array(
+          self.x_train[:25], dtype=np.float32), mode=self.img_mode)
+      if self.cfg.NUM_MULTI_OBJECT:
+        utils.square_grid_show_imgs(np.array(
+            self.imgs_test_mul[:25], dtype=np.float32), mode=self.img_mode)
+        utils.square_grid_show_imgs(np.array(
+            self.x_test_mul[:25], dtype=np.float32), mode=self.img_mode)
+      if self.data_base_name == 'radical':
+        utils.square_grid_show_imgs(np.array(
+            self.imgs_test_oracle[:25], dtype=np.float32), mode=self.img_mode)
+        utils.square_grid_show_imgs(np.array(
+            self.x_test_oracle[:25], dtype=np.float32), mode=self.img_mode)
+
   def _check_data(self):
     """Check data format."""
+    utils.thin_line()
+    print('Checking data shapes...')
     assert self.x_train.max() <= 1, self.x_train.max()
     assert self.y_train.max() <= 1, self.y_train.max()
     assert self.x_valid.max() <= 1, self.x_valid.max()
@@ -369,18 +449,27 @@ class DataPreProcess(object):
     assert self.x_test.min() >= 0, self.x_test.min()
     assert self.y_test.min() >= 0, self.y_test.min()
 
+    assert self.imgs_train.max() <= 1, self.imgs_train.max()
+    assert self.imgs_valid.max() <= 1, self.imgs_valid.max()
+    assert self.imgs_test.max() <= 1, self.imgs_test.max()
+
+    assert self.imgs_train.min() >= 0, self.imgs_train.min()
+    assert self.imgs_valid.min() >= 0, self.imgs_valid.min()
+    assert self.imgs_test.min() >= 0, self.imgs_test.min()
+
     if self.data_base_name == 'mnist':
       n_classes = 10
-      img_size = (*self.img_size, 1)
-
+      input_size = (*self.input_size, 1)
+      image_size = (*self.image_size, 1)
     elif self.data_base_name == 'cifar10':
       n_classes = 10
-      img_size = (*self.img_size, 3)
-
+      input_size = (*self.input_size, 3)
+      image_size = (*self.image_size, 3)
     elif self.data_base_name == 'radical':
       n_classes = \
           148 if self.cfg.NUM_RADICALS is None else self.cfg.NUM_RADICALS
-      img_size = (*self.cfg.IMAGE_SIZE, 1)
+      input_size = (*self.input_size, 1)
+      image_size = (*self.image_size, 1)
     else:
       raise ValueError('Wrong database name!')
 
@@ -388,28 +477,90 @@ class DataPreProcess(object):
     test_num = len(self.x_test)
     valid_num = len(self.x_valid)
 
-    assert self.x_train.shape == (train_num, *img_size), self.x_train.shape
+    assert self.x_train.shape == (train_num, *input_size), self.x_train.shape
     assert self.y_train.shape == (train_num, n_classes), self.y_train.shape
-    assert self.x_valid.shape == (valid_num, *img_size), self.x_valid.shape
+    assert self.x_valid.shape == (valid_num, *input_size), self.x_valid.shape
     assert self.y_valid.shape == (valid_num, n_classes), self.y_valid.shape
-    assert self.x_test.shape == (test_num, *img_size), self.x_test.shape
+    assert self.x_test.shape == (test_num, *input_size), self.x_test.shape
     assert self.y_test.shape == (test_num, n_classes), self.y_test.shape
+
+    assert self.imgs_train.shape == (train_num, *image_size), \
+        self.imgs_train.shape
+    assert self.imgs_valid.shape == (valid_num, *image_size), \
+        self.imgs_valid.shape
+    assert self.imgs_test.shape == (test_num, *image_size), \
+        self.imgs_test.shape
 
     if self.cfg.NUM_MULTI_OBJECT:
       assert self.x_test_mul.max() <= 1, self.x_test_mul.max()
       assert self.y_test_mul.max() <= 1, self.y_test_mul
       assert self.x_test_mul.min() >= 0, self.x_test_mul.min()
       assert self.y_test_mul.min() >= 0, self.y_test_mul
-      assert self.x_test_mul.shape == (
-        self.cfg.NUM_MULTI_IMG, *img_size), self.x_test_mul.shape
-      assert self.y_test_mul.shape == (
-        self.cfg.NUM_MULTI_IMG, n_classes), self.y_test_mul.shape
+      assert self.imgs_test_mul.max() <= 1, self.imgs_test_mul.max()
+      assert self.imgs_test_mul.min() >= 0, self.imgs_test_mul.min()
+      assert self.x_test_mul.shape == (self.cfg.NUM_MULTI_IMG, *input_size), \
+          self.x_test_mul.shape
+      assert self.y_test_mul.shape == (self.cfg.NUM_MULTI_IMG, n_classes), \
+          self.y_test_mul.shape
+      assert self.imgs_test_mul.shape == \
+          (self.cfg.NUM_MULTI_IMG, *image_size), self.imgs_test_mul.shape
 
-  def _get_bottleneck_features(self, model_name='xception'):
-    """Get bottleneck features of transfer learning models."""
-    # Check image size for transfer learning models
-    assert self.cfg.IMAGE_SIZE == (224, 224)
+  def _save_data(self):
+    """Save data set to pickle files."""
+    utils.thin_line()
+    print('Saving pickle files...')
+    utils.check_dir([self.preprocessed_path])
 
+    utils.save_data_to_pkl(
+          self.x_train, join(self.preprocessed_path, 'x_train.p'))
+    utils.save_data_to_pkl(
+        self.y_train, join(self.preprocessed_path, 'y_train.p'))
+    utils.save_data_to_pkl(
+        self.x_valid, join(self.preprocessed_path, 'x_valid.p'))
+    utils.save_data_to_pkl(
+        self.y_valid, join(self.preprocessed_path, 'y_valid.p'))
+    utils.save_data_to_pkl(
+        self.x_test, join(self.preprocessed_path, 'x_test.p'))
+    utils.save_data_to_pkl(
+        self.y_test, join(self.preprocessed_path, 'y_test.p'))
+
+    utils.save_data_to_pkl(
+        self.imgs_train, join(self.preprocessed_path, 'imgs_train.p'))
+    utils.save_data_to_pkl(
+        self.imgs_valid, join(self.preprocessed_path, 'imgs_valid.p'))
+    utils.save_data_to_pkl(
+        self.imgs_test, join(self.preprocessed_path, 'imgs_test.p'))
+
+    del self.imgs_train
+    del self.imgs_valid
+    del self.imgs_test
+
+    if self.cfg.NUM_MULTI_OBJECT:
+      utils.save_data_to_pkl(
+          self.x_test_mul, join(self.preprocessed_path, 'x_test_multi_obj.p'))
+      utils.save_data_to_pkl(
+          self.y_test_mul, join(self.preprocessed_path, 'y_test_multi_obj.p'))
+      utils.save_data_to_pkl(
+          self.imgs_test_mul,
+          join(self.preprocessed_path, 'imgs_test_multi_obj.p'))
+      del self.imgs_test_mul
+
+    if self.data_base_name == 'radical':
+      utils.save_data_to_pkl(
+          self.x_test_oracle, join(self.preprocessed_path, 'x_test_oracle.p'))
+      utils.save_data_to_pkl(
+          self.y_test_oracle, join(self.preprocessed_path, 'y_test_oracle.p'))
+      utils.save_data_to_pkl(
+          self.imgs_test_oracle,
+          join(self.preprocessed_path, 'imgs_test_oracle.p'))
+      del self.imgs_test_oracle
+
+    gc.collect()
+
+    print(id(self.imgs_train))
+
+  def _save_bottleneck_features(self, model_name='xception'):
+    """Save bottleneck features of transfer learning models."""
     def _extract_features(tensor):
 
       if model_name == 'vgg16':
@@ -436,10 +587,38 @@ class DataPreProcess(object):
       else:
         raise ValueError('Wrong transfer learning model name!')
 
-    self.x_train_bf = _extract_features(self.x_train)
-    self.x_valid_bf = _extract_features(self.x_valid)
-    self.x_test_bf = _extract_features(self.x_test)
+    # Check image size for transfer learning models
+    assert self.x_train.shape[1:3] == (224, 224)
+    assert self.x_valid.shape[1:3] == (224, 224)
+    assert self.x_test.shape[1:3] == (224, 224)
 
+    # Get bottleneck features
+    utils.thin_line()
+    print('Calculating bottleneck features...')
+
+    # Scale to 0-255
+    self.x_train_bf = _extract_features(utils.imgs_scale_to_255(self.x_train))
+    self.x_valid_bf = _extract_features(utils.imgs_scale_to_255(self.x_valid))
+    self.x_test_bf = _extract_features(utils.imgs_scale_to_255(self.x_test))
+
+    # Check data shape
+    if model_name == 'vgg16':
+      bf_shape = (7, 7, 512)
+    elif model_name == 'vgg19':
+      bf_shape = (7, 7, 512)
+    elif model_name == 'resnet50':
+      bf_shape = (1, 1, 2048)
+    elif model_name == 'inceptionv3':
+      bf_shape = (5, 5, 2048)
+    elif model_name == 'xception':
+      bf_shape = (7, 7, 2048)
+    else:
+      raise ValueError('Wrong transfer learning model name!')
+    assert self.x_train_bf.shape[1:] == bf_shape
+    assert self.x_valid_bf.shape[1:] == bf_shape
+    assert self.x_test_bf.shape[1:] == bf_shape
+
+    # Save bottleneck features to pickles
     utils.thin_line()
     print('Saving {} bottleneck features...'.format(model_name))
     utils.check_dir([self.preprocessed_path])
@@ -449,49 +628,18 @@ class DataPreProcess(object):
         self.x_valid_bf, join(self.preprocessed_path, 'x_valid_bf.p'))
     utils.save_data_to_pkl(
         self.x_test_bf, join(self.preprocessed_path, 'x_test_bf.p'))
-
     if self.cfg.NUM_MULTI_OBJECT:
       self.x_test_mul_bf = _extract_features(self.x_test_mul)
+      assert self.x_test_mul_bf.shape[1:] == bf_shape
       utils.save_data_to_pkl(
           self.x_test_mul_bf,
           join(self.preprocessed_path, 'x_test_multi_obj_bf.p'))
-
     if self.data_base_name == 'radical':
       self.x_test_oracle_bf = _extract_features(self.x_test_oracle)
+      assert self.x_test_oracle_bf.shape[1:] == bf_shape
       utils.save_data_to_pkl(
           self.x_test_oracle_bf,
           join(self.preprocessed_path, 'x_test_oracle_bf.p'))
-
-  def _save_data(self):
-    """Save data set to pickle files."""
-    utils.thin_line()
-    print('Saving pickle files...')
-    utils.check_dir([self.preprocessed_path])
-
-    utils.save_data_to_pkl(
-          self.x_train, join(self.preprocessed_path, 'x_train.p'))
-    utils.save_data_to_pkl(
-        self.y_train, join(self.preprocessed_path, 'y_train.p'))
-    utils.save_data_to_pkl(
-        self.x_valid, join(self.preprocessed_path, 'x_valid.p'))
-    utils.save_data_to_pkl(
-        self.y_valid, join(self.preprocessed_path, 'y_valid.p'))
-    utils.save_data_to_pkl(
-        self.x_test, join(self.preprocessed_path, 'x_test.p'))
-    utils.save_data_to_pkl(
-        self.y_test, join(self.preprocessed_path, 'y_test.p'))
-
-    if self.cfg.NUM_MULTI_OBJECT:
-      utils.save_data_to_pkl(
-          self.x_test_mul, join(self.preprocessed_path, 'x_test_multi_obj.p'))
-      utils.save_data_to_pkl(
-          self.y_test_mul, join(self.preprocessed_path, 'y_test_multi_obj.p'))
-
-    if self.data_base_name == 'radical':
-      utils.save_data_to_pkl(
-          self.x_test_oracle, join(self.preprocessed_path, 'x_test_oracle.p'))
-      utils.save_data_to_pkl(
-          self.y_test_oracle, join(self.preprocessed_path, 'y_test_oracle.p'))
 
   @staticmethod
   def _grid_show_imgs(x, y, n_img_show, mode='L'):
@@ -522,8 +670,6 @@ class DataPreProcess(object):
     # Load data
     if self.data_base_name == 'mnist' or self.data_base_name == 'cifar10':
       self._load_data(show_img=show_img)
-      if self.cfg.RESIZE_IMG:
-        self._resize_imgs()
     elif self.data_base_name == 'radical':
       self._load_radicals(show_img=show_img)
       self._train_test_split()
@@ -547,15 +693,18 @@ class DataPreProcess(object):
     # Split data set into train/valid
     self._train_valid_split()
 
-    # Check data format
-    self._check_data()
+    # Resize images and inputs
+    self._resize_imgs(show_img=show_img)
 
-    # Get and save bottleneck features
-    if self.cfg.TRANSFER_LEARNING == 'encode':
-      self._get_bottleneck_features(model_name=self.cfg.TL_MODEL)
+    # Check data format
+    # self._check_data()
 
     # Save data to pickles
     self._save_data()
+
+    # Get and save bottleneck features
+    if self.tl_encode:
+      self._save_bottleneck_features(model_name=self.cfg.TL_MODEL)
 
     utils.thin_line()
     print('Done! Using {:.4}s'.format(time.time() - start_time))
@@ -578,17 +727,20 @@ if __name__ == '__main__':
     print('Running baseline model.')
     DataPreProcess(basel_cfg, global_seed, basel_cfg.DATABASE_NAME).pipeline()
   else:
-    utils.thick_line()
-    print('Input [ 1 ] to preprocess the Oracle Radicals database.')
-    print('Input [ 2 ] to preprocess the MNIST database.')
-    print('Input [ 3 ] to preprocess the CIFAR-10 database.')
-    utils.thin_line()
-    input_mode = input('Input: ')
-    utils.thick_line()
-    print('Input [ 1 ] to use config.')
-    print('Input [ 2 ] to use config_pipeline.')
-    utils.thin_line()
-    input_cfg = input('Input: ')
+    # utils.thick_line()
+    # print('Input [ 1 ] to preprocess the Oracle Radicals database.')
+    # print('Input [ 2 ] to preprocess the MNIST database.')
+    # print('Input [ 3 ] to preprocess the CIFAR-10 database.')
+    # utils.thin_line()
+    # input_mode = input('Input: ')
+    # utils.thick_line()
+    # print('Input [ 1 ] to use config.')
+    # print('Input [ 2 ] to use config_pipeline.')
+    # utils.thin_line()
+    # input_cfg = input('Input: ')
+
+    input_mode = '2'
+    input_cfg = '1'
 
     if input_cfg == '1':
       cfg_selected = cfg_1

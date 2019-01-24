@@ -42,6 +42,12 @@ class Main(object):
       self.multi_gpu = False
       model = CapsNet(cfg, model_arch)
 
+    # Use encode transfer learning
+    if self.cfg.TRANSFER_LEARNING == 'encode':
+      self.tl_encode = True
+    else:
+      self.tl_encode = False
+
     # Get paths from configuration
     self.preprocessed_path, self.train_log_path, \
         self.summary_path, self.checkpoint_path, \
@@ -118,19 +124,21 @@ class Main(object):
     #       n_parts=self.cfg.LARGE_DATA_PART_NUM)
     # else:
 
-    imgs_train = utils.load_data_from_pkl(
-        join(self.preprocessed_path, 'x_train.p'))
-    imgs_valid = utils.load_data_from_pkl(
-        join(self.preprocessed_path, 'x_valid.p'))
-
-    if self.cfg.TRANSFER_LEARNING == 'encode':
+    if self.tl_encode:
       x_train = utils.load_data_from_pkl(
           join(self.preprocessed_path, 'x_train_bf.p'))
       x_valid = utils.load_data_from_pkl(
           join(self.preprocessed_path, 'x_valid_bf.p'))
     else:
-      x_train = imgs_train
-      x_valid = imgs_valid
+      x_train = utils.load_data_from_pkl(
+        join(self.preprocessed_path, 'x_train.p'))
+      x_valid = utils.load_data_from_pkl(
+        join(self.preprocessed_path, 'x_train.p'))
+
+    imgs_train = utils.load_data_from_pkl(
+        join(self.preprocessed_path, 'imgs_train.p'))
+    imgs_valid = utils.load_data_from_pkl(
+        join(self.preprocessed_path, 'imgs_valid.p'))
 
     y_train = utils.load_data_from_pkl(
         join(self.preprocessed_path, 'y_train.p'))
@@ -153,13 +161,13 @@ class Main(object):
     return x_train, y_train, x_valid, y_valid, imgs_train, imgs_valid
 
   def _get_batch_generator(self, x, y, imgs):
-    if self.cfg.TRANSFER_LEARNING == 'encode':
+    if self.tl_encode:
       return utils.get_batches(x, y, self.cfg.BATCH_SIZE, imgs=imgs)
     else:
       return utils.get_batches(x, y, self.cfg.BATCH_SIZE)
 
   def _get_batch(self, batch_generator):
-    if self.cfg.TRANSFER_LEARNING == 'encode':
+    if self.tl_encode:
       x_batch, y_batch, imgs_batch = next(batch_generator)
     else:
       x_batch, y_batch = next(batch_generator)
