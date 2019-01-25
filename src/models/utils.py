@@ -4,7 +4,7 @@ from __future__ import print_function
 
 import os
 import gc
-import sys
+import re
 import csv
 import math
 import time
@@ -12,6 +12,7 @@ import gzip
 import shutil
 import pickle
 import tarfile
+from os import listdir
 
 import numpy as np
 import tensorflow as tf
@@ -24,13 +25,13 @@ from urllib.request import urlretrieve
 
 def save_data_to_pkl(data, data_path, verbose=True):
   """data to pickle file."""
-  file_size = sys.getsizeof(data)
+  file_size = data.nbytes
   if file_size / (10**9) > 4:
     if verbose:
-      print('File is too large for pickle to save: {:.4}Gb'.format(
+      print('Saving {}...'.format(data_path))
+      print('File is too large (>4Gb) for pickle to save: {:.4}Gb'.format(
           file_size / (10**9)))
-    n_parts = int(((file_size / (10**9)) // 4) + 1)
-    save_large_data_to_pkl(data, data_path[:-2], n_parts, verbose)
+    save_large_data_to_pkl(data, data_path[:-2], verbose)
   else:
     with open(data_path, 'wb') as f:
       if verbose:
@@ -38,6 +39,53 @@ def save_data_to_pkl(data, data_path, verbose=True):
         print('Shape: {}'.format(np.array(data).shape))
         print('Size: {:.4}Mb'.format(file_size / (10**6)))
       pickle.dump(data, f)
+
+
+def save_large_data_to_pkl(data, data_path, verbose=True):
+  """Save large data to pickle file."""
+  file_size = data.nbytes
+  max_part_size = 2**31 - 1  # 2Gb
+  n_parts = file_size // max_part_size + 1
+  len_part = int(((len(data) // n_parts) // 2048) * 2048)
+  n_parts = int(len(data) // len_part + 1)
+
+  if verbose:
+    print('Saving {} into {} parts...'.format(data_path, n_parts))
+    print('Total Size: {:.4}Gb'.format(file_size / (10**9)))
+    print('Data Shape: ', data.shape)
+
+  for i in range(n_parts):
+    if i == n_parts - 1:
+      data_part = data[i * len_part:]
+    else:
+      data_part = data[i * len_part:(i + 1) * len_part]
+    data_path_i = data_path + '_{}.p'.format(i)
+    with open(data_path_i, 'wb') as f:
+      if verbose:
+        file_size_part = data_part.nbytes
+        print('Saving {}... Part Size: {:.4}Gb'.format(
+            f.name, file_size_part / (10**9)))
+        print('Part Shape: ', data_part.shape)
+      pickle.dump(data_part, f)
+    del data_part
+    gc.collect()
+
+
+def load_pkls(dir_path, file_name, verbose=True):
+  """Load data from pickle file or files."""
+  indices = []
+  for f_name in listdir(dir_path):
+    m = re.match(file_name + '_(\d*).p', f_name)
+    if m:
+      indices.append(int(m.group(1)))
+  if indices:
+    return load_large_data_from_pkl(
+        '{}/{}'.format(dir_path, file_name),
+        n_parts=len(indices), verbose=verbose)
+  else:
+    return load_data_from_pkl(
+        '{}/{}.p'.format(dir_path, file_name),
+        verbose=verbose)
 
 
 def load_data_from_pkl(data_path, verbose=True):
@@ -48,31 +96,10 @@ def load_data_from_pkl(data_path, verbose=True):
     return pickle.load(f)
 
 
-def save_large_data_to_pkl(data, data_path, n_parts=2, verbose=True):
+def load_large_data_from_pkl(data_path, n_parts=2, verbose=True):
   """Save large data to pickle file."""
   if verbose:
-    print('Saving large file into {} parts...'.format(n_parts))
-    print('Total Size: {:.4}Gb'.format(sys.getsizeof(data) / (10**9)))
-  len_part = len(data) // n_parts
-  for i in range(n_parts):
-    if i == n_parts - 1:
-      data_part = data[i * len_part:]
-    else:
-      data_part = data[i * len_part:(i + 1) * len_part]
-    data_path_i = data_path + '_{}.p'
-    with open(data_path_i, 'wb') as f:
-      if verbose:
-        file_size = sys.getsizeof(data_part)
-        print('Saving {}... Part Size: {:.4}Mb'.format(
-            f.name, file_size / (10**6)))
-      pickle.dump(data_part, f)
-
-    del data_part
-    gc.collect()
-
-
-def load_large_data_to_pkl(data_path, n_parts=2, verbose=True):
-  """Save large data to pickle file."""
+    print('Loading {}.p from {} parts...'.format(data_path, n_parts))
   data = []
   for i in range(n_parts):
     with open(data_path + '_{}.p'.format(i), 'rb') as f:
@@ -81,6 +108,11 @@ def load_large_data_to_pkl(data_path, n_parts=2, verbose=True):
       data.append(pickle.load(f))
   concat = np.concatenate(data, axis=0)
   assert concat.shape[1:] == data[0].shape[1:]
+
+  if verbose:
+    print('Total Size: {:.4}Gb'.format(concat / (10**9)))
+    print('Data Shape: ', concat.shape)
+
   return concat
 
 
@@ -690,7 +722,8 @@ def img_black_to_color(imgs, same=False):
 def imgs_scale_to_255(imgs):
   """Scale images to 0-255"""
   return np.array(
-      [np.divide(((i - i.min()) * 255), (i.max() - i.min())) for i in imgs])
+      [np.divide(((i - i.min()) * 255),
+                 (i.max() - i.min())) for i in imgs]).astype(int)
 
 
 def save_imgs(real_imgs,

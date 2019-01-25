@@ -66,14 +66,15 @@ __C.TEST_SIZE = 0.2
 # Rate of train-validation split
 __C.VALID_SIZE = 0.1
 
-# Input size
-__C.IMAGE_SIZE = (28, 28)
 # Resize images
 __C.RESIZE_INPUTS = False
-# Image size
-__C.IMAGE_SIZE = (28, 28)
+# Input size
+__C.INPUT_SIZE = (28, 28)
+
 # Resize images
 __C.RESIZE_IMAGES = False
+# Image size
+__C.IMAGE_SIZE = (28, 28)
 
 # Using data augment
 __C.USE_DATA_AUG = True

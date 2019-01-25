@@ -131,17 +131,12 @@ class Test(object):
     utils.thin_line()
     preprocessed_path_ = join(self.cfg.DPP_DATA_PATH, self.cfg.DATABASE_NAME)
 
-    if self.tl_encode:
-      x = utils.load_data_from_pkl(
-          join(preprocessed_path_, 'x_test' + self.append_info + '_bf.p'))
-    else:
-      x = utils.load_data_from_pkl(
-          join(preprocessed_path_, 'x_test' + self.append_info + '.p'))
-
-    imgs = utils.load_data_from_pkl(
-        join(preprocessed_path_, 'imgs_test' + self.append_info + '.p'))
+    x = utils.load_data_from_pkl(
+        join(preprocessed_path_, 'x_test' + self.append_info + '.p'))
     y = utils.load_data_from_pkl(
         join(preprocessed_path_, 'y_test' + self.append_info + '.p'))
+    imgs = utils.load_data_from_pkl(
+        join(preprocessed_path_, 'imgs_test' + self.append_info + '.p'))
 
     return x, y, imgs
 
@@ -183,20 +178,6 @@ class Test(object):
               accuracy_, clf_loss_, rec_loss_, rec_images_
         else:
           return inputs_, labels_, input_imgs_, preds_, loss_, accuracy_
-
-  def _get_batch_generator(self, x, y, imgs):
-    if self.tl_encode:
-      return utils.get_batches(x, y, self.cfg.TEST_BATCH_SIZE, imgs=imgs)
-    else:
-      return utils.get_batches(x, y, self.cfg.TEST_BATCH_SIZE)
-
-  def _get_batch(self, batch_generator):
-    if self.tl_encode:
-      x_batch, y_batch, imgs_batch = next(batch_generator)
-    else:
-      x_batch, y_batch = next(batch_generator)
-      imgs_batch = x_batch
-    return x_batch, y_batch, imgs_batch
 
   def _get_preds_int(self, preds_vec):
     """Get integer predictions."""
@@ -258,15 +239,18 @@ class Test(object):
     clf_loss_all = []
     rec_loss_all = []
     step = 0
-    batch_generator = self._get_batch_generator(
-        self.x_test, self.y_test, self.imgs_test)
+    batch_generator = utils.get_batches(
+        self.x_test,
+        self.y_test,
+        self.cfg.TEST_BATCH_SIZE,
+        imgs=self.imgs_test)
     n_batch = (len(self.x_test) // self.cfg.TEST_BATCH_SIZE) + 1
 
     if self.cfg.TEST_WITH_REC:
       for _ in tqdm(range(n_batch), total=n_batch,
                     ncols=100, unit=' batch'):
         step += 1
-        x_batch, y_batch, imgs_batch = self._get_batch(batch_generator)
+        x_batch, y_batch, imgs_batch = next(batch_generator)
         len_batch = len(x_batch)
 
         if len_batch == self.cfg.TEST_BATCH_SIZE:
@@ -302,7 +286,7 @@ class Test(object):
     else:
       for _ in tqdm(range(n_batch), total=n_batch,
                     ncols=100, unit=' batches'):
-        x_batch, y_batch, imgs_batch = self._get_batch(batch_generator)
+        x_batch, y_batch, imgs_batch = next(batch_generator)
         len_batch = len(x_batch)
 
         if len_batch == self.cfg.TEST_BATCH_SIZE:

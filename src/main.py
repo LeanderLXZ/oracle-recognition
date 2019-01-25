@@ -124,16 +124,10 @@ class Main(object):
     #       n_parts=self.cfg.LARGE_DATA_PART_NUM)
     # else:
 
-    if self.tl_encode:
-      x_train = utils.load_data_from_pkl(
-          join(self.preprocessed_path, 'x_train_bf.p'))
-      x_valid = utils.load_data_from_pkl(
-          join(self.preprocessed_path, 'x_valid_bf.p'))
-    else:
-      x_train = utils.load_data_from_pkl(
-        join(self.preprocessed_path, 'x_train.p'))
-      x_valid = utils.load_data_from_pkl(
-        join(self.preprocessed_path, 'x_train.p'))
+    x_train = utils.load_data_from_pkl(
+      join(self.preprocessed_path, 'x_train.p'))
+    x_valid = utils.load_data_from_pkl(
+      join(self.preprocessed_path, 'x_train.p'))
 
     imgs_train = utils.load_data_from_pkl(
         join(self.preprocessed_path, 'imgs_train.p'))
@@ -160,20 +154,6 @@ class Main(object):
 
     return x_train, y_train, x_valid, y_valid, imgs_train, imgs_valid
 
-  def _get_batch_generator(self, x, y, imgs):
-    if self.tl_encode:
-      return utils.get_batches(x, y, self.cfg.BATCH_SIZE, imgs=imgs)
-    else:
-      return utils.get_batches(x, y, self.cfg.BATCH_SIZE)
-
-  def _get_batch(self, batch_generator):
-    if self.tl_encode:
-      x_batch, y_batch, imgs_batch = next(batch_generator)
-    else:
-      x_batch, y_batch = next(batch_generator)
-      imgs_batch = x_batch
-    return x_batch, y_batch, imgs_batch
-
   def _display_status(self,
                       sess,
                       x_batch,
@@ -187,6 +167,12 @@ class Main(object):
     x_valid_batch = self.x_valid[valid_batch_idx]
     y_valid_batch = self.y_valid[valid_batch_idx]
     imgs_valid_batch = self.imgs_valid[valid_batch_idx]
+
+    if self.tl_encode:
+      x_valid_batch = GetBottleneckFeatures(
+          self.cfg.TL_MODEL).get_features(x_valid_batch)
+      y_valid_batch = GetBottleneckFeatures(
+          self.cfg.TL_MODEL).get_features(y_valid_batch)
 
     if self.cfg.WITH_REC:
       loss_train, clf_loss_train, rec_loss_train, acc_train = \
@@ -241,6 +227,12 @@ class Main(object):
     y_valid_batch = self.y_valid[valid_batch_idx]
     imgs_valid_batch = self.imgs_valid[valid_batch_idx]
 
+    if self.tl_encode:
+      x_valid_batch = GetBottleneckFeatures(
+          self.cfg.TL_MODEL).get_features(x_valid_batch)
+      y_valid_batch = GetBottleneckFeatures(
+          self.cfg.TL_MODEL).get_features(y_valid_batch)
+
     if self.cfg.WITH_REC:
       summary_train, loss_train, clf_loss_train, rec_loss_train, acc_train = \
           sess.run([self.summary, self.loss, self.clf_loss,
@@ -294,69 +286,56 @@ class Main(object):
     clf_loss_all = []
     rec_loss_all = []
 
-    batch_generator = self._get_batch_generator(x, y, imgs)
+    batch_generator = utils.get_batches(x, y, self.cfg.BATCH_SIZE, imgs=imgs)
 
     if not silent:
       utils.thin_line()
       print('Calculating loss and accuracy of full {} set...'.format(mode))
-      if self.cfg.WITH_REC:
-        for _ in tqdm(range(n_batch), total=n_batch,
-                      ncols=100, unit=' batches'):
-          x_batch, y_batch, imgs_batch = self._get_batch(batch_generator)
-          loss_i, clf_loss_i, rec_loss_i, acc_i = sess.run(
-              [self.loss, self.clf_loss, self.rec_loss, self.accuracy],
-              feed_dict={self.inputs: x_batch,
-                         self.labels: y_batch,
-                         self.input_imgs: imgs_batch,
-                         self.is_training: False})
-          loss_all.append(loss_i)
-          clf_loss_all.append(clf_loss_i)
-          rec_loss_all.append(rec_loss_i)
-          acc_all.append(acc_i)
-        clf_loss = sum(clf_loss_all) / len(clf_loss_all)
-        rec_loss = sum(rec_loss_all) / len(rec_loss_all)
-      else:
-        for _ in tqdm(range(n_batch), total=n_batch,
-                      ncols=100, unit=' batch'):
-          x_batch, y_batch, imgs_batch = self._get_batch(batch_generator)
-          loss_i, acc_i = sess.run(
-              [self.loss, self.accuracy],
-              feed_dict={self.inputs: x_batch,
-                         self.labels: y_batch,
-                         self.input_imgs: imgs_batch,
-                         self.is_training: False})
-          loss_all.append(loss_i)
-          acc_all.append(acc_i)
-        clf_loss, rec_loss = None, None
-
+      iterator = tqdm(range(n_batch), total=n_batch, ncols=100, unit=' batches')
     else:
-      if self.cfg.WITH_REC:
-        for _ in range(n_batch):
-          x_batch, y_batch, imgs_batch = self._get_batch(batch_generator)
-          loss_i, clf_loss_i, rec_loss_i, acc_i = sess.run(
-              [self.loss, self.clf_loss, self.rec_loss, self.accuracy],
-              feed_dict={self.inputs: x_batch,
-                         self.labels: y_batch,
-                         self.input_imgs: imgs_batch,
-                         self.is_training: False})
-          loss_all.append(loss_i)
-          clf_loss_all.append(clf_loss_i)
-          rec_loss_all.append(rec_loss_i)
-          acc_all.append(acc_i)
-        clf_loss = sum(clf_loss_all) / len(clf_loss_all)
-        rec_loss = sum(rec_loss_all) / len(rec_loss_all)
-      else:
-        for _ in range(n_batch):
-          x_batch, y_batch, imgs_batch = self._get_batch(batch_generator)
-          loss_i, acc_i = sess.run(
-              [self.loss, self.accuracy],
-              feed_dict={self.inputs: x_batch,
-                         self.labels: y_batch,
-                         self.input_imgs: imgs_batch,
-                         self.is_training: False})
-          loss_all.append(loss_i)
-          acc_all.append(acc_i)
-        clf_loss, rec_loss = None, None
+      iterator = range(n_batch)
+
+    if self.cfg.WITH_REC:
+      for _ in iterator:
+
+        x_batch, y_batch, imgs_batch = next(batch_generator)
+        if self.tl_encode:
+          x_batch = GetBottleneckFeatures(
+              self.cfg.TL_MODEL).get_features(x_batch)
+          y_batch = GetBottleneckFeatures(
+              self.cfg.TL_MODEL).get_features(y_batch)
+
+        loss_i, clf_loss_i, rec_loss_i, acc_i = sess.run(
+            [self.loss, self.clf_loss, self.rec_loss, self.accuracy],
+            feed_dict={self.inputs: x_batch,
+                       self.labels: y_batch,
+                       self.input_imgs: imgs_batch,
+                       self.is_training: False})
+        loss_all.append(loss_i)
+        clf_loss_all.append(clf_loss_i)
+        rec_loss_all.append(rec_loss_i)
+        acc_all.append(acc_i)
+      clf_loss = sum(clf_loss_all) / len(clf_loss_all)
+      rec_loss = sum(rec_loss_all) / len(rec_loss_all)
+    else:
+      for _ in iterator:
+
+        x_batch, y_batch, imgs_batch = next(batch_generator)
+        if self.tl_encode:
+          x_batch = GetBottleneckFeatures(
+              self.cfg.TL_MODEL).get_features(x_batch)
+          y_batch = GetBottleneckFeatures(
+              self.cfg.TL_MODEL).get_features(y_batch)
+
+        loss_i, acc_i = sess.run(
+            [self.loss, self.accuracy],
+            feed_dict={self.inputs: x_batch,
+                       self.labels: y_batch,
+                       self.input_imgs: imgs_batch,
+                       self.is_training: False})
+        loss_all.append(loss_i)
+        acc_all.append(acc_i)
+      clf_loss, rec_loss = None, None
 
     loss = sum(loss_all) / len(loss_all)
     accuracy = sum(acc_all) / len(acc_all)
@@ -516,8 +495,8 @@ class Main(object):
       print('Training on epoch: {}/{}'.format(epoch_i + 1, self.cfg.EPOCHS))
 
       utils.thin_line()
-      train_batch_generator = self._get_batch_generator(
-          self.x_train, self.y_train, self.imgs_train)
+      train_batch_generator = utils.get_batches(
+          self.x_train, self.y_train, self.cfg.BATCH_SIZE, imgs=self.imgs_train)
 
       if self.cfg.DISPLAY_STEP:
         iterator = range(self.n_batch_train)
@@ -531,7 +510,13 @@ class Main(object):
       for _ in iterator:
 
         step += 1
-        x_batch, y_batch, imgs_batch = self._get_batch(train_batch_generator)
+        x_batch, y_batch, imgs_batch = next(train_batch_generator)
+
+        if self.tl_encode:
+          x_batch = GetBottleneckFeatures(
+              self.cfg.TL_MODEL).get_features(x_batch)
+          y_batch = GetBottleneckFeatures(
+              self.cfg.TL_MODEL).get_features(y_batch)
 
         # Training optimizer
         sess.run(self.optimizer, feed_dict={self.inputs: x_batch,
