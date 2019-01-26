@@ -77,7 +77,7 @@ __C.RESIZE_IMAGES = False
 __C.IMAGE_SIZE = (28, 28)
 
 # Using data augment
-__C.USE_DATA_AUG = True
+__C.USE_DATA_AUG = False
 # Parameters for data augment
 __C.DATA_AUG_PARAM = dict(
     rotation_range=40,

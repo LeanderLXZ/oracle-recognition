@@ -76,7 +76,7 @@ class GetBottleneckFeatures(object):
       batch_generator = utils.get_batches_all_x(inputs, batch_size)
       n_batch = len(inputs) // batch_size + 1
       bottleneck_features = []
-      for _ in tqdm(range(n_batch), total=n_batch, ncols=100, unit='batches'):
+      for _ in tqdm(range(n_batch), total=n_batch, ncols=100, unit='batch'):
         inputs_batch = next(batch_generator)
         inputs_batch = utils.imgs_scale_to_255(inputs_batch).astype(data_type)
         if inputs_shape[3] == 1:

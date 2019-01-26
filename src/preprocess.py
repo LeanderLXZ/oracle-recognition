@@ -5,7 +5,9 @@ from __future__ import print_function
 import time
 import os
 import gc
+import re
 import math
+import pickle
 import argparse
 from PIL import Image
 import numpy as np
@@ -13,13 +15,13 @@ import pandas as pd
 import sklearn.utils
 from copy import copy
 from tqdm import tqdm
+from os import listdir
 from os.path import join
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.model_selection import train_test_split
 
 from models import utils
-from config import config as cfg_1
-from config_pipeline import config as cfg_2
+from config import config as cfg
 from baseline_config import config as basel_cfg
 from models.get_transfer_learning_codes import GetBottleneckFeatures
 
@@ -31,14 +33,14 @@ KTF.set_session(tf.Session(config=tf.ConfigProto(device_count={'gpu': 0})))
 
 class DataPreProcess(object):
 
-  def __init__(self, cfg, seed=None, data_base_name=None):
+  def __init__(self, config, seed=None, data_base_name=None):
     """
     Preprocess data and save as pickle files.
 
     Args:
-      cfg: configuration
+      config: configuration
     """
-    self.cfg = cfg
+    self.cfg = config
     self.seed = seed
     self.data_base_name = data_base_name
     self.preprocessed_path = None
@@ -546,10 +548,31 @@ class DataPreProcess(object):
     # Batch size for extracting bottleneck features
     bf_batch_size = 128
 
+    # Get bottleneck features for x_train, which is very large
+    if self.x_train.nbytes > 2**33:
+      n_parts = utils.save_large_data_to_pkl(
+          self.x_train,
+          join(self.preprocessed_path, 'x_train'),
+          return_n_parts=True)
+      x_train_bf = []
+      for i in range(n_parts):
+        with open(self.preprocessed_path + 'x_train_{}.p'.format(i), 'rb') as f:
+          data_part = pickle.load(f)
+          bf_part = GetBottleneckFeatures(
+              self.cfg.TL_MODEL).get_features(
+              data_part, batch_size=bf_batch_size, data_type=self.data_type)
+          x_train_bf.append(bf_part)
+      self.x_train = np.concatenate(x_train_bf, axis=0)
+    else:
+      self.x_train = GetBottleneckFeatures(
+          self.cfg.TL_MODEL).get_features(
+          self.x_train, batch_size=bf_batch_size, data_type=self.data_type)
+    utils.save_data_to_pkl(
+        self.x_train, join(self.preprocessed_path, 'x_train.p'))
+    del self.x_train
+    gc.collect()
+
     # Extract bottleneck features
-    self.x_train = GetBottleneckFeatures(
-        self.cfg.TL_MODEL).get_features(
-        self.x_train, batch_size=bf_batch_size, data_type=self.data_type)
     self.x_valid = GetBottleneckFeatures(
         self.cfg.TL_MODEL).get_features(
         self.x_valid, batch_size=bf_batch_size, data_type=self.data_type)
@@ -643,7 +666,7 @@ class DataPreProcess(object):
     self._resize_inputs(show_img=show_img)
 
     # Check data format
-    # self._check_data()
+    self._check_data()
 
     # Get features of transfer learning models
     if self.tl_encode:
@@ -662,44 +685,33 @@ if __name__ == '__main__':
   global_seed = None
 
   parser = argparse.ArgumentParser(
-      description="Testing the model."
+      description='Testing the model.'
   )
-  parser.add_argument('-b', '--baseline', action="store_true",
-                      help="Use baseline configurations.")
+  parser.add_argument('-b', '--baseline', action='store_true',
+                      help='Use baseline configurations.')
+  parser.add_argument('-m', '--mnist', action='store_true',
+                      help='Preprocess the MNIST database.')
+  parser.add_argument('-c', '--cifar', action='store_true',
+                      help='Preprocess the CIFAR-10 database.')
+  parser.add_argument('-o', '--oracle', action='store_true',
+                      help='Preprocess the Oracle Radicals database.')
   args = parser.parse_args()
 
   if args.baseline:
     utils.thick_line()
     print('Running baseline model.')
     DataPreProcess(basel_cfg, global_seed, basel_cfg.DATABASE_NAME).pipeline()
+  elif args.mnist:
+    utils.thick_line()
+    print('Preprocess the MNIST database.')
+    DataPreProcess(cfg, global_seed, 'mnist').pipeline()
+  elif args.cifar:
+    utils.thick_line()
+    print('Preprocess the CIFAR-10 database.')
+    DataPreProcess(cfg, global_seed, 'cifar10').pipeline()
+  elif args.oracle:
+    utils.thick_line()
+    print('Preprocess the Oracle Radicals database.')
+    DataPreProcess(cfg, global_seed, 'radical').pipeline()
   else:
-    # utils.thick_line()
-    # print('Input [ 1 ] to preprocess the Oracle Radicals database.')
-    # print('Input [ 2 ] to preprocess the MNIST database.')
-    # print('Input [ 3 ] to preprocess the CIFAR-10 database.')
-    # utils.thin_line()
-    # input_mode = input('Input: ')
-    # utils.thick_line()
-    # print('Input [ 1 ] to use config.')
-    # print('Input [ 2 ] to use config_pipeline.')
-    # utils.thin_line()
-    # input_cfg = input('Input: ')
-
-    input_mode = '2'
-    input_cfg = '1'
-
-    if input_cfg == '1':
-      cfg_selected = cfg_1
-    elif input_cfg == '2':
-      cfg_selected = cfg_2
-    else:
-      raise ValueError('Wrong config input! Found: {}'.format(input_cfg))
-
-    if input_mode == '1':
-      DataPreProcess(cfg_selected, global_seed, 'radical').pipeline()
-    elif input_mode == '2':
-      DataPreProcess(cfg_selected, global_seed, 'mnist').pipeline()
-    elif input_mode == '3':
-      DataPreProcess(cfg_selected, global_seed, 'cifar10').pipeline()
-    else:
-      raise ValueError('Wrong database input! Found: {}'.format(input_mode))
+    raise ValueError('Wrong argument!')
