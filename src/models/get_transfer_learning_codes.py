@@ -64,9 +64,8 @@ class GetBottleneckFeatures(object):
   def get_features(self, inputs, batch_size=None, data_type=np.float32):
 
     # Check image size for transfer learning models
-    if inputs.shape[3] == 1:
-      inputs = np.concatenate([inputs, inputs, inputs], axis=-1)
-    assert inputs.shape[1:] == (224, 224, 3)
+    inputs_shape = inputs.shape
+    assert inputs_shape[1:3] == (224, 224)
 
     # Get bottleneck features
     utils.thin_line()
@@ -80,11 +79,17 @@ class GetBottleneckFeatures(object):
       for _ in tqdm(range(n_batch), total=n_batch, ncols=100, unit='batches'):
         inputs_batch = next(batch_generator)
         inputs_batch = utils.imgs_scale_to_255(inputs_batch).astype(data_type)
+        if inputs_shape[3] == 1:
+          inputs_batch = np.concatenate(
+              [inputs_batch, inputs_batch, inputs_batch], axis=-1)
+        assert inputs_batch.shape[1:] == (224, 224, 3)
         bf_batch = self._extract_features(inputs_batch, pooling=None)
         bottleneck_features.append(bf_batch)
       bottleneck_features = np.concatenate(bottleneck_features, axis=0)
     else:
       inputs = utils.imgs_scale_to_255(inputs).astype(data_type)
+      if inputs_shape[3] == 1:
+        inputs = np.concatenate([inputs, inputs, inputs], axis=-1)
       bottleneck_features = self._extract_features(inputs, pooling=None)
 
     # Check data shape
