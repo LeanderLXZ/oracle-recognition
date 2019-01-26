@@ -43,7 +43,7 @@ class DataPreProcess(object):
     self.data_base_name = data_base_name
     self.preprocessed_path = None
     self.source_data_path = None
-    self.data_type = np.float32
+    self.data_type = np.float16
 
     # Use encode transfer learning
     if self.cfg.TRANSFER_LEARNING == 'encode':

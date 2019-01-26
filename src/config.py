@@ -28,8 +28,8 @@ __C = EasyDict()
 # 'radical': Oracle Radicals
 # 'mnist': MNIST
 # 'cifar10' CIFAR-10
-# __C.DATABASE_NAME = 'radical'
-__C.DATABASE_NAME = 'mnist'
+__C.DATABASE_NAME = 'radical'
+# __C.DATABASE_NAME = 'mnist'
 
 # Training version
 # Set None to auto generate version
@@ -74,7 +74,7 @@ __C.INPUT_SIZE = (28, 28)
 # Resize images
 __C.RESIZE_IMAGES = True
 # Image size
-__C.IMAGE_SIZE = (28, 28)
+__C.IMAGE_SIZE = (56, 56)
 
 # Using data augment
 __C.USE_DATA_AUG = True
@@ -89,7 +89,7 @@ __C.DATA_AUG_PARAM = dict(
     fill_mode='nearest'
 )
 # Keep original images if use data augment
-__C.DATA_AUG_KEEP_SOURCE = False
+__C.DATA_AUG_KEEP_SOURCE = True
 # The max number of images of a class if use data augment
 __C.MAX_IMAGE_NUM = 10000
 
