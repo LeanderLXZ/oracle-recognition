@@ -27,7 +27,7 @@ class CapsNet(object):
     """Get input tensors.
 
     Args:
-      input_size: the size of input tensor, should be 3 dimensional
+      input_size: the size of input tensor
       num_class: number of class of label
       image_size: the size of ground truth images, should be 3 dimensional
     Returns:
@@ -348,7 +348,7 @@ class CapsNet(object):
     """Build the graph of CapsNet.
 
     Args:
-      input_size: size of input tensor, should be 3 dimensional
+      input_size: size of input tensor
       image_size: the size of ground truth images, should be 3 dimensional
       num_class: number of class of label
       n_train_samples: number of train samples

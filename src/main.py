@@ -168,12 +168,6 @@ class Main(object):
     y_valid_batch = self.y_valid[valid_batch_idx]
     imgs_valid_batch = self.imgs_valid[valid_batch_idx]
 
-    if self.tl_encode:
-      x_valid_batch = GetBottleneckFeatures(
-          self.cfg.TL_MODEL).get_features(x_valid_batch)
-      y_valid_batch = GetBottleneckFeatures(
-          self.cfg.TL_MODEL).get_features(y_valid_batch)
-
     if self.cfg.WITH_REC:
       loss_train, clf_loss_train, rec_loss_train, acc_train = \
           sess.run([self.loss, self.clf_loss,
@@ -226,12 +220,6 @@ class Main(object):
     x_valid_batch = self.x_valid[valid_batch_idx]
     y_valid_batch = self.y_valid[valid_batch_idx]
     imgs_valid_batch = self.imgs_valid[valid_batch_idx]
-
-    if self.tl_encode:
-      x_valid_batch = GetBottleneckFeatures(
-          self.cfg.TL_MODEL).get_features(x_valid_batch)
-      y_valid_batch = GetBottleneckFeatures(
-          self.cfg.TL_MODEL).get_features(y_valid_batch)
 
     if self.cfg.WITH_REC:
       summary_train, loss_train, clf_loss_train, rec_loss_train, acc_train = \
@@ -299,11 +287,6 @@ class Main(object):
       for _ in iterator:
 
         x_batch, y_batch, imgs_batch = next(batch_generator)
-        if self.tl_encode:
-          x_batch = GetBottleneckFeatures(
-              self.cfg.TL_MODEL).get_features(x_batch)
-          y_batch = GetBottleneckFeatures(
-              self.cfg.TL_MODEL).get_features(y_batch)
 
         loss_i, clf_loss_i, rec_loss_i, acc_i = sess.run(
             [self.loss, self.clf_loss, self.rec_loss, self.accuracy],
@@ -321,11 +304,6 @@ class Main(object):
       for _ in iterator:
 
         x_batch, y_batch, imgs_batch = next(batch_generator)
-        if self.tl_encode:
-          x_batch = GetBottleneckFeatures(
-              self.cfg.TL_MODEL).get_features(x_batch)
-          y_batch = GetBottleneckFeatures(
-              self.cfg.TL_MODEL).get_features(y_batch)
 
         loss_i, acc_i = sess.run(
             [self.loss, self.accuracy],
@@ -511,12 +489,6 @@ class Main(object):
 
         step += 1
         x_batch, y_batch, imgs_batch = next(train_batch_generator)
-
-        if self.tl_encode:
-          x_batch = GetBottleneckFeatures(
-              self.cfg.TL_MODEL).get_features(x_batch)
-          y_batch = GetBottleneckFeatures(
-              self.cfg.TL_MODEL).get_features(y_batch)
 
         # Training optimizer
         sess.run(self.optimizer, feed_dict={self.inputs: x_batch,

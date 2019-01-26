@@ -372,7 +372,9 @@ class DataPreProcess(object):
                             img_mode=mode,
                             resize_filter=Image.ANTIALIAS
                             ).astype(self.data_type)
-    return np.divide(imgs, 255.).astype(self.data_type)
+    for i in range(len(imgs)):
+      imgs[i] = imgs[i] / 255.
+    return imgs.astype(self.data_type)
 
   @staticmethod
   def _grid_show_imgs(x, y, n_img_show, mode='L'):
@@ -406,7 +408,6 @@ class DataPreProcess(object):
       if self.data_base_name == 'radical':
         self.imgs_test_oracle = self._resize_imgs(
             self.x_test_oracle, self.image_size, self.img_mode)
-
     else:
       self.imgs_train = self.x_train.astype(self.data_type)
       self.imgs_valid = self.x_valid.astype(self.data_type)
@@ -540,6 +541,31 @@ class DataPreProcess(object):
       assert self.y_test_mul.shape == (self.cfg.NUM_MULTI_IMG, n_classes), \
           self.y_test_mul.shape
 
+  def _get_bottleneck_features(self):
+    """Get bottleneck features of transfer learning models."""
+    # Batch size for extracting bottleneck features
+    bf_batch_size = 128
+
+    # Extract bottleneck features
+    self.x_train = GetBottleneckFeatures(
+        self.cfg.TL_MODEL).get_features(
+        self.x_train, batch_size=bf_batch_size, data_type=self.data_type)
+    self.x_valid = GetBottleneckFeatures(
+        self.cfg.TL_MODEL).get_features(
+        self.x_valid, batch_size=bf_batch_size, data_type=self.data_type)
+    self.x_test = GetBottleneckFeatures(
+        self.cfg.TL_MODEL).get_features(
+        self.x_test, batch_size=bf_batch_size, data_type=self.data_type)
+    if self.cfg.NUM_MULTI_OBJECT:
+      self.x_test_mul = GetBottleneckFeatures(
+          self.cfg.TL_MODEL).get_features(
+          self.x_test_mul, batch_size=bf_batch_size, data_type=self.data_type)
+    if self.data_base_name == 'radical':
+      self.x_test_oracle = GetBottleneckFeatures(
+          self.cfg.TL_MODEL).get_features(
+          self.x_test_oracle, batch_size=bf_batch_size,
+          data_type=self.data_type)
+
   def _save_data(self):
     """Save data set to pickle files."""
     utils.thin_line()
@@ -570,40 +596,6 @@ class DataPreProcess(object):
           self.x_test_oracle, join(self.preprocessed_path, 'x_test_oracle.p'))
       utils.save_data_to_pkl(
           self.y_test_oracle, join(self.preprocessed_path, 'y_test_oracle.p'))
-
-  def _save_bottleneck_features(self):
-    """Save bottleneck features of transfer learning models."""
-
-    # Scale to 0-255
-    self.x_train_bf = GetBottleneckFeatures(
-        self.cfg.TL_MODEL).get_features(self.x_train, batch_zie=128)
-    self.x_valid_bf = GetBottleneckFeatures(
-        self.cfg.TL_MODEL).get_features(self.x_valid, batch_zie=128)
-    self.x_test_bf = GetBottleneckFeatures(
-        self.cfg.TL_MODEL).get_features(self.x_test, batch_zie=128)
-
-    # Save bottleneck features to pickles
-    utils.thin_line()
-    print('Saving {} bottleneck features...'.format(self.cfg.TL_MODEL))
-    utils.check_dir([self.preprocessed_path])
-    utils.save_data_to_pkl(
-        self.x_train_bf, join(self.preprocessed_path, 'x_train_bf.p'))
-    utils.save_data_to_pkl(
-        self.x_valid_bf, join(self.preprocessed_path, 'x_valid_bf.p'))
-    utils.save_data_to_pkl(
-        self.x_test_bf, join(self.preprocessed_path, 'x_test_bf.p'))
-    if self.cfg.NUM_MULTI_OBJECT:
-      self.x_test_mul_bf = GetBottleneckFeatures(
-        self.cfg.TL_MODEL).get_features(self.x_test_mul, batch_zie=128)
-      utils.save_data_to_pkl(
-          self.x_test_mul_bf,
-          join(self.preprocessed_path, 'x_test_multi_obj_bf.p'))
-    if self.data_base_name == 'radical':
-      self.x_test_oracle_bf = GetBottleneckFeatures(
-        self.cfg.TL_MODEL).get_features(self.x_test_oracle, batch_zie=128)
-      utils.save_data_to_pkl(
-          self.x_test_oracle_bf,
-          join(self.preprocessed_path, 'x_test_oracle_bf.p'))
 
   def pipeline(self):
     """Pipeline of preprocessing data."""
@@ -651,14 +643,14 @@ class DataPreProcess(object):
     self._resize_inputs(show_img=show_img)
 
     # Check data format
-    self._check_data()
+    # self._check_data()
+
+    # Get features of transfer learning models
+    if self.tl_encode:
+      self._get_bottleneck_features()
 
     # Save data to pickles
     self._save_data()
-
-    # Save bottleneck features of transfer learning models
-    if self.tl_encode:
-      self._save_bottleneck_features()
 
     utils.thin_line()
     print('Done! Using {:.4}s'.format(time.time() - start_time))

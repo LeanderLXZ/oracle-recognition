@@ -463,15 +463,20 @@ class Dense2CapsLayer(object):
         - shape: (batch_size, num_caps_j, vec_dim_j, 1)
     """
     with tf.variable_scope('dense2caps'):
-      # Flatten shape: (batch_size, height * width * depth)
+
       inputs_shape = inputs.get_shape().as_list()
-      if self.reshape_mode == 'FLATTEN':
-        inputs_flatten = tf.contrib.layers.flatten(inputs)
-      elif self.reshape_mode == 'GAP':
-        inputs_flatten = tf.reduce_mean(inputs, axis=[1, 2])
+
+      if len(inputs_shape) != 2:
+        # Flatten shape: (batch_size, height * width * depth)
+        if self.reshape_mode == 'FLATTEN':
+          inputs_flatten = tf.contrib.layers.flatten(inputs)
+        elif self.reshape_mode == 'GAP':
+          inputs_flatten = tf.reduce_mean(inputs, axis=[1, 2])
+        else:
+          raise ValueError('Wrong reshape_mode!')
         assert inputs_flatten.get_shape() == (inputs_shape[0], inputs_shape[3])
       else:
-        raise ValueError('Wrong reshape_mode!')
+        inputs_flatten = inputs
 
       if self.identity_map:
         self.num_caps = inputs_flatten.get_shape().as_list()[1]

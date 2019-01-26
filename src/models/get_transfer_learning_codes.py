@@ -9,29 +9,38 @@ class GetBottleneckFeatures(object):
   def __init__(self, model_name):
     self.model_name = model_name
 
-  def _extract_features(self, tensor):
+  def _extract_features(self,
+                        tensor,
+                        weights='imagenet',
+                        include_top=False,
+                        pooling=None):
     """Extract bottleneck features from transfer learning models."""
     if self.model_name == 'vgg16':
       from keras.applications.vgg16 import VGG16, preprocess_input
-      return VGG16(weights='imagenet', include_top=False).predict(
-          preprocess_input(tensor))
+      return VGG16(weights=weights,
+                   include_top=include_top,
+                   pooling=pooling).predict(preprocess_input(tensor))
     elif self.model_name == 'vgg19':
       from keras.applications.vgg19 import VGG19, preprocess_input
-      return VGG19(weights='imagenet', include_top=False).predict(
-          preprocess_input(tensor))
+      return VGG19(weights=weights,
+                   include_top=include_top,
+                   pooling=pooling).predict(preprocess_input(tensor))
     elif self.model_name == 'resnet50':
       from keras.applications.resnet50 import ResNet50, preprocess_input
-      return ResNet50(weights='imagenet', include_top=False).predict(
-          preprocess_input(tensor))
+      return ResNet50(weights=weights,
+                      include_top=include_top,
+                      pooling=pooling).predict(preprocess_input(tensor))
     elif self.model_name == 'inceptionv3':
       from keras.applications.inception_v3 import \
         InceptionV3, preprocess_input
-      return InceptionV3(weights='imagenet', include_top=False).predict(
-          preprocess_input(tensor))
+      return InceptionV3(weights=weights,
+                         include_top=include_top,
+                         pooling=pooling).predict(preprocess_input(tensor))
     elif self.model_name == 'xception':
       from keras.applications.xception import Xception, preprocess_input
-      return Xception(weights='imagenet', include_top=False).predict(
-          preprocess_input(tensor))
+      return Xception(weights=weights,
+                      include_top=include_top,
+                      pooling=pooling).predict(preprocess_input(tensor))
     else:
       raise ValueError('Wrong transfer learning model name!')
 
@@ -52,29 +61,31 @@ class GetBottleneckFeatures(object):
 
     return bf_shape
 
-  def get_features(self, inputs, batch_zie=None):
+  def get_features(self, inputs, batch_size=None, data_type=np.float32):
 
     # Check image size for transfer learning models
-    assert inputs.shape[1:3] == (224, 224)
+    if inputs.shape[3] == 1:
+      inputs = np.concatenate([inputs, inputs, inputs], axis=-1)
+    assert inputs.shape[1:] == (224, 224, 3)
 
     # Get bottleneck features
     utils.thin_line()
     print('Calculating bottleneck features...')
 
     # Scale to 0-255 and extract features
-    if batch_zie:
-      batch_generator = utils.get_batches_all_x(inputs, batch_zie)
-      n_batch = len(inputs) // batch_zie + 1
+    if batch_size:
+      batch_generator = utils.get_batches_all_x(inputs, batch_size)
+      n_batch = len(inputs) // batch_size + 1
       bottleneck_features = []
       for _ in tqdm(range(n_batch), total=n_batch, ncols=100, unit='batches'):
         inputs_batch = next(batch_generator)
-        bf_batch = self._extract_features(
-          utils.imgs_scale_to_255(inputs_batch))
+        inputs_batch = utils.imgs_scale_to_255(inputs_batch).astype(data_type)
+        bf_batch = self._extract_features(inputs_batch, pooling=None)
         bottleneck_features.append(bf_batch)
       bottleneck_features = np.concatenate(bottleneck_features, axis=0)
     else:
-      bottleneck_features = self._extract_features(
-          utils.imgs_scale_to_255(inputs))
+      inputs = utils.imgs_scale_to_255(inputs).astype(data_type)
+      bottleneck_features = self._extract_features(inputs, pooling=None)
 
     # Check data shape
     assert len(bottleneck_features) == len(inputs)
