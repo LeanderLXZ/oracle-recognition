@@ -548,13 +548,15 @@ class DataPreProcess(object):
 
     # Get bottleneck features for x_train, which is very large
     if self.x_train.nbytes > 2**31:
+      print('x_train is too large!')
       n_parts = utils.save_large_data_to_pkl(
           self.x_train,
           join(self.preprocessed_path, 'x_train_cache'),
           return_n_parts=True)
       x_train_bf = []
       for i in range(n_parts):
-        part_path = self.preprocessed_path + 'x_train_cache_{}.p'.format(i)
+        part_path = join(self.preprocessed_path,
+                         'x_train_cache_{}.p'.format(i))
         with open(part_path, 'rb') as f:
           data_part = pickle.load(f)
           bf_part = GetBottleneckFeatures(
