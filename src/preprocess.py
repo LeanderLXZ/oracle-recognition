@@ -43,7 +43,7 @@ class DataPreProcess(object):
     self.data_base_name = data_base_name
     self.preprocessed_path = None
     self.source_data_path = None
-    self.data_type = np.float16
+    self.data_type = np.float32
 
     # Use encode transfer learning
     if self.cfg.TRANSFER_LEARNING == 'encode':
@@ -741,4 +741,5 @@ if __name__ == '__main__':
     print('Preprocess the Oracle Radicals database.')
     DataPreProcess(cfg, global_seed, 'radical').pipeline()
   else:
-    raise ValueError('Wrong argument!')
+    DataPreProcess(cfg, global_seed, 'mnist').pipeline()
+    # raise ValueError('Wrong argument!')
