@@ -41,10 +41,13 @@ def save_data_to_pkl(data, data_path, verbose=True):
       pickle.dump(data, f)
 
 
-def save_large_data_to_pkl(data, data_path, verbose=True, return_n_parts=False):
+def save_large_data_to_pkl(data,
+                           data_path,
+                           max_part_size=2**31,
+                           verbose=True,
+                           return_n_parts=False):
   """Save large data to pickle file."""
   file_size = data.nbytes
-  max_part_size = 2**31 - 1  # 2Gb
   n_parts = file_size // max_part_size + 1
   len_part = int(((len(data) // n_parts) // 2048) * 2048)
   n_parts = int(len(data) // len_part + 1)

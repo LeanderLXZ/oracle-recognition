@@ -545,14 +545,16 @@ class DataPreProcess(object):
     """Get bottleneck features of transfer learning models."""
     # Batch size for extracting bottleneck features
     bf_batch_size = 128
+    max_part_size = 2**30
 
     # Get bottleneck features for x_train, which is very large
-    if self.x_train.nbytes > 2**31:
+    if self.x_train.nbytes > max_part_size:
       print('x_train is too large!')
 
       n_parts = utils.save_large_data_to_pkl(
           self.x_train,
           join(self.preprocessed_path, 'x_train_cache'),
+          max_part_size=max_part_size,
           return_n_parts=True)
       del self.x_train
       gc.collect()
@@ -567,7 +569,10 @@ class DataPreProcess(object):
               self.cfg.TL_MODEL).get_features(
               data_part, batch_size=bf_batch_size, data_type=self.data_type)
           x_train_bf.append(bf_part)
-          os.remove(part_path)
+          del data_part
+          del bf_part
+          gc.collect()
+        os.remove(part_path)
 
       self.x_train = np.concatenate(x_train_bf, axis=0)
     else:
