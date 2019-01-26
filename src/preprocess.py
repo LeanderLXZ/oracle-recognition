@@ -547,59 +547,72 @@ class DataPreProcess(object):
     bf_batch_size = 128
     max_part_size = 2**30
 
+    # Get bottleneck features
+    utils.thin_line()
+    print('Calculating bottleneck features...')
+
     # Get bottleneck features for x_train, which is very large
-    if self.x_train.nbytes > max_part_size:
-      print('x_train is too large!')
+    # if self.x_train.nbytes > max_part_size:
+    #   print('x_train is too large!')
+    #
+    #   n_parts = utils.save_large_data_to_pkl(
+    #       self.x_train,
+    #       join(self.preprocessed_path, 'x_train_cache'),
+    #       max_part_size=max_part_size,
+    #       return_n_parts=True)
+    #   del self.x_train
+    #   gc.collect()
+    #
+    #   x_train_bf = []
+    #   for i in range(n_parts):
+    #     part_path = join(self.preprocessed_path,
+    #                      'x_train_cache_{}.p'.format(i))
+    #     print('Get bottleneck features of x_train_cache_{}.p'.format(i))
+    #     with open(part_path, 'rb') as f:
+    #       data_part = pickle.load(f)
+    #       bf_part = GetBottleneckFeatures(
+    #           self.cfg.TL_MODEL).get_bottleneck_features(
+    #           data_part, batch_size=bf_batch_size, data_type=self.data_type)
+    #       x_train_bf.append(bf_part)
+    #       del data_part
+    #       del bf_part
+    #       gc.collect()
+    #     os.remove(part_path)
+    #
+    #   self.x_train = np.concatenate(x_train_bf, axis=0)
+    # else:
+    #   self.x_train = GetBottleneckFeatures(
+    #       self.cfg.TL_MODEL).get_bottleneck_features(
+    #       self.x_train, batch_size=bf_batch_size, data_type=self.data_type)
+    #
+    # # Save x_train
+    # utils.save_data_to_pkl(
+    #     self.x_train, join(self.preprocessed_path, 'x_train.p'))
 
-      n_parts = utils.save_large_data_to_pkl(
-          self.x_train,
-          join(self.preprocessed_path, 'x_train_cache'),
-          max_part_size=max_part_size,
-          return_n_parts=True)
-      del self.x_train
-      gc.collect()
+    GetBottleneckFeatures(
+        self.cfg.TL_MODEL).save_bottleneck_features(
+        self.x_train,
+        file_path=join(self.preprocessed_path, 'x_train.p'),
+        batch_size=bf_batch_size,
+        data_type=self.data_type)
 
-      x_train_bf = []
-      for i in range(n_parts):
-        part_path = join(self.preprocessed_path,
-                         'x_train_cache_{}.p'.format(i))
-        with open(part_path, 'rb') as f:
-          data_part = pickle.load(f)
-          bf_part = GetBottleneckFeatures(
-              self.cfg.TL_MODEL).get_features(
-              data_part, batch_size=bf_batch_size, data_type=self.data_type)
-          x_train_bf.append(bf_part)
-          del data_part
-          del bf_part
-          gc.collect()
-        os.remove(part_path)
-
-      self.x_train = np.concatenate(x_train_bf, axis=0)
-    else:
-      self.x_train = GetBottleneckFeatures(
-          self.cfg.TL_MODEL).get_features(
-          self.x_train, batch_size=bf_batch_size, data_type=self.data_type)
-
-    # Save x_train
-    utils.save_data_to_pkl(
-        self.x_train, join(self.preprocessed_path, 'x_train.p'))
     del self.x_train
     gc.collect()
 
     # Extract bottleneck features
     self.x_valid = GetBottleneckFeatures(
-        self.cfg.TL_MODEL).get_features(
+        self.cfg.TL_MODEL).get_bottleneck_features(
         self.x_valid, batch_size=bf_batch_size, data_type=self.data_type)
     self.x_test = GetBottleneckFeatures(
-        self.cfg.TL_MODEL).get_features(
+        self.cfg.TL_MODEL).get_bottleneck_features(
         self.x_test, batch_size=bf_batch_size, data_type=self.data_type)
     if self.cfg.NUM_MULTI_OBJECT:
       self.x_test_mul = GetBottleneckFeatures(
-          self.cfg.TL_MODEL).get_features(
+          self.cfg.TL_MODEL).get_bottleneck_features(
           self.x_test_mul, batch_size=bf_batch_size, data_type=self.data_type)
     if self.data_base_name == 'radical':
       self.x_test_oracle = GetBottleneckFeatures(
-          self.cfg.TL_MODEL).get_features(
+          self.cfg.TL_MODEL).get_bottleneck_features(
           self.x_test_oracle, batch_size=bf_batch_size,
           data_type=self.data_type)
 
@@ -644,8 +657,8 @@ class DataPreProcess(object):
     self.preprocessed_path = join(self.cfg.DPP_DATA_PATH, self.data_base_name)
     self.source_data_path = join(self.cfg.SOURCE_DATA_PATH, self.data_base_name)
 
-    show_img = True
-    # show_img = False
+    # show_img = True
+    show_img = False
 
     # Load data
     if self.data_base_name == 'mnist' or self.data_base_name == 'cifar10':
