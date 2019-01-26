@@ -5,7 +5,6 @@ from __future__ import print_function
 import time
 import os
 import gc
-import re
 import math
 import pickle
 import argparse
@@ -15,7 +14,6 @@ import pandas as pd
 import sklearn.utils
 from copy import copy
 from tqdm import tqdm
-from os import listdir
 from os.path import join
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.model_selection import train_test_split
@@ -549,19 +547,21 @@ class DataPreProcess(object):
     bf_batch_size = 128
 
     # Get bottleneck features for x_train, which is very large
-    if self.x_train.nbytes > 2**33:
+    if self.x_train.nbytes > 2**31:
       n_parts = utils.save_large_data_to_pkl(
           self.x_train,
-          join(self.preprocessed_path, 'x_train'),
+          join(self.preprocessed_path, 'x_train_cache'),
           return_n_parts=True)
       x_train_bf = []
       for i in range(n_parts):
-        with open(self.preprocessed_path + 'x_train_{}.p'.format(i), 'rb') as f:
+        part_path = self.preprocessed_path + 'x_train_cache_{}.p'.format(i)
+        with open(part_path, 'rb') as f:
           data_part = pickle.load(f)
           bf_part = GetBottleneckFeatures(
               self.cfg.TL_MODEL).get_features(
               data_part, batch_size=bf_batch_size, data_type=self.data_type)
           x_train_bf.append(bf_part)
+          os.remove(part_path)
       self.x_train = np.concatenate(x_train_bf, axis=0)
     else:
       self.x_train = GetBottleneckFeatures(
