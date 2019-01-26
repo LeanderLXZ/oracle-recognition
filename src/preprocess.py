@@ -79,11 +79,11 @@ class DataPreProcess(object):
     print('Loading {} data set...'.format(self.data_base_name))
 
     self.x = utils.load_data_from_pkl(
-        join(self.source_data_path, 'train_images.p'))
+        join(self.source_data_path, 'train_images.p')).astype(self.data_type)
     self.y = utils.load_data_from_pkl(
         join(self.source_data_path, 'train_labels.p'))
     self.x_test = utils.load_data_from_pkl(
-        join(self.source_data_path, 'test_images.p'))
+        join(self.source_data_path, 'test_images.p')).astype(self.data_type)
     self.y_test = utils.load_data_from_pkl(
         join(self.source_data_path, 'test_labels.p'))
 
@@ -549,10 +549,14 @@ class DataPreProcess(object):
     # Get bottleneck features for x_train, which is very large
     if self.x_train.nbytes > 2**31:
       print('x_train is too large!')
+
       n_parts = utils.save_large_data_to_pkl(
           self.x_train,
           join(self.preprocessed_path, 'x_train_cache'),
           return_n_parts=True)
+      del self.x_train
+      gc.collect()
+
       x_train_bf = []
       for i in range(n_parts):
         part_path = join(self.preprocessed_path,
@@ -564,11 +568,14 @@ class DataPreProcess(object):
               data_part, batch_size=bf_batch_size, data_type=self.data_type)
           x_train_bf.append(bf_part)
           os.remove(part_path)
+
       self.x_train = np.concatenate(x_train_bf, axis=0)
     else:
       self.x_train = GetBottleneckFeatures(
           self.cfg.TL_MODEL).get_features(
           self.x_train, batch_size=bf_batch_size, data_type=self.data_type)
+
+    # Save x_train
     utils.save_data_to_pkl(
         self.x_train, join(self.preprocessed_path, 'x_train.p'))
     del self.x_train
@@ -632,8 +639,8 @@ class DataPreProcess(object):
     self.preprocessed_path = join(self.cfg.DPP_DATA_PATH, self.data_base_name)
     self.source_data_path = join(self.cfg.SOURCE_DATA_PATH, self.data_base_name)
 
-    # show_img = True
-    show_img = False
+    show_img = True
+    # show_img = False
 
     # Load data
     if self.data_base_name == 'mnist' or self.data_base_name == 'cifar10':

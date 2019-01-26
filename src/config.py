@@ -72,9 +72,9 @@ __C.RESIZE_INPUTS = False
 __C.INPUT_SIZE = (28, 28)
 
 # Resize images
-__C.RESIZE_IMAGES = False
+__C.RESIZE_IMAGES = True
 # Image size
-__C.IMAGE_SIZE = (28, 28)
+__C.IMAGE_SIZE = (56, 56)
 
 # Using data augment
 __C.USE_DATA_AUG = False

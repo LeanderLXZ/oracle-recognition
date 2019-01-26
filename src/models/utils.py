@@ -70,8 +70,8 @@ def save_large_data_to_pkl(data, data_path, verbose=True, return_n_parts=False):
     del data_part
     gc.collect()
 
-    if return_n_parts:
-      return n_parts
+  if return_n_parts:
+    return n_parts
 
 
 def load_pkls(dir_path, file_name, verbose=True):
