@@ -680,7 +680,7 @@ def get_and_save_bf(config,
     if m:
       indices.append(int(m.group(1)))
   if indices:
-    for i in indices:
+    for i in np.sort(indices).tolist():
       part_path = join(dir_path, cache_file_name + '_{}.p'.format(i))
       print('Get bottleneck features of {}_{}.p'.format(cache_file_name, i))
       with open(part_path, 'rb') as f:

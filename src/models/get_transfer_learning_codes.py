@@ -113,7 +113,10 @@ class GetBottleneckFeatures(object):
       if batch_size:
 
         batch_generator = utils.get_batches_all_x(inputs, batch_size)
-        n_batch = len(inputs) // batch_size + 1
+        if len(inputs) % batch_size == 0:
+          n_batch = len(inputs) // batch_size
+        else:
+          n_batch = len(inputs) // batch_size + 1
 
         for _ in tqdm(range(n_batch), total=n_batch, ncols=100, unit='batch'):
           inputs_batch = next(batch_generator)
