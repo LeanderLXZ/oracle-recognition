@@ -33,7 +33,12 @@ KTF.set_session(tf.Session(config=tf.ConfigProto(device_count={'gpu': 0})))
 
 class DataPreProcess(object):
 
-  def __init__(self, config, seed=None, data_base_name=None, tl_encode=False):
+  def __init__(self,
+               config,
+               seed=None,
+               data_base_name=None,
+               tl_encode=False,
+               show_img=False):
     """
     Preprocess data and save as pickle files.
 
@@ -45,7 +50,8 @@ class DataPreProcess(object):
     self.data_base_name = data_base_name
     self.preprocessed_path = None
     self.source_data_path = None
-    self.data_type = np.float16
+    self.show_img = show_img
+    self.data_type = np.float32
 
     # Use encode transfer learning
     if tl_encode:
@@ -73,7 +79,7 @@ class DataPreProcess(object):
     if self.cfg.RESIZE_INPUTS:
       self.input_size = self.cfg.INPUT_SIZE
 
-  def _load_data(self, show_img=False):
+  def _load_data(self):
     """Load data set from files."""
     utils.thin_line()
     print('Loading {} data set...'.format(self.data_base_name))
@@ -115,10 +121,10 @@ class DataPreProcess(object):
           x_new, dtype=self.data_type).reshape((-1, *self.x[0].shape))
       self.y = np.array(y_new, dtype=np.int)
 
-    if show_img:
+    if self.show_img:
       self._grid_show_imgs(self.x, self.y, 25, mode='L')
 
-  def _load_radicals(self, show_img=False):
+  def _load_radicals(self):
     """Load radicals data set from files."""
     utils.thin_line()
     print('Loading radicals data set...')
@@ -165,10 +171,10 @@ class DataPreProcess(object):
         self.x.shape, self.y.shape))
     assert len(self.x) == len(self.y)
 
-    if show_img:
+    if self.show_img:
       self._grid_show_imgs(self.x, self.y, 25, mode='L')
 
-  def _load_oracles(self, show_img=False):
+  def _load_oracles(self):
     """Load oracles data set from files."""
     utils.thin_line()
     print('Loading oracles data set...')
@@ -199,7 +205,7 @@ class DataPreProcess(object):
     self.x_test_oracle = np.array(x_test_oracle)
     self.y_test_oracle = np.array(y_test_oracle, dtype=np.int64)
 
-    if show_img:
+    if self.show_img:
       self._grid_show_imgs(self.x_test_oracle, self.y_test_oracle, 25, mode='L')
 
   @staticmethod
@@ -291,7 +297,6 @@ class DataPreProcess(object):
 
   def _generate_multi_obj_img(self,
                               x_y_dict=None,
-                              show_img=False,
                               data_aug=False):
     """Generate images of superpositions of multi-objects"""
     utils.thin_line()
@@ -344,7 +349,7 @@ class DataPreProcess(object):
     self.x_test_mul = np.array(self.x_test_mul).astype(self.data_type)
     self.y_test_mul = np.array(self.y_test_mul).astype(self.data_type)
 
-    if show_img:
+    if self.show_img:
       y_show = np.argsort(
           self.y_test_mul, axis=1)[:, -self.cfg.NUM_MULTI_OBJECT:]
       self._grid_show_imgs(self.x_test_mul, y_show, 25, mode='L')
@@ -385,7 +390,7 @@ class DataPreProcess(object):
     size = math.floor(np.sqrt(n_img_show))
     print(y_show.reshape(size, size, -1))
 
-  def _save_images(self, show_img=False):
+  def _save_images(self):
     """Get and save images"""
 
     img_shape = self.x_train.shape[1:3]
@@ -417,7 +422,7 @@ class DataPreProcess(object):
       if self.data_base_name == 'radical':
         self.imgs_test_oracle = self.x_test_oracle.astype(self.data_type)
 
-    if show_img:
+    if self.show_img:
       utils.square_grid_show_imgs(np.array(
           self.imgs_train[:25], dtype=self.data_type), mode=self.img_mode)
       if self.cfg.NUM_MULTI_OBJECT:
@@ -456,7 +461,7 @@ class DataPreProcess(object):
     del self.imgs_test
     gc.collect()
 
-  def _resize_inputs(self, show_img=False):
+  def _resize_inputs(self):
     """Resize input data"""
     img_shape = self.x_train.shape[1:3]
 
@@ -479,7 +484,7 @@ class DataPreProcess(object):
         self.x_test_oracle = self._resize_imgs(
             self.x_test_oracle, self.input_size, self.img_mode)
 
-    if show_img:
+    if self.show_img:
       utils.square_grid_show_imgs(np.array(
           self.x_train[:25], dtype=self.data_type), mode=self.img_mode)
       if self.cfg.NUM_MULTI_OBJECT:
@@ -616,16 +621,13 @@ class DataPreProcess(object):
     self.preprocessed_path = join(self.cfg.DPP_DATA_PATH, self.data_base_name)
     self.source_data_path = join(self.cfg.SOURCE_DATA_PATH, self.data_base_name)
 
-    # show_img = True
-    show_img = False
-
     # Load data
     if self.data_base_name == 'mnist' or self.data_base_name == 'cifar10':
-      self._load_data(show_img=show_img)
+      self._load_data()
     elif self.data_base_name == 'radical':
-      self._load_radicals(show_img=show_img)
+      self._load_radicals()
       self._train_test_split()
-      self._load_oracles(show_img=show_img)
+      self._load_oracles()
 
     # Scaling images to (0, 1)
     self._scaling()
@@ -640,16 +642,16 @@ class DataPreProcess(object):
     if self.cfg.NUM_MULTI_OBJECT:
       x_y_dict = self._get_x_y_dict(self.x_test, self.y_test, y_encoded=True)
       self._generate_multi_obj_img(
-          x_y_dict=x_y_dict, show_img=show_img, data_aug=False)
+          x_y_dict=x_y_dict, data_aug=False)
 
     # Split data set into train/valid
     self._train_valid_split()
 
     # Save images
-    self._save_images(show_img=show_img)
+    self._save_images()
 
     # Resize images and inputs
-    self._resize_inputs(show_img=show_img)
+    self._resize_inputs()
 
     # Check data format
     self._check_data()
@@ -750,16 +752,22 @@ if __name__ == '__main__':
                       help='Save transfer learning cache data.')
   parser.add_argument('-t2', '--tl2', action='store_true',
                       help='Get transfer learning bottleneck features.')
+  parser.add_argument('-si', '--show_img', action='store_true',
+                      help='Get transfer learning bottleneck features.')
   args = parser.parse_args()
 
+  show_img = True if args.show_img else False
   mul_imgs_flag = True if cfg.NUM_MULTI_OBJECT else False
 
   if args.baseline:
     utils.thick_line()
     print('Running baseline model.')
     if args.tl1:
-      DataPreProcess(basel_cfg, global_seed, basel_cfg.DATABASE_NAME,
-                     tl_encode=True).pipeline()
+      DataPreProcess(basel_cfg,
+                     global_seed,
+                     basel_cfg.DATABASE_NAME,
+                     tl_encode=True,
+                     show_img=show_img).pipeline()
     elif args.tl2:
       oracle_flag = True if basel_cfg.DATABASE_NAME == 'radical' else False
       save_bottleneck_features(cfg,
@@ -769,12 +777,17 @@ if __name__ == '__main__':
     else:
       DataPreProcess(basel_cfg,
                      global_seed,
-                     basel_cfg.DATABASE_NAME).pipeline()
+                     basel_cfg.DATABASE_NAME,
+                     show_img=show_img).pipeline()
   elif args.mnist:
     utils.thick_line()
     print('Preprocess the MNIST database.')
     if args.tl1:
-      DataPreProcess(cfg, global_seed, 'mnist', tl_encode=True).pipeline()
+      DataPreProcess(cfg,
+                     global_seed,
+                     'mnist',
+                     tl_encode=True,
+                     show_img=show_img).pipeline()
     elif args.tl2:
       save_bottleneck_features(cfg,
                                'mnist',
@@ -786,19 +799,27 @@ if __name__ == '__main__':
     utils.thick_line()
     print('Preprocess the CIFAR-10 database.')
     if args.tl1:
-      DataPreProcess(cfg, global_seed, 'cifar10', tl_encode=True).pipeline()
+      DataPreProcess(cfg,
+                     global_seed,
+                     'cifar10',
+                     tl_encode=True,
+                     show_img=show_img).pipeline()
     elif args.tl2:
       save_bottleneck_features(cfg,
                                'cifar10',
                                mul_imgs=mul_imgs_flag,
                                oracle=False)
     else:
-      DataPreProcess(cfg, global_seed, 'cifar10').pipeline()
+      DataPreProcess(cfg, global_seed, 'cifar10', show_img=show_img).pipeline()
   elif args.oracle:
     utils.thick_line()
     print('Preprocess the Oracle Radicals database.')
     if args.tl1:
-      DataPreProcess(cfg, global_seed, 'radical', tl_encode=True).pipeline()
+      DataPreProcess(cfg,
+                     global_seed,
+                     'radical',
+                     tl_encode=True,
+                     show_img=show_img).pipeline()
     elif args.tl2:
       save_bottleneck_features(cfg,
                                'radical',
@@ -807,5 +828,5 @@ if __name__ == '__main__':
     else:
       DataPreProcess(cfg, global_seed, 'radical').pipeline()
   else:
-    DataPreProcess(cfg, global_seed, 'mnist').pipeline()
+    DataPreProcess(cfg, global_seed, 'mnist', show_img=show_img).pipeline()
     # raise ValueError('Wrong argument!')
