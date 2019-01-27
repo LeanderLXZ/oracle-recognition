@@ -66,7 +66,8 @@ class GetBottleneckFeatures(object):
   def get_bottleneck_features(self,
                               inputs,
                               batch_size=None,
-                              data_type=np.float32):
+                              data_type=np.float32,
+                              pooling='avg'):
     # Check image size for transfer learning models
     inputs_shape = inputs.shape
     assert inputs_shape[1:3] == (224, 224)
@@ -83,14 +84,14 @@ class GetBottleneckFeatures(object):
           inputs_batch = np.concatenate(
               [inputs_batch, inputs_batch, inputs_batch], axis=-1)
         assert inputs_batch.shape[1:] == (224, 224, 3)
-        bf_batch = self._extract_features(inputs_batch, pooling=None)
+        bf_batch = self._extract_features(inputs_batch, pooling=pooling)
         bottleneck_features.append(bf_batch)
       bottleneck_features = np.concatenate(bottleneck_features, axis=0)
     else:
       inputs = utils.imgs_scale_to_255(inputs).astype(data_type)
       if inputs_shape[3] == 1:
         inputs = np.concatenate([inputs, inputs, inputs], axis=-1)
-      bottleneck_features = self._extract_features(inputs, pooling=None)
+      bottleneck_features = self._extract_features(inputs, pooling=pooling)
 
     # Check data shape
     assert len(bottleneck_features) == len(inputs)
@@ -102,6 +103,7 @@ class GetBottleneckFeatures(object):
                                inputs,
                                file_path,
                                batch_size=None,
+                               pooling='avg',
                                data_type=np.float32):
     inputs_shape = inputs.shape
     img_mode = 'L' if inputs_shape[3] == 1 else 'RGB'
@@ -129,7 +131,7 @@ class GetBottleneckFeatures(object):
                 [inputs_batch, inputs_batch, inputs_batch], axis=-1)
 
           assert inputs_batch.shape[1:] == (224, 224, 3)
-          bf_batch = self._extract_features(inputs_batch, pooling=None)
+          bf_batch = self._extract_features(inputs_batch, pooling=pooling)
           f.write(pickle.dumps(bf_batch))
 
       else:
@@ -139,5 +141,5 @@ class GetBottleneckFeatures(object):
           inputs = np.concatenate([inputs, inputs, inputs], axis=-1)
 
         assert inputs.shape[1:] == (224, 224, 3)
-        bottleneck_features = self._extract_features(inputs, pooling=None)
+        bottleneck_features = self._extract_features(inputs, pooling=pooling)
         f.write(pickle.dumps(bottleneck_features))

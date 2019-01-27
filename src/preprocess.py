@@ -662,12 +662,15 @@ class DataPreProcess(object):
     utils.thick_line()
 
 
-def get_and_save_bf(config, dir_path, cache_file_name, file_name):
+def get_and_save_bf(config,
+                    dir_path,
+                    cache_file_name,
+                    file_name,
+                    bf_batch_size=128,
+                    pooling='avg',
+                    data_type=np.float32):
   utils.thin_line()
   print('Calculating bottleneck features of {}...'.format(file_name))
-
-  bf_batch_size = 64
-  data_type = np.float32
 
   indices = []
   for f_name in listdir(dir_path):
@@ -685,6 +688,7 @@ def get_and_save_bf(config, dir_path, cache_file_name, file_name):
             data_part,
             file_path=join(dir_path, '{}_{}.p'.format(file_name, i)),
             batch_size=bf_batch_size,
+            pooling=pooling,
             data_type=data_type)
         del data_part
         gc.collect()
@@ -699,6 +703,7 @@ def get_and_save_bf(config, dir_path, cache_file_name, file_name):
           data_part,
           file_path=join(dir_path, '{}.p'.format(file_name)),
           batch_size=bf_batch_size,
+          pooling=pooling,
           data_type=data_type)
     os.remove(part_path)
 
