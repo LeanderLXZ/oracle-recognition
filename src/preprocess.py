@@ -51,7 +51,7 @@ class DataPreProcess(object):
     self.preprocessed_path = None
     self.source_data_path = None
     self.show_img = show_img
-    self.data_type = np.float32
+    self.data_type = np.float16
 
     # Use encode transfer learning
     if tl_encode:
@@ -756,7 +756,7 @@ if __name__ == '__main__':
                       help='Get transfer learning bottleneck features.')
   args = parser.parse_args()
 
-  show_img = True if args.show_img else False
+  show_img_flag = True if args.show_img else False
   mul_imgs_flag = True if cfg.NUM_MULTI_OBJECT else False
 
   if args.baseline:
@@ -767,7 +767,7 @@ if __name__ == '__main__':
                      global_seed,
                      basel_cfg.DATABASE_NAME,
                      tl_encode=True,
-                     show_img=show_img).pipeline()
+                     show_img=show_img_flag).pipeline()
     elif args.tl2:
       oracle_flag = True if basel_cfg.DATABASE_NAME == 'radical' else False
       save_bottleneck_features(cfg,
@@ -778,7 +778,7 @@ if __name__ == '__main__':
       DataPreProcess(basel_cfg,
                      global_seed,
                      basel_cfg.DATABASE_NAME,
-                     show_img=show_img).pipeline()
+                     show_img=show_img_flag).pipeline()
   elif args.mnist:
     utils.thick_line()
     print('Preprocess the MNIST database.')
@@ -787,7 +787,7 @@ if __name__ == '__main__':
                      global_seed,
                      'mnist',
                      tl_encode=True,
-                     show_img=show_img).pipeline()
+                     show_img=show_img_flag).pipeline()
     elif args.tl2:
       save_bottleneck_features(cfg,
                                'mnist',
@@ -803,14 +803,17 @@ if __name__ == '__main__':
                      global_seed,
                      'cifar10',
                      tl_encode=True,
-                     show_img=show_img).pipeline()
+                     show_img=show_img_flag).pipeline()
     elif args.tl2:
       save_bottleneck_features(cfg,
                                'cifar10',
                                mul_imgs=mul_imgs_flag,
                                oracle=False)
     else:
-      DataPreProcess(cfg, global_seed, 'cifar10', show_img=show_img).pipeline()
+      DataPreProcess(cfg,
+                     global_seed,
+                     'cifar10',
+                     show_img=show_img_flag).pipeline()
   elif args.oracle:
     utils.thick_line()
     print('Preprocess the Oracle Radicals database.')
@@ -819,14 +822,20 @@ if __name__ == '__main__':
                      global_seed,
                      'radical',
                      tl_encode=True,
-                     show_img=show_img).pipeline()
+                     show_img=show_img_flag).pipeline()
     elif args.tl2:
       save_bottleneck_features(cfg,
                                'radical',
                                mul_imgs=mul_imgs_flag,
                                oracle=True)
     else:
-      DataPreProcess(cfg, global_seed, 'radical').pipeline()
+      DataPreProcess(cfg,
+                     global_seed,
+                     'radical',
+                     show_img=show_img_flag).pipeline()
   else:
-    DataPreProcess(cfg, global_seed, 'mnist', show_img=show_img).pipeline()
+    DataPreProcess(cfg,
+                   global_seed,
+                   'mnist',
+                   show_img=show_img_flag).pipeline()
     # raise ValueError('Wrong argument!')
