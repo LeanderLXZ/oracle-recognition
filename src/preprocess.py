@@ -395,7 +395,7 @@ class DataPreProcess(object):
 
     img_shape = self.x_train.shape[1:3]
 
-    if img_shape != self.image_size:
+    if tuple(img_shape) != tuple(self.image_size):
       utils.thin_line()
       print('Resizing images...')
       print('Before: {}'.format(tuple(img_shape)))
@@ -465,7 +465,7 @@ class DataPreProcess(object):
     """Resize input data"""
     img_shape = self.x_train.shape[1:3]
 
-    if img_shape != self.input_size:
+    if tuple(img_shape) != tuple(self.input_size):
       utils.thin_line()
       print('Resizing inputs...')
       print('Before: {}'.format(tuple(img_shape)))
