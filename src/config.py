@@ -28,8 +28,8 @@ __C = EasyDict()
 # 'radical': Oracle Radicals
 # 'mnist': MNIST
 # 'cifar10' CIFAR-10
-__C.DATABASE_NAME = 'radical'
-# __C.DATABASE_NAME = 'mnist'
+# __C.DATABASE_NAME = 'radical'
+__C.DATABASE_NAME = 'mnist'
 
 # Training version
 # Set None to auto generate version
@@ -69,12 +69,12 @@ __C.VALID_SIZE = 0.1
 # Resize images
 __C.RESIZE_INPUTS = False
 # Input size
-__C.INPUT_SIZE = (112, 112)
+__C.INPUT_SIZE = (56, 56)
 
 # Resize images
 __C.RESIZE_IMAGES = True
 # Image size
-__C.IMAGE_SIZE = (112, 112)
+__C.IMAGE_SIZE = (56, 56)
 
 # Using data augment
 __C.USE_DATA_AUG = True

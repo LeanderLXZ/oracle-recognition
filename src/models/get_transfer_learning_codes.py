@@ -102,9 +102,9 @@ class GetBottleneckFeatures(object):
                                inputs,
                                file_path,
                                batch_size=None,
-                               img_mode='L',
                                data_type=np.float32):
     inputs_shape = inputs.shape
+    img_mode = 'L' if inputs_shape[3] == 1 else 'RGB'
 
     with open(file_path, 'wb') as f:
 
@@ -121,7 +121,8 @@ class GetBottleneckFeatures(object):
             inputs_batch = utils.img_resize(inputs_batch,
                                             (224, 224),
                                             img_mode=img_mode,
-                                            resize_filter=Image.ANTIALIAS
+                                            resize_filter=Image.ANTIALIAS,
+                                            verbose=False,
                                             ).astype(data_type)
           if inputs_shape[3] == 1:
             inputs_batch = np.concatenate(

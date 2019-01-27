@@ -5,6 +5,7 @@ from __future__ import print_function
 import time
 import os
 import gc
+import re
 import math
 import pickle
 import argparse
@@ -14,6 +15,7 @@ import pandas as pd
 import sklearn.utils
 from copy import copy
 from tqdm import tqdm
+from os import listdir
 from os.path import join
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.model_selection import train_test_split
@@ -31,7 +33,7 @@ KTF.set_session(tf.Session(config=tf.ConfigProto(device_count={'gpu': 0})))
 
 class DataPreProcess(object):
 
-  def __init__(self, config, seed=None, data_base_name=None):
+  def __init__(self, config, seed=None, data_base_name=None, tl_encode=False):
     """
     Preprocess data and save as pickle files.
 
@@ -46,7 +48,7 @@ class DataPreProcess(object):
     self.data_type = np.float16
 
     # Use encode transfer learning
-    if self.cfg.TRANSFER_LEARNING == 'encode':
+    if tl_encode:
       self.tl_encode = True
     else:
       self.tl_encode = False
@@ -428,7 +430,7 @@ class DataPreProcess(object):
 
     # Save data to pickle files
     utils.thin_line()
-    print('Saving pickle files...')
+    print('Saving images files...')
     utils.check_dir([self.preprocessed_path])
     utils.save_data_to_pkl(
         self.imgs_train, join(self.preprocessed_path, 'imgs_train.p'))
@@ -539,125 +541,83 @@ class DataPreProcess(object):
       assert self.y_test_mul.shape == (self.cfg.NUM_MULTI_IMG, n_classes), \
           self.y_test_mul.shape
 
-  def _get_bottleneck_features(self):
-    """Get bottleneck features of transfer learning models."""
-    # Batch size for extracting bottleneck features
-    bf_batch_size = 128
+  def _save_cache_data(self):
+    """Save cache data for transfer learning."""
     max_part_size = 2**30
+
+    def _save_data(data, data_dir, data_name):
+      if data.nbytes > max_part_size:
+        print('{} is too large!'.format(data_name))
+        utils.save_large_data_to_pkl(
+            data, join(data_dir, data_name), max_part_size=max_part_size)
+      else:
+        utils.save_data_to_pkl(data, join(data_dir, data_name) + '.p')
 
     # Get bottleneck features
     utils.thin_line()
-    print('Calculating bottleneck features...')
+    print('Saving cache data for transfer learning...')
 
-    # Get bottleneck features for x_train, which is very large
-    # if self.x_train.nbytes > max_part_size:
-    #   print('x_train is too large!')
-    #
-    #   n_parts = utils.save_large_data_to_pkl(
-    #       self.x_train,
-    #       join(self.preprocessed_path, 'x_train_cache'),
-    #       max_part_size=max_part_size,
-    #       return_n_parts=True)
-    #   del self.x_train
-    #   gc.collect()
-    #
-    #   x_train_bf = []
-    #   for i in range(n_parts):
-    #     part_path = join(self.preprocessed_path,
-    #                      'x_train_cache_{}.p'.format(i))
-    #     print('Get bottleneck features of x_train_cache_{}.p'.format(i))
-    #     with open(part_path, 'rb') as f:
-    #       data_part = pickle.load(f)
-    #       bf_part = GetBottleneckFeatures(
-    #           self.cfg.TL_MODEL).get_bottleneck_features(
-    #           data_part, batch_size=bf_batch_size, data_type=self.data_type)
-    #       x_train_bf.append(bf_part)
-    #       del data_part
-    #       del bf_part
-    #       gc.collect()
-    #     os.remove(part_path)
-    #
-    #   self.x_train = np.concatenate(x_train_bf, axis=0)
-    # else:
-    #   self.x_train = GetBottleneckFeatures(
-    #       self.cfg.TL_MODEL).get_bottleneck_features(
-    #       self.x_train, batch_size=bf_batch_size, data_type=self.data_type)
-    #
-    # # Save x_train
-    # utils.save_data_to_pkl(
-    #     self.x_train, join(self.preprocessed_path, 'x_train.p'))
-
-    GetBottleneckFeatures(
-        self.cfg.TL_MODEL).save_bottleneck_features(
-        self.x_train,
-        file_path=join(self.preprocessed_path, 'x_train.p'),
-        img_mode=self.img_mode,
-        batch_size=bf_batch_size,
-        data_type=self.data_type)
-
+    # Save x_train
+    _save_data(self.x_train, self.preprocessed_path, 'x_train_cache')
     del self.x_train
     gc.collect()
 
-    # Extract bottleneck features
-    self.x_valid = GetBottleneckFeatures(
-        self.cfg.TL_MODEL).get_bottleneck_features(
-        self.x_valid, batch_size=bf_batch_size, data_type=self.data_type)
-    self.x_test = GetBottleneckFeatures(
-        self.cfg.TL_MODEL).get_bottleneck_features(
-        self.x_test, batch_size=bf_batch_size, data_type=self.data_type)
+    _save_data(self.x_valid, self.preprocessed_path, 'x_valid_cache')
+    _save_data(self.x_test, self.preprocessed_path, 'x_test_cache')
+
     if self.cfg.NUM_MULTI_OBJECT:
-      self.x_test_mul = GetBottleneckFeatures(
-          self.cfg.TL_MODEL).get_bottleneck_features(
-          self.x_test_mul, batch_size=bf_batch_size, data_type=self.data_type)
+      _save_data(self.x_test_mul, self.preprocessed_path, 'x_test_mul_cache')
     if self.data_base_name == 'radical':
-      self.x_test_oracle = GetBottleneckFeatures(
-          self.cfg.TL_MODEL).get_bottleneck_features(
-          self.x_test_oracle, batch_size=bf_batch_size,
-          data_type=self.data_type)
+      _save_data(
+          self.x_test_oracle, self.preprocessed_path, 'x_test_oracle_cache')
 
   def _save_data(self):
     """Save data set to pickle files."""
     utils.thin_line()
-    print('Saving pickle files...')
+    print('Saving inputs files...')
     utils.check_dir([self.preprocessed_path])
 
-    utils.save_data_to_pkl(
+    if self.tl_encode:
+      self._save_cache_data()
+    else:
+      utils.save_data_to_pkl(
           self.x_train, join(self.preprocessed_path, 'x_train.p'))
+      utils.save_data_to_pkl(
+          self.x_valid, join(self.preprocessed_path, 'x_valid.p'))
+      utils.save_data_to_pkl(
+          self.x_test, join(self.preprocessed_path, 'x_test.p'))
+      if self.cfg.NUM_MULTI_OBJECT:
+        utils.save_data_to_pkl(
+            self.x_test_mul, join(self.preprocessed_path, 'x_test_multi_obj.p'))
+      if self.data_base_name == 'radical':
+        utils.save_data_to_pkl(
+            self.x_test_oracle, join(self.preprocessed_path, 'x_test_oracle.p'))
+
     utils.save_data_to_pkl(
         self.y_train, join(self.preprocessed_path, 'y_train.p'))
     utils.save_data_to_pkl(
-        self.x_valid, join(self.preprocessed_path, 'x_valid.p'))
-    utils.save_data_to_pkl(
         self.y_valid, join(self.preprocessed_path, 'y_valid.p'))
     utils.save_data_to_pkl(
-        self.x_test, join(self.preprocessed_path, 'x_test.p'))
-    utils.save_data_to_pkl(
         self.y_test, join(self.preprocessed_path, 'y_test.p'))
-
     if self.cfg.NUM_MULTI_OBJECT:
       utils.save_data_to_pkl(
-          self.x_test_mul, join(self.preprocessed_path, 'x_test_multi_obj.p'))
-      utils.save_data_to_pkl(
           self.y_test_mul, join(self.preprocessed_path, 'y_test_multi_obj.p'))
-
     if self.data_base_name == 'radical':
-      utils.save_data_to_pkl(
-          self.x_test_oracle, join(self.preprocessed_path, 'x_test_oracle.p'))
       utils.save_data_to_pkl(
           self.y_test_oracle, join(self.preprocessed_path, 'y_test_oracle.p'))
 
   def pipeline(self):
     """Pipeline of preprocessing data."""
     utils.thick_line()
-    print('Start Preprocessing...')
+    print('Start preprocessing...')
 
     start_time = time.time()
 
     self.preprocessed_path = join(self.cfg.DPP_DATA_PATH, self.data_base_name)
     self.source_data_path = join(self.cfg.SOURCE_DATA_PATH, self.data_base_name)
 
-    show_img = True
-    # show_img = False
+    # show_img = True
+    show_img = False
 
     # Load data
     if self.data_base_name == 'mnist' or self.data_base_name == 'cifar10':
@@ -694,16 +654,76 @@ class DataPreProcess(object):
     # Check data format
     self._check_data()
 
-    # Get features of transfer learning models
-    if self.tl_encode:
-      self._get_bottleneck_features()
-
     # Save data to pickles
     self._save_data()
 
     utils.thin_line()
     print('Done! Using {:.4}s'.format(time.time() - start_time))
     utils.thick_line()
+
+
+def get_and_save_bf(config, dir_path, cache_file_name, file_name):
+  utils.thin_line()
+  print('Calculating bottleneck features of {}...'.format(file_name))
+
+  bf_batch_size = 64
+  data_type = np.float32
+
+  indices = []
+  for f_name in listdir(dir_path):
+    m = re.match(cache_file_name + '_(\d*).p', f_name)
+    if m:
+      indices.append(int(m.group(1)))
+  if indices:
+    for i in indices:
+      part_path = join(dir_path, cache_file_name + '_{}.p'.format(i))
+      print('Get bottleneck features of {}_{}.p'.format(cache_file_name, i))
+      with open(part_path, 'rb') as f:
+        data_part = pickle.load(f)
+        GetBottleneckFeatures(
+            config.TL_MODEL).save_bottleneck_features(
+            data_part,
+            file_path=join(dir_path, '{}_{}.p'.format(file_name, i)),
+            batch_size=bf_batch_size,
+            data_type=data_type)
+        del data_part
+        gc.collect()
+      os.remove(part_path)
+  else:
+    part_path = join(dir_path, cache_file_name + '.p')
+    print('Get bottleneck features of {}.p'.format(cache_file_name))
+    with open(part_path, 'rb') as f:
+      data_part = pickle.load(f)
+      GetBottleneckFeatures(
+          config.TL_MODEL).save_bottleneck_features(
+          data_part,
+          file_path=join(dir_path, '{}.p'.format(file_name)),
+          batch_size=bf_batch_size,
+          data_type=data_type)
+    os.remove(part_path)
+
+
+def save_bottleneck_features(config,
+                             data_base_name,
+                             mul_imgs=False,
+                             oracle=False):
+  utils.thick_line()
+  print('Start calculating bottleneck features...')
+  start_time = time.time()
+
+  dir_path = join(config.DPP_DATA_PATH, data_base_name)
+  get_and_save_bf(config, dir_path, 'x_train_cache', 'x_train')
+  get_and_save_bf(config, dir_path, 'x_valid_cache', 'x_valid')
+  get_and_save_bf(config, dir_path, 'x_test_cache', 'x_test')
+
+  if mul_imgs:
+    get_and_save_bf(config, dir_path, 'x_test_mul_cache', 'x_test_mul')
+  if oracle:
+    get_and_save_bf(config, dir_path, 'x_test_oracle_cache', 'x_test_oracle')
+
+  utils.thick_line()
+  print('Done! Using {:.4}s'.format(time.time() - start_time))
+  utils.thick_line()
 
 
 if __name__ == '__main__':
@@ -721,24 +741,66 @@ if __name__ == '__main__':
                       help='Preprocess the CIFAR-10 database.')
   parser.add_argument('-o', '--oracle', action='store_true',
                       help='Preprocess the Oracle Radicals database.')
+  parser.add_argument('-t1', '--tl1', action='store_true',
+                      help='Save transfer learning cache data.')
+  parser.add_argument('-t2', '--tl2', action='store_true',
+                      help='Get transfer learning bottleneck features.')
   args = parser.parse_args()
+
+  mul_imgs_flag = True if cfg.NUM_MULTI_OBJECT else False
 
   if args.baseline:
     utils.thick_line()
     print('Running baseline model.')
-    DataPreProcess(basel_cfg, global_seed, basel_cfg.DATABASE_NAME).pipeline()
+    if args.tl1:
+      DataPreProcess(basel_cfg, global_seed, basel_cfg.DATABASE_NAME,
+                     tl_encode=True).pipeline()
+    elif args.tl2:
+      oracle_flag = True if basel_cfg.DATABASE_NAME == 'radical' else False
+      save_bottleneck_features(cfg,
+                               data_base_name=basel_cfg.DATABASE_NAME,
+                               mul_imgs=mul_imgs_flag,
+                               oracle=oracle_flag)
+    else:
+      DataPreProcess(basel_cfg,
+                     global_seed,
+                     basel_cfg.DATABASE_NAME).pipeline()
   elif args.mnist:
     utils.thick_line()
     print('Preprocess the MNIST database.')
-    DataPreProcess(cfg, global_seed, 'mnist').pipeline()
+    if args.tl1:
+      DataPreProcess(cfg, global_seed, 'mnist', tl_encode=True).pipeline()
+    elif args.tl2:
+      save_bottleneck_features(cfg,
+                               'mnist',
+                               mul_imgs=mul_imgs_flag,
+                               oracle=False)
+    else:
+      DataPreProcess(cfg, global_seed, 'mnist').pipeline()
   elif args.cifar:
     utils.thick_line()
     print('Preprocess the CIFAR-10 database.')
-    DataPreProcess(cfg, global_seed, 'cifar10').pipeline()
+    if args.tl1:
+      DataPreProcess(cfg, global_seed, 'cifar10', tl_encode=True).pipeline()
+    elif args.tl2:
+      save_bottleneck_features(cfg,
+                               'cifar10',
+                               mul_imgs=mul_imgs_flag,
+                               oracle=False)
+    else:
+      DataPreProcess(cfg, global_seed, 'cifar10').pipeline()
   elif args.oracle:
     utils.thick_line()
     print('Preprocess the Oracle Radicals database.')
-    DataPreProcess(cfg, global_seed, 'radical').pipeline()
+    if args.tl1:
+      DataPreProcess(cfg, global_seed, 'radical', tl_encode=True).pipeline()
+    elif args.tl2:
+      save_bottleneck_features(cfg,
+                               'radical',
+                               mul_imgs=mul_imgs_flag,
+                               oracle=True)
+    else:
+      DataPreProcess(cfg, global_seed, 'radical').pipeline()
   else:
     DataPreProcess(cfg, global_seed, 'mnist').pipeline()
     # raise ValueError('Wrong argument!')

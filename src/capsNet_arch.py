@@ -294,7 +294,7 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
           idx=1))
       model.add(DenseLayer(
           cfg,
-          out_dim=784,
+          out_dim=3136,
           act_fn=act_fn_last,
           idx=2))
 

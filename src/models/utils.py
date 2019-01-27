@@ -158,7 +158,7 @@ def get_batches(x, y, batch_size, imgs=None):
   """Split features and labels into batches."""
   for start in range(0, len(x) - batch_size + 1, batch_size):
     end = start + batch_size
-    if imgs:
+    if imgs is not None:
       yield x[start:end], y[start:end], imgs[start:end]
     else:
       yield x[start:end], y[start:end]
@@ -692,10 +692,19 @@ def img_add_no_overlap(imgs,
   return added
 
 
-def img_resize(imgs, img_shape, img_mode='L', resize_filter=None):
+def img_resize(imgs,
+               img_shape,
+               img_mode='L',
+               resize_filter=None,
+               verbose=True):
   """Resize images"""
   resized_imgs = []
-  for img in tqdm(imgs, ncols=100, unit=' images'):
+  if verbose:
+    iterator = tqdm(imgs, ncols=100, unit=' images')
+  else:
+    iterator = imgs
+
+  for img in iterator:
     if img_mode == 'L':
       img = np.squeeze(img, axis=-1)
     img = Image.fromarray(img.astype('uint8'), mode=img_mode)

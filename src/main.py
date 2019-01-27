@@ -70,7 +70,7 @@ class Main(object):
         self.loss, self.accuracy, self.clf_loss, self.rec_loss, \
         self.rec_images, self.preds = model.build_graph(
             input_size=self.x_train.shape[1:],
-            image_size=self.imgs_train[1:],
+            image_size=self.imgs_train.shape[1:],
             num_class=self.y_train.shape[1])
 
     # Save config
