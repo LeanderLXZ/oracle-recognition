@@ -1,5 +1,6 @@
 import pickle
 import numpy as np
+from PIL import Image
 from models import utils
 from tqdm import tqdm
 
@@ -101,27 +102,41 @@ class GetBottleneckFeatures(object):
                                inputs,
                                file_path,
                                batch_size=None,
+                               img_mode='L',
                                data_type=np.float32):
-    # Check image size for transfer learning models
     inputs_shape = inputs.shape
-    assert inputs_shape[1:3] == (224, 224)
 
     with open(file_path, 'wb') as f:
+
       if batch_size:
+
         batch_generator = utils.get_batches_all_x(inputs, batch_size)
         n_batch = len(inputs) // batch_size + 1
+
         for _ in tqdm(range(n_batch), total=n_batch, ncols=100, unit='batch'):
           inputs_batch = next(batch_generator)
           inputs_batch = utils.imgs_scale_to_255(inputs_batch).astype(data_type)
+
+          if inputs_shape[1:3] != (224, 224):
+            inputs_batch = utils.img_resize(inputs_batch,
+                                            (224, 224),
+                                            img_mode=img_mode,
+                                            resize_filter=Image.ANTIALIAS
+                                            ).astype(data_type)
           if inputs_shape[3] == 1:
             inputs_batch = np.concatenate(
                 [inputs_batch, inputs_batch, inputs_batch], axis=-1)
+
           assert inputs_batch.shape[1:] == (224, 224, 3)
           bf_batch = self._extract_features(inputs_batch, pooling=None)
           f.write(pickle.dumps(bf_batch))
+
       else:
         inputs = utils.imgs_scale_to_255(inputs).astype(data_type)
+
         if inputs_shape[3] == 1:
           inputs = np.concatenate([inputs, inputs, inputs], axis=-1)
+
+        assert inputs.shape[1:] == (224, 224, 3)
         bottleneck_features = self._extract_features(inputs, pooling=None)
         f.write(pickle.dumps(bottleneck_features))

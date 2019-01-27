@@ -26,12 +26,12 @@ from urllib.request import urlretrieve
 def save_data_to_pkl(data, data_path, verbose=True):
   """data to pickle file."""
   file_size = data.nbytes
-  if file_size / (10**9) > 4:
+  if file_size / (2**30) > 4:
     if verbose:
       print('Saving {}...'.format(data_path))
       print('File is too large (>4Gb) for pickle to save: {:.4}Gb'.format(
           file_size / (10**9)))
-    save_large_data_to_pkl(data, data_path[:-2], verbose)
+    save_large_data_to_pkl(data, data_path[:-2], verbose=verbose)
   else:
     with open(data_path, 'wb') as f:
       if verbose:

@@ -51,27 +51,25 @@ class DataPreProcess(object):
     else:
       self.tl_encode = False
 
-    if self.cfg.RESIZE_INPUTS:
+    if self.data_base_name == 'mnist':
+      self.input_size = (28, 28)
+      self.img_mode = 'L'
+    elif self.data_base_name == 'cifar10':
+      self.input_size = (32, 32)
+      self.img_mode = 'RGB'
+    elif self.data_base_name == 'radical':
       self.input_size = self.cfg.INPUT_SIZE
+      self.img_mode = 'L'
     else:
-      if self.data_base_name == 'mnist':
-        self.input_size = (28, 28)
-        self.img_mode = 'L'
-      elif self.data_base_name == 'cifar10':
-        self.input_size = (32, 32)
-        self.img_mode = 'RGB'
-      elif self.data_base_name == 'radical':
-        self.input_size = self.cfg.INPUT_SIZE
-        self.img_mode = 'L'
-      else:
-        raise ValueError('Wrong database name!')
+      raise ValueError('Wrong database name!')
 
     if self.cfg.RESIZE_IMAGES:
       self.image_size = self.cfg.IMAGE_SIZE
     else:
       self.image_size = self.input_size
 
-    self.input_size = (224, 224) if self.tl_encode else self.cfg.INPUT_SIZE
+    if self.cfg.RESIZE_INPUTS:
+      self.input_size = self.cfg.INPUT_SIZE
 
   def _load_data(self, show_img=False):
     """Load data set from files."""
@@ -235,8 +233,7 @@ class DataPreProcess(object):
     assert reshaped_image.shape == (*img_size, 1)
     return reshaped_image
 
-  @staticmethod
-  def _augment_data(tensor, data_aug_param, img_num, add_self=True):
+  def _augment_data(self, tensor, data_aug_param, img_num, add_self=True):
     """Augment data set and add noises."""
     data_generator = ImageDataGenerator(**data_aug_param)
     if add_self:
@@ -246,8 +243,9 @@ class DataPreProcess(object):
     while True:
       for i in range(len(tensor)):
         if len(new_x_tensors) >= img_num:
-          return new_x_tensors
-        augmented = data_generator.random_transform(tensor[i])
+          return np.array(new_x_tensors, dtype=self.data_type)
+        augmented = data_generator.random_transform(
+            tensor[i].astype(np.float32))
         new_x_tensors.append(augmented)
 
   def _train_test_split(self):
@@ -393,8 +391,8 @@ class DataPreProcess(object):
     if img_shape != self.image_size:
       utils.thin_line()
       print('Resizing images...')
-      print('Before: {}'.format(img_shape))
-      print('After: {}'.format(self.image_size))
+      print('Before: {}'.format(tuple(img_shape)))
+      print('After: {}'.format(tuple(self.image_size)))
 
       self.imgs_train = self._resize_imgs(
           self.x_train, self.image_size, self.img_mode)
@@ -463,8 +461,8 @@ class DataPreProcess(object):
     if img_shape != self.input_size:
       utils.thin_line()
       print('Resizing inputs...')
-      print('Before: {}'.format(img_shape))
-      print('After: {}'.format(self.input_size))
+      print('Before: {}'.format(tuple(img_shape)))
+      print('After: {}'.format(tuple(self.input_size)))
 
       self.x_train = self._resize_imgs(
           self.x_train, self.input_size, self.img_mode)
@@ -593,6 +591,7 @@ class DataPreProcess(object):
         self.cfg.TL_MODEL).save_bottleneck_features(
         self.x_train,
         file_path=join(self.preprocessed_path, 'x_train.p'),
+        img_mode=self.img_mode,
         batch_size=bf_batch_size,
         data_type=self.data_type)
 
@@ -657,8 +656,8 @@ class DataPreProcess(object):
     self.preprocessed_path = join(self.cfg.DPP_DATA_PATH, self.data_base_name)
     self.source_data_path = join(self.cfg.SOURCE_DATA_PATH, self.data_base_name)
 
-    # show_img = True
-    show_img = False
+    show_img = True
+    # show_img = False
 
     # Load data
     if self.data_base_name == 'mnist' or self.data_base_name == 'cifar10':
