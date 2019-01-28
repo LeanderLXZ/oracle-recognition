@@ -91,7 +91,7 @@ __C.DATA_AUG_PARAM = dict(
 # Keep original images if use data augment
 __C.DATA_AUG_KEEP_SOURCE = True
 # The max number of images of a class if use data augment
-__C.MAX_IMAGE_NUM = 10000
+__C.MAX_IMAGE_NUM = 2000
 
 # Oracle Parameters
 # Number of radicals to use for training
@@ -104,7 +104,7 @@ __C.NUM_RADICALS = 148
 # those objects are random.
 __C.NUM_MULTI_OBJECT = 2
 # The number of multi-objects images
-__C.NUM_MULTI_IMG = 2000
+__C.NUM_MULTI_IMG = 10000
 # If overlap, the multi-objects will be overlapped in a image.
 __C.OVERLAP = False
 # If Repeat, repetitive labels will appear in a image.
