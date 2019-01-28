@@ -69,12 +69,12 @@ __C.VALID_SIZE = 0.1
 # Resize images
 __C.RESIZE_INPUTS = False
 # Input size
-__C.INPUT_SIZE = (56, 56)
+__C.INPUT_SIZE = (28, 28)
 
 # Resize images
 __C.RESIZE_IMAGES = True
 # Image size
-__C.IMAGE_SIZE = (56, 56)
+__C.IMAGE_SIZE = (28, 28)
 
 # Using data augment
 __C.USE_DATA_AUG = True
@@ -104,7 +104,7 @@ __C.NUM_RADICALS = 148
 # those objects are random.
 __C.NUM_MULTI_OBJECT = 2
 # The number of multi-objects images
-__C.NUM_MULTI_IMG = 10000
+__C.NUM_MULTI_IMG = 2000
 # If overlap, the multi-objects will be overlapped in a image.
 __C.OVERLAP = False
 # If Repeat, repetitive labels will appear in a image.
