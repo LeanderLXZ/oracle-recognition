@@ -4,6 +4,7 @@ from PIL import Image
 from models import utils
 from tqdm import tqdm
 
+import os
 import tensorflow as tf
 from keras import backend as K
 
@@ -13,6 +14,8 @@ class GetBottleneckFeatures(object):
 
   def __init__(self, model_name):
     self.model_name = model_name
+    # Only shows Errors
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = '3'
 
   def _extract_features(self,
                         tensor,
