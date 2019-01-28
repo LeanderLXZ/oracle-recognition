@@ -685,6 +685,7 @@ def get_and_save_bf(config,
       print('Get bottleneck features of {}_{}.p'.format(cache_file_name, i))
       with open(part_path, 'rb') as f:
         data_part = pickle.load(f)
+        print('Data cache shape: ', data_part.shape)
         GetBottleneckFeatures(
             config.TL_MODEL).save_bottleneck_features(
             data_part,

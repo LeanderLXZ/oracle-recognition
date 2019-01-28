@@ -4,6 +4,9 @@ from PIL import Image
 from models import utils
 from tqdm import tqdm
 
+import tensorflow as tf
+from keras import backend as K
+
 
 class GetBottleneckFeatures(object):
   """Save bottleneck features of transfer learning models."""
@@ -46,18 +49,18 @@ class GetBottleneckFeatures(object):
     else:
       raise ValueError('Wrong transfer learning model name!')
 
-  def _get_bottleneck_feature_shape(self):
+  def _get_bottleneck_feature_shape(self, pooling=None):
     """Get bottleneck feature shapes."""
     if self.model_name == 'vgg16':
-      bf_shape = (7, 7, 512)
+      bf_shape = (512,) if pooling is not None else (7, 7, 512)
     elif self.model_name == 'vgg19':
-      bf_shape = (7, 7, 512)
+      bf_shape = (512,) if pooling is not None else (7, 7, 512)
     elif self.model_name == 'resnet50':
-      bf_shape = (1, 1, 2048)
+      bf_shape = (2048,) if pooling is not None else (1, 1, 2048)
     elif self.model_name == 'inceptionv3':
-      bf_shape = (5, 5, 2048)
+      bf_shape = (2048,) if pooling is not None else (5, 5, 2048)
     elif self.model_name == 'xception':
-      bf_shape = (7, 7, 2048)
+      bf_shape = (2048,) if pooling is not None else (7, 7, 2048)
     else:
       raise ValueError('Wrong transfer learning model name!')
 
@@ -78,14 +81,22 @@ class GetBottleneckFeatures(object):
       n_batch = len(inputs) // batch_size + 1
       bottleneck_features = []
       for _ in tqdm(range(n_batch), total=n_batch, ncols=100, unit='batch'):
+
         inputs_batch = next(batch_generator)
         inputs_batch = utils.imgs_scale_to_255(inputs_batch).astype(data_type)
+
         if inputs_shape[3] == 1:
           inputs_batch = np.concatenate(
               [inputs_batch, inputs_batch, inputs_batch], axis=-1)
+
         assert inputs_batch.shape[1:] == (224, 224, 3)
         bf_batch = self._extract_features(inputs_batch, pooling=pooling)
         bottleneck_features.append(bf_batch)
+
+        # Release memory
+        K.clear_session()
+        tf.reset_default_graph()
+
       bottleneck_features = np.concatenate(bottleneck_features, axis=0)
     else:
       inputs = utils.imgs_scale_to_255(inputs).astype(data_type)
@@ -95,7 +106,8 @@ class GetBottleneckFeatures(object):
 
     # Check data shape
     assert len(bottleneck_features) == len(inputs)
-    assert bottleneck_features.shape[1:] == self._get_bottleneck_feature_shape()
+    assert bottleneck_features.shape[1:] == \
+        self._get_bottleneck_feature_shape(pooling=pooling)
 
     return bottleneck_features
 
@@ -135,7 +147,13 @@ class GetBottleneckFeatures(object):
 
           assert inputs_batch.shape[1:] == (224, 224, 3)
           bf_batch = self._extract_features(inputs_batch, pooling=pooling)
+          assert bf_batch.shape[1:] == \
+              self._get_bottleneck_feature_shape(pooling=pooling)
           f.write(pickle.dumps(bf_batch))
+
+          # Release memory
+          K.clear_session()
+          tf.reset_default_graph()
 
       else:
         inputs = utils.imgs_scale_to_255(inputs).astype(data_type)
@@ -145,4 +163,6 @@ class GetBottleneckFeatures(object):
 
         assert inputs.shape[1:] == (224, 224, 3)
         bottleneck_features = self._extract_features(inputs, pooling=pooling)
+        assert bottleneck_features.shape[1:] == \
+            self._get_bottleneck_feature_shape(pooling=pooling)
         f.write(pickle.dumps(bottleneck_features))
