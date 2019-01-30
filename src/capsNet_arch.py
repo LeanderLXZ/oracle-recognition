@@ -45,50 +45,50 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
     num_classes = 10
 
   model = Sequential(inputs)      # (b, 32, 32, 1)
-  conv_block(
-      model,
-      cfg,
-      conv_size=3,
-      conv_stride=1,
-      conv_depth=16,
-      conv_padding='SAME',
-      act_fn='relu',
-      use_batch_norm=True,
-      is_training=is_training,
-      use_max_pool=True,
-      pool_size=2,
-      pool_strides=(2, 2),
-      pool_padding='VALID',
-      idx=0
-  )                               # (b, 16, 16, 8)
-  conv_block(
-      model,
-      cfg,
-      conv_size=3,
-      conv_stride=1,
-      conv_depth=32,
-      conv_padding='SAME',
-      act_fn='relu',
-      use_batch_norm=True,
-      is_training=is_training,
-      use_max_pool=True,
-      pool_size=2,
-      pool_strides=(2, 2),
-      pool_padding='VALID',
-      idx=1
-  )                               # (b, 8, 8, 16)
-  conv_block(
-      model,
-      cfg,
-      conv_size=3,
-      conv_stride=1,
-      conv_depth=32,
-      conv_padding='VALID',
-      act_fn='relu',
-      use_batch_norm=True,
-      is_training=is_training,
-      idx=2
-  )                               # (b, 6, 6, 16)
+  # conv_block(
+  #     model,
+  #     cfg,
+  #     conv_size=3,
+  #     conv_stride=1,
+  #     conv_depth=16,
+  #     conv_padding='SAME',
+  #     act_fn='relu',
+  #     use_batch_norm=True,
+  #     is_training=is_training,
+  #     use_max_pool=True,
+  #     pool_size=2,
+  #     pool_strides=(2, 2),
+  #     pool_padding='VALID',
+  #     idx=0
+  # )                               # (b, 16, 16, 8)
+  # conv_block(
+  #     model,
+  #     cfg,
+  #     conv_size=3,
+  #     conv_stride=1,
+  #     conv_depth=32,
+  #     conv_padding='SAME',
+  #     act_fn='relu',
+  #     use_batch_norm=True,
+  #     is_training=is_training,
+  #     use_max_pool=True,
+  #     pool_size=2,
+  #     pool_strides=(2, 2),
+  #     pool_padding='VALID',
+  #     idx=1
+  # )                               # (b, 8, 8, 16)
+  # conv_block(
+  #     model,
+  #     cfg,
+  #     conv_size=3,
+  #     conv_stride=1,
+  #     conv_depth=32,
+  #     conv_padding='VALID',
+  #     act_fn='relu',
+  #     use_batch_norm=True,
+  #     is_training=is_training,
+  #     idx=2
+  # )                               # (b, 6, 6, 16)
   # conv_block(
   #     model,
   #     cfg,
@@ -99,39 +99,31 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
   #     act_fn='relu',
   #     use_batch_norm=True,
   #     route_epoch=10,
-  #     kraining=is_training,
+  #     is_training=is_training,
   #     idx=2
   # )                               # (b, 4, 4, 32)
-  # models.add(Dense2Capsule(
-  #     cfg,
-  #     identity_map=True,
-  #     num_caps=None,
-  #     act_fn='relu',
-  #     vec_dim=8,
-  #     batch_size=batch_size
-  # ))
-  model.add(Conv2CapsLayer(
+  model.add(Dense2CapsLayer(
       cfg,
-      kernel_size=3,
-      stride=1,
-      n_kernel=48,
+      identity_map=True,
+      num_caps=None,
+      act_fn='relu',
       vec_dim=8,
-      padding='VALID',
       batch_size=batch_size
-  ))                               # (b, 4, 4, 32) -> (b, 216, 148, 16, 8)
-  model.add(CapsLayer(
-      cfg,
-      num_caps=150,
-      vec_dim=16,
-      route_epoch=10,
-      batch_size=batch_size,
-      idx=0
   ))
+  # model.add(Conv2CapsLayer(
+  #     cfg,
+  #     kernel_size=3,
+  #     stride=1,
+  #     n_kernel=48,
+  #     vec_dim=8,
+  #     padding='VALID',
+  #     batch_size=batch_size
+  # ))                               # (b, 4, 4, 32) -> (b, 216, 148, 16, 8)
   model.add(CapsLayer(
       cfg,
       num_caps=num_classes,
-      vec_dim=32,
-      route_epoch=10,
+      vec_dim=16,
+      route_epoch=3,
       batch_size=batch_size,
       idx=1
   ))
@@ -162,7 +154,7 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
       #     cfg, is_training, momentum=0.99, act_fn='relu', idx=1))
       model.add(DenseLayer(
           cfg,
-          out_dim=1024,
+          out_dim=cfg.IMAGE_SIZE[0]*cfg.IMAGE_SIZE[1],
           act_fn=act_fn_last,
           idx=2))
       # model.add(BatchNorm(
@@ -267,15 +259,12 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
           cfg, is_training, momentum=0.99, act_fn='relu', idx=3))
       model.add(ConvTLayer(
           cfg,
-          kernel_size=5,
+          kernel_size=3,
           stride=1,
           n_kernel=1,
-          output_shape=[batch_size, 32, 32, 1],
-          padding='VALID',
-          act_fn=None,
+          output_shape=[batch_size, 28, 28, 1],
+          act_fn=act_fn_last,
           idx=4))
-      model.add(BatchNorm(
-          cfg, is_training, momentum=0.99, act_fn=act_fn_last, idx=4))
       assert model.top_layer.get_shape() == (
         batch_size, *cfg.IMAGE_SIZE, 1), model.top_layer.get_shape()
 
@@ -299,34 +288,33 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
           idx=2))
 
     elif cfg.DECODER_TYPE == 'conv':
-      model.add(Reshape(      # (b, 4, 4, 1)
+      model.add(Reshape(    # (b, 4, 4, 1)
           (batch_size, 4, 4, -1), name='reshape'))
-      model.add(ConvLayer(    # (b, 7, 7, 16)
+      model.add(ConvLayer(  # (b, 8, 8, 16)
           cfg,
           kernel_size=3,
           stride=1,
           n_kernel=16,
-          resize=7,
           idx=0))
-      model.add(ConvLayer(    # (b, 14, 14, 32)
+      model.add(ConvLayer(  # (b, 16, 16, 32)
           cfg,
           kernel_size=3,
           stride=1,
           n_kernel=32,
-          resize=14,
+          resize=16,
           idx=1))
-      model.add(ConvLayer(    # (b, 28, 28, 16)
+      model.add(ConvLayer(  # (b, 32, 32, 16)
           cfg,
           kernel_size=3,
           stride=1,
           n_kernel=16,
-          resize=28,
+          resize=32,
           idx=2))
-      model.add(ConvLayer(    # (b, 28, 28, 1)
+      model.add(ConvLayer(  # (b, 32, 32, 3)
           cfg,
           kernel_size=3,
           stride=1,
-          n_kernel=1,
+          n_kernel=3,
           act_fn=act_fn_last,
           idx=3))
 

@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import print_function
 
 import time
+import gc
 import argparse
 import numpy as np
 import tensorflow as tf
@@ -84,7 +85,13 @@ class Main(object):
     train_log_path_ = join(self.cfg.TRAIN_LOG_PATH, self.cfg.VERSION)
     summary_path_ = join(self.cfg.SUMMARY_PATH, self.cfg.VERSION)
     checkpoint_path_ = join(self.cfg.CHECKPOINT_PATH, self.cfg.VERSION)
-    preprocessed_path = join(self.cfg.DPP_DATA_PATH, self.cfg.DATABASE_NAME)
+
+    if self.cfg.DATABASE_MODE == 'small':
+      preprocessed_path = join('../data/small', self.cfg.DATABASE_NAME)
+    elif self.cfg.DATABASE_MODE == 'large':
+      preprocessed_path = join('../data/large', self.cfg.DATABASE_NAME)
+    else:
+      preprocessed_path = join(self.cfg.DPP_DATA_PATH, self.cfg.DATABASE_NAME)
 
     # Get log paths, append information if the directory exist.
     train_log_path = train_log_path_
@@ -124,20 +131,22 @@ class Main(object):
     #       n_parts=self.cfg.LARGE_DATA_PART_NUM)
     # else:
 
-    x_train = utils.load_data_from_pkl(
-      join(self.preprocessed_path, 'x_train.p'))
-    x_valid = utils.load_data_from_pkl(
-      join(self.preprocessed_path, 'x_train.p'))
+    x_train = utils.load_pkls(self.preprocessed_path, 'x_train')
+    x_valid = utils.load_pkls(self.preprocessed_path, 'x_valid')
 
-    imgs_train = utils.load_data_from_pkl(
-        join(self.preprocessed_path, 'imgs_train.p'))
-    imgs_valid = utils.load_data_from_pkl(
-        join(self.preprocessed_path, 'imgs_valid.p'))
+    imgs_train = utils.load_pkls(self.preprocessed_path, 'imgs_train')
+    imgs_valid = utils.load_pkls(self.preprocessed_path, 'imgs_valid')
 
-    y_train = utils.load_data_from_pkl(
-        join(self.preprocessed_path, 'y_train.p'))
-    y_valid = utils.load_data_from_pkl(
-        join(self.preprocessed_path, 'y_valid.p'))
+    if imgs_train.shape == x_train.shape:
+      print('[W] imgs_train.shape == x_train.shape')
+      del imgs_train
+      del imgs_valid
+      gc.collect()
+      imgs_train = x_train
+      imgs_valid = x_valid
+
+    y_train = utils.load_pkls(self.preprocessed_path, 'y_train')
+    y_valid = utils.load_pkls(self.preprocessed_path, 'y_valid')
 
     utils.thin_line()
     print('Data info:')

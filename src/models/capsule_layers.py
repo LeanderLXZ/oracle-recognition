@@ -365,7 +365,7 @@ class Dense2CapsLayer(object):
                act_fn='relu',
                vec_dim=8,
                batch_size=None,
-               reshape_mode='FLATTEN'):
+               reshape_mode='GAP'):
     """Generate a Capsule layer densely.
 
     Args:
