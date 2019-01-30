@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import os
 import gc
+import sys
 import re
 import csv
 import math
@@ -77,7 +78,7 @@ def save_large_data_to_pkl(data,
     return n_parts
 
 
-def load_pkls(dir_path, file_name, verbose=True):
+def load_pkls(dir_path, file_name, verbose=True, tl=False):
   """Load data from pickle file or files."""
   indices = []
   for f_name in listdir(dir_path):
@@ -87,31 +88,39 @@ def load_pkls(dir_path, file_name, verbose=True):
   if indices:
     return load_large_data_from_pkl(
         '{}/{}'.format(dir_path, file_name),
-        n_parts=len(indices), verbose=verbose)
+        n_parts=len(indices), verbose=verbose, tl=tl)
   else:
     return load_data_from_pkl(
         '{}/{}.p'.format(dir_path, file_name),
-        verbose=verbose)
+        verbose=verbose, tl=tl)
 
 
-def load_data_from_pkl(data_path, verbose=True):
+def load_data_from_pkl(data_path, verbose=True, tl=False, size_batch=1048737):
   """Load data from pickle file."""
-  with open(data_path, 'rb') as f:
-    if verbose:
-      print('Loading {}...'.format(f.name))
-    return pickle.load(f)
+  if tl:
+    return load_data_tl(data_path, size_batch, verbose=verbose)
+  else:
+    with open(data_path, 'rb') as f:
+      if verbose:
+        print('Loading {}...'.format(f.name))
+      return pickle.load(f)
 
 
-def load_large_data_from_pkl(data_path, n_parts=2, verbose=True):
+def load_large_data_from_pkl(data_path, n_parts=2, verbose=True,
+                             tl=False, size_batch=1048737):
   """Save large data to pickle file."""
   if verbose:
     print('Loading {}.p from {} parts...'.format(data_path, n_parts))
   data = []
   for i in range(n_parts):
-    with open(data_path + '_{}.p'.format(i), 'rb') as f:
+    data_path = data_path + '_{}.p'.format(i)
+    with open(data_path, 'rb') as f:
       if verbose:
         print('Loading {}...'.format(f.name))
-      data.append(pickle.load(f))
+      if tl:
+        data.append(load_data_tl(data_path, size_batch, verbose=verbose))
+      else:
+        data.append(pickle.load(f))
   concat = np.concatenate(data, axis=0)
   assert concat.shape[1:] == data[0].shape[1:]
 
@@ -120,6 +129,22 @@ def load_large_data_from_pkl(data_path, n_parts=2, verbose=True):
     print('Data Shape: ', concat.shape)
 
   return concat
+
+
+def load_data_tl(file_path, size_batch=1048737, verbose=True):
+  with open(file_path, 'rb') as f:
+    if verbose:
+      print('Loading bottleneck features: {}...'.format(f.name))
+    size_total = sys.getsizeof(f.read())
+  if size_total % size_batch == 0:
+    n_batch = size_total // size_batch
+  else:
+    n_batch = size_total // size_batch + 1
+  batches = []
+  with open(file_path, 'rb') as f:
+    for _ in range(n_batch):
+      batches.append(pickle.loads(f.read(size_batch)))
+  return np.concatenate(batches, axis=0)
 
 
 def get_vec_length(vec, batch_size, epsilon):

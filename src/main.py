@@ -55,8 +55,8 @@ class Main(object):
         self.train_image_path = self._get_paths()
 
     # Load data
-    self.x_train, self.y_train, self.x_valid, \
-        self.y_valid, self.imgs_train, self.imgs_valid = self._load_data()
+    self.x_train, self.y_train, self.imgs_train, \
+        self.x_valid, self.y_valid, self.imgs_valid = self._load_data()
 
     # Calculate number of batches
     self.n_batch_train = len(self.y_train) // cfg.BATCH_SIZE
@@ -125,14 +125,10 @@ class Main(object):
     print('Loading data...')
     utils.thin_line()
 
-    # if self.cfg.DATABASE_NAME == 'radical':
-    #   self.x_train = utils.load_large_data_to_pkl(
-    #       join(self.preprocessed_path, 'x_train'),
-    #       n_parts=self.cfg.LARGE_DATA_PART_NUM)
-    # else:
-
-    x_train = utils.load_pkls(self.preprocessed_path, 'x_train')
-    x_valid = utils.load_pkls(self.preprocessed_path, 'x_valid')
+    x_train = utils.load_pkls(
+        self.preprocessed_path, 'x_train', tl=self.tl_encode)
+    x_valid = utils.load_pkls(
+        self.preprocessed_path, 'x_valid', tl=self.tl_encode)
 
     imgs_train = utils.load_pkls(self.preprocessed_path, 'imgs_train')
     imgs_valid = utils.load_pkls(self.preprocessed_path, 'imgs_valid')
@@ -161,7 +157,7 @@ class Main(object):
         imgs_train.shape,
         imgs_valid.shape))
 
-    return x_train, y_train, x_valid, y_valid, imgs_train, imgs_valid
+    return x_train, y_train, imgs_train, x_valid, y_valid, imgs_valid
 
   def _display_status(self,
                       sess,
