@@ -53,13 +53,11 @@ class Main(object):
         self.summary_path, self.checkpoint_path, \
         self.train_image_path = self._get_paths()
 
-    # Load data
-    self.x_train, self.y_train, self.x_valid, \
-        self.y_valid, self.imgs_train, self.imgs_valid = self._load_data()
+    # Load data - get batch generators
+    inputs_shape, image_shape, num_class = self._get_batch_generators()
 
     # Calculate number of batches
-    self.n_batch_train = len(self.y_train) // cfg.BATCH_SIZE
-    self.n_batch_valid = len(self.y_valid) // cfg.BATCH_SIZE
+    self.n_batch_train, self.n_batch_valid = self._get_n_batches(num_class)
 
     # Build graph
     utils.thick_line()
@@ -69,9 +67,9 @@ class Main(object):
         self.is_training, self.optimizer, self.saver, self.summary, \
         self.loss, self.accuracy, self.clf_loss, self.rec_loss, \
         self.rec_images, self.preds = model.build_graph(
-            input_size=self.x_train.shape[1:],
-            image_size=self.imgs_train.shape[1:],
-            num_class=self.y_train.shape[1])
+            input_size=inputs_shape,
+            image_size=image_shape,
+            num_class=num_class)
 
     # Save config
     self.clf_arch_info = model.clf_arch_info
@@ -84,7 +82,13 @@ class Main(object):
     train_log_path_ = join(self.cfg.TRAIN_LOG_PATH, self.cfg.VERSION)
     summary_path_ = join(self.cfg.SUMMARY_PATH, self.cfg.VERSION)
     checkpoint_path_ = join(self.cfg.CHECKPOINT_PATH, self.cfg.VERSION)
-    preprocessed_path = join(self.cfg.DPP_DATA_PATH, self.cfg.DATABASE_NAME)
+
+    if self.cfg.DATABASE_MODE == 'small':
+      preprocessed_path = join('../data/small', self.cfg.DATABASE_NAME)
+    elif self.cfg.DATABASE_MODE == 'large':
+      preprocessed_path = join('../data/large', self.cfg.DATABASE_NAME)
+    else:
+      preprocessed_path = join(self.cfg.DPP_DATA_PATH, self.cfg.DATABASE_NAME)
 
     # Get log paths, append information if the directory exist.
     train_log_path = train_log_path_
@@ -112,47 +116,60 @@ class Main(object):
     return preprocessed_path, train_log_path, \
         summary_path, checkpoint_path, train_image_path
 
-  def _load_data(self):
-    """Load preprocessed data."""
-    utils.thick_line()
-    print('Loading data...')
-    utils.thin_line()
+  def _get_n_batches(self, num_class=10):
 
-    # if self.cfg.DATABASE_NAME == 'radical':
-    #   self.x_train = utils.load_large_data_to_pkl(
-    #       join(self.preprocessed_path, 'x_train'),
-    #       n_parts=self.cfg.LARGE_DATA_PART_NUM)
-    # else:
+    if self.cfg.DATABASE_NAME == 'radical':
+      len_train = self.cfg.NUM_MULTI_IMG * num_class * (1 - self.cfg.TEST_SIZE)
+      len_valid = self.cfg.NUM_MULTI_IMG * num_class * self.cfg.TEST_SIZE
+      if self.cfg.DPP_TEST_AS_VALID:
+        len_valid = len_train * self.cfg.VALID_SIZE
+        len_train *= 1 - self.cfg.VALID_SIZE
+      if self.cfg.DATABASE_MODE == 'large':
+        len_train = 1184000
+        len_valid = 296000
+      elif self.cfg.DATABASE_MODE == 'small':
+        len_train = 236800
+        len_valid = 59200
+    elif self.cfg.DATABASE_NAME == 'mnist' or \
+            self.cfg.DATABASE_NAME == 'cifar10':
+      if self.cfg.DPP_TEST_AS_VALID:
+        len_train = 50000
+        len_valid = 10000
+      else:
+        len_train = 50000 * (1 - self.cfg.VALID_SIZE)
+        len_valid = 50000 * self.cfg.VALID_SIZE
+    else:
+      raise ValueError
 
-    x_train = utils.load_data_from_pkl(
-      join(self.preprocessed_path, 'x_train.p'))
-    x_valid = utils.load_data_from_pkl(
-      join(self.preprocessed_path, 'x_train.p'))
+    n_batch_train = len_train // self.cfg.BATCH_SIZE
+    n_batch_valid = len_valid // self.cfg.BATCH_SIZE
 
-    imgs_train = utils.load_data_from_pkl(
-        join(self.preprocessed_path, 'imgs_train.p'))
-    imgs_valid = utils.load_data_from_pkl(
-        join(self.preprocessed_path, 'imgs_valid.p'))
+    return n_batch_train, n_batch_valid
 
-    y_train = utils.load_data_from_pkl(
-        join(self.preprocessed_path, 'y_train.p'))
-    y_valid = utils.load_data_from_pkl(
-        join(self.preprocessed_path, 'y_valid.p'))
+  def _get_batch_generators(self):
+    """Get batch generators for training and validation."""
+    self.x_train_batch_gen = utils.batch_generator(
+        self.preprocessed_path, 'x_train', self.cfg.BATCH_SIZE)
+    self.y_train_batch_gen = utils.batch_generator(
+        self.preprocessed_path, 'y_train', self.cfg.BATCH_SIZE)
+    self.imgs_train_batch_gen = utils.batch_generator(
+        self.preprocessed_path, 'imgs_train', self.cfg.BATCH_SIZE)
 
-    utils.thin_line()
-    print('Data info:')
-    utils.thin_line()
-    print('x_train: {}\ny_train: {}\nx_valid: {}\ny_valid: {}'.format(
-        x_train.shape,
-        y_train.shape,
-        x_valid.shape,
-        y_valid.shape))
+    self.x_valid_batch_gen = utils.batch_generator(
+        self.preprocessed_path, 'x_valid', self.cfg.BATCH_SIZE)
+    self.y_valid_batch_gen = utils.batch_generator(
+        self.preprocessed_path, 'y_valid', self.cfg.BATCH_SIZE)
+    self.imgs_valid_batch_gen = utils.batch_generator(
+        self.preprocessed_path, 'imgs_valid', self.cfg.BATCH_SIZE)
 
-    print('imgs_train: {}\nimgs_valid: {}'.format(
-        imgs_train.shape,
-        imgs_valid.shape))
+    inputs_shape = next(utils.batch_generator(
+        self.preprocessed_path, 'x_train', self.cfg.BATCH_SIZE)).shape[1:]
+    image_shape = next(utils.batch_generator(
+        self.preprocessed_path, 'imgs_train', self.cfg.BATCH_SIZE)).shape[1:]
+    num_class = next(utils.batch_generator(
+        self.preprocessed_path, 'y_train', self.cfg.BATCH_SIZE)).shape[1]
 
-    return x_train, y_train, x_valid, y_valid, imgs_train, imgs_valid
+    return inputs_shape, image_shape, num_class
 
   def _display_status(self,
                       sess,
@@ -274,6 +291,13 @@ class Main(object):
     clf_loss_all = []
     rec_loss_all = []
 
+    x_train_batch_gen = utils.batch_generator(
+        self.preprocessed_path, 'x_train', self.cfg.BATCH_SIZE)
+    y_train_batch_gen = utils.batch_generator(
+        self.preprocessed_path, 'y_train', self.cfg.BATCH_SIZE)
+    imgs_train_batch_gen = utils.batch_generator(
+        self.preprocessed_path, 'imgs_train', self.cfg.BATCH_SIZE)
+
     batch_generator = utils.get_batches(x, y, self.cfg.BATCH_SIZE, imgs=imgs)
 
     if not silent:
@@ -285,6 +309,10 @@ class Main(object):
 
     if self.cfg.WITH_REC:
       for _ in iterator:
+
+        x_batch = next(self.x_train_batch_gen)
+        y_batch = next(self.y_train_batch_gen)
+        imgs_batch = next(self.imgs_train_batch_gen)
 
         x_batch, y_batch, imgs_batch = next(batch_generator)
 

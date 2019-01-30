@@ -122,6 +122,33 @@ def load_large_data_from_pkl(data_path, n_parts=2, verbose=True):
   return concat
 
 
+def batch_generator(dir_path, file_name, batch_size):
+  """Load pickle file and return a batch."""
+  indices = []
+  for f_name in listdir(dir_path):
+    m = re.match(file_name + '_(\d*).p', f_name)
+    if m:
+      indices.append(int(m.group(1)))
+  indices: list = np.sort(indices).tolist()
+  if indices:
+    while True:
+      for i in indices:
+        part_path = join(dir_path, file_name + '_{}.p'.format(i))
+        with open(part_path, 'rb') as f:
+          data_part = pickle.load(f)
+          for start in range(0, len(data_part) - batch_size + 1, batch_size):
+            end = start + batch_size
+            yield data_part[start:end]
+  else:
+    while True:
+      part_path = join(dir_path, file_name + '.p')
+      with open(part_path, 'rb') as f:
+        data_part = pickle.load(f)
+        for start in range(0, len(data_part) - batch_size + 1, batch_size):
+          end = start + batch_size
+          yield data_part[start:end]
+
+
 def get_vec_length(vec, batch_size, epsilon):
   """Get the length of a vector."""
   vec_shape = vec.get_shape().as_list()

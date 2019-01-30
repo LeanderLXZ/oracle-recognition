@@ -30,6 +30,7 @@ __C = EasyDict()
 # 'cifar10' CIFAR-10
 # __C.DATABASE_NAME = 'radical'
 __C.DATABASE_NAME = 'mnist'
+__C.DATABASE_MODE = 'small'
 
 # Training version
 # Set None to auto generate version
@@ -303,8 +304,7 @@ if __C.VERSION is None:
 __C.SOURCE_DATA_PATH = '../data/source_data'
 
 # Preprocessed data path
-# __C.DPP_DATA_PATH = '../data/preprocessed_data'
-__C.DPP_DATA_PATH = '../data/small'
+__C.DPP_DATA_PATH = '../data/preprocessed_data'
 
 # Oracle labels path
 __C.ORAClE_LABEL_PATH = __C.SOURCE_DATA_PATH + '/recognized_oracles_labels.csv'
