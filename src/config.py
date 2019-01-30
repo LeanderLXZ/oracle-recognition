@@ -303,7 +303,8 @@ if __C.VERSION is None:
 __C.SOURCE_DATA_PATH = '../data/source_data'
 
 # Preprocessed data path
-__C.DPP_DATA_PATH = '../data/preprocessed_data'
+# __C.DPP_DATA_PATH = '../data/preprocessed_data'
+__C.DPP_DATA_PATH = '../data/small'
 
 # Oracle labels path
 __C.ORAClE_LABEL_PATH = __C.SOURCE_DATA_PATH + '/recognized_oracles_labels.csv'
