@@ -133,13 +133,16 @@ def load_large_data_from_pkl(data_path, n_parts=2, verbose=True,
 
 def load_data_tl(file_path, size_batch=1048737, verbose=True):
   with open(file_path, 'rb') as f:
+    size_total = sys.getsizeof(f.read())
     if verbose:
       print('Loading bottleneck features: {}...'.format(f.name))
-    size_total = sys.getsizeof(f.read())
-  if size_total % size_batch == 0:
-    n_batch = size_total // size_batch
-  else:
-    n_batch = size_total // size_batch + 1
+      print('Total bytes: ', size_total)
+  n_batch = size_total // size_batch
+
+  if verbose:
+    print('Batch bytes: ', size_batch)
+    print('N_Batch: ', n_batch)
+
   batches = []
   with open(file_path, 'rb') as f:
     for _ in range(n_batch):
