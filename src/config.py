@@ -48,10 +48,10 @@ __C.LR_DECAY_STEPS = 2000
 __C.LR_DECAY_RATE = 0.96
 
 # Epochs
-__C.EPOCHS = 50
+__C.EPOCHS = 20
 
 # Batch size
-__C.BATCH_SIZE = 1024
+__C.BATCH_SIZE = 2048
 
 
 # ===========================================
@@ -239,13 +239,13 @@ __C.SHOW_TRAINING_DETAILS = False
 # None: Do not test
 
 # Evaluate on single-object test set
-__C.TEST_SO_MODE = 'after_training'  # 'per_epoch'
+__C.TEST_SO_MODE = 'per_epoch'
 
 # Evaluate on multi-objects test set
-__C.TEST_MO_MODE = 'after_training'  # 'per_epoch'
+__C.TEST_MO_MODE = 'per_epoch'
 
 # Evaluate on Oracles test set after
-__C.TEST_ORACLE_MODE = None  # 'after_training'  # 'per_epoch'
+__C.TEST_ORACLE_MODE = 'per_epoch'
 
 
 # ===========================================
@@ -253,7 +253,7 @@ __C.TEST_ORACLE_MODE = None  # 'after_training'  # 'per_epoch'
 # ===========================================
 
 # Testing version name
-__C.TEST_VERSION = 'conv_rec_mse'
+__C.TEST_VERSION = __C.VERSION
 
 # Testing checkpoint index
 # If None, load the latest checkpoint.
@@ -304,8 +304,7 @@ if __C.VERSION is None:
 __C.SOURCE_DATA_PATH = '../data/source_data'
 
 # Preprocessed data path
-# __C.DPP_DATA_PATH = '../data/preprocessed_data'
-__C.DPP_DATA_PATH = '../data/small'
+__C.DPP_DATA_PATH = '../data/preprocessed_data'
 
 # Oracle labels path
 __C.ORAClE_LABEL_PATH = __C.SOURCE_DATA_PATH + '/recognized_oracles_labels.csv'
@@ -334,11 +333,11 @@ __C.VAR_ON_CPU = True
 __C.GPU_NUMBER = 2
 
 # Number of tasks
-__C.TASK_NUMBER = 4
+__C.TASK_NUMBER = 16
 
 # The decay to use for the moving average.
 # If None, not use
-__C.MOVING_AVERAGE_DECAY = None  # 0.9999
+__C.MOVING_AVERAGE_DECAY = 0.9999
 
 # ===========================================
 
