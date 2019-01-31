@@ -128,7 +128,7 @@ class Main(object):
     x_train = utils.load_pkls(
         self.preprocessed_path, 'x_train', tl=self.tl_encode)
     x_valid = utils.load_pkls(
-        self.preprocessed_path, 'x_valid', tl=self.tl_encode)
+        self.preprocessed_path, 'x_valid', tl=self.tl_encode, add_n_batch=1)
 
     imgs_train = utils.load_pkls(self.preprocessed_path, 'imgs_train')
     imgs_valid = utils.load_pkls(self.preprocessed_path, 'imgs_valid')

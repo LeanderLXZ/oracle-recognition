@@ -648,10 +648,10 @@ class DataPreProcess(object):
     self._train_valid_split()
 
     # Save images
-    self._save_images()
+    # self._save_images()
 
     # Resize images and inputs
-    self._resize_inputs()
+    # self._resize_inputs()
 
     # Check data format
     self._check_data()
