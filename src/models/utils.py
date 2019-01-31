@@ -78,7 +78,11 @@ def save_large_data_to_pkl(data,
     return n_parts
 
 
-def load_pkls(dir_path, file_name, verbose=True, tl=False):
+def load_pkls(dir_path,
+              file_name,
+              verbose=True,
+              tl=False,
+              add_n_batch=0):
   """Load data from pickle file or files."""
   indices = []
   for f_name in listdir(dir_path):
@@ -88,17 +92,27 @@ def load_pkls(dir_path, file_name, verbose=True, tl=False):
   if indices:
     return load_large_data_from_pkl(
         '{}/{}'.format(dir_path, file_name),
-        n_parts=len(indices), verbose=verbose, tl=tl)
+        n_parts=len(indices),
+        verbose=verbose,
+        tl=tl,
+        add_n_batch=add_n_batch)
   else:
     return load_data_from_pkl(
         '{}/{}.p'.format(dir_path, file_name),
-        verbose=verbose, tl=tl)
+        verbose=verbose,
+        tl=tl,
+        add_n_batch=add_n_batch)
 
 
-def load_data_from_pkl(data_path, verbose=True, tl=False, size_batch=1048737):
+def load_data_from_pkl(data_path,
+                       verbose=True,
+                       tl=False,
+                       size_batch=1048737,
+                       add_n_batch=0):
   """Load data from pickle file."""
   if tl:
-    return load_data_tl(data_path, size_batch, verbose=verbose)
+    return load_data_tl(
+        data_path, size_batch, verbose=verbose, add_n_batch=add_n_batch)
   else:
     with open(data_path, 'rb') as f:
       if verbose:
@@ -106,8 +120,12 @@ def load_data_from_pkl(data_path, verbose=True, tl=False, size_batch=1048737):
       return pickle.load(f)
 
 
-def load_large_data_from_pkl(data_path, n_parts=2, verbose=True,
-                             tl=False, size_batch=1048737):
+def load_large_data_from_pkl(data_path,
+                             n_parts=2,
+                             verbose=True,
+                             tl=False,
+                             size_batch=1048737,
+                             add_n_batch=0):
   """Save large data to pickle file."""
   if verbose:
     print('Loading {}.p from {} parts...'.format(data_path, n_parts))
@@ -118,7 +136,8 @@ def load_large_data_from_pkl(data_path, n_parts=2, verbose=True,
       if verbose:
         print('Loading {}...'.format(f.name))
       if tl:
-        data.append(load_data_tl(data_path, size_batch, verbose=verbose))
+        data.append(load_data_tl(
+            data_path, size_batch, verbose=verbose, add_n_batch=add_n_batch))
       else:
         data.append(pickle.load(f))
   concat = np.concatenate(data, axis=0)
@@ -131,13 +150,16 @@ def load_large_data_from_pkl(data_path, n_parts=2, verbose=True,
   return concat
 
 
-def load_data_tl(file_path, size_batch=1048737, verbose=True):
+def load_data_tl(file_path,
+                 size_batch=1048737,
+                 verbose=True,
+                 add_n_batch=0):
   with open(file_path, 'rb') as f:
     size_total = sys.getsizeof(f.read())
     if verbose:
       print('Loading bottleneck features: {}...'.format(f.name))
       print('Total bytes: ', size_total)
-  n_batch = size_total // size_batch
+  n_batch = size_total // size_batch + add_n_batch
 
   if verbose:
     print('Batch bytes: ', size_batch)

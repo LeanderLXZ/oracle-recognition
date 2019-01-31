@@ -138,7 +138,8 @@ class Test(object):
       preprocessed_path_ = join(self.cfg.DPP_DATA_PATH, self.cfg.DATABASE_NAME)
 
     x = utils.load_pkls(
-        preprocessed_path_, 'x_test' + self.append_info, tl=self.tl_encode)
+        preprocessed_path_, 'x_test' + self.append_info,
+        tl=self.tl_encode, add_n_batch=1)
     y = utils.load_pkls(
         preprocessed_path_, 'y_test' + self.append_info)
     imgs = utils.load_pkls(
