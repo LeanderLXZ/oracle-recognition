@@ -38,13 +38,8 @@ class CapsNet(object):
     _labels = tf.placeholder(
         tf.float32, shape=[self.cfg.BATCH_SIZE, num_class], name='labels')
     _is_training = tf.placeholder(tf.bool, name='is_training')
-
-    if self.cfg.TRANSFER_LEARNING == 'encode':
-      _input_imgs = tf.placeholder(
-          tf.float32,
-          shape=[self.cfg.BATCH_SIZE, *image_size], name='input_imgs')
-    else:
-      _input_imgs = _inputs
+    _input_imgs = tf.placeholder(
+        tf.float32, shape=[self.cfg.BATCH_SIZE, *image_size], name='input_imgs')
 
     return _inputs, _labels, _input_imgs, _is_training
 

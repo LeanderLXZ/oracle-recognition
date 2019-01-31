@@ -129,14 +129,20 @@ class Test(object):
     utils.thick_line()
     print('Loading data...')
     utils.thin_line()
-    preprocessed_path_ = join(self.cfg.DPP_DATA_PATH, self.cfg.DATABASE_NAME)
 
-    x = utils.load_data_from_pkl(
-        join(preprocessed_path_, 'x_test' + self.append_info + '.p'))
-    y = utils.load_data_from_pkl(
-        join(preprocessed_path_, 'y_test' + self.append_info + '.p'))
-    imgs = utils.load_data_from_pkl(
-        join(preprocessed_path_, 'imgs_test' + self.append_info + '.p'))
+    if self.cfg.DATABASE_MODE == 'small':
+      preprocessed_path_ = join('../data/small', self.cfg.DATABASE_NAME)
+    elif self.cfg.DATABASE_MODE == 'large':
+      preprocessed_path_ = join('../data/large', self.cfg.DATABASE_NAME)
+    else:
+      preprocessed_path_ = join(self.cfg.DPP_DATA_PATH, self.cfg.DATABASE_NAME)
+
+    x = utils.load_pkls(
+        preprocessed_path_, 'x_test' + self.append_info, tl=self.tl_encode)
+    y = utils.load_pkls(
+        preprocessed_path_, 'y_test' + self.append_info)
+    imgs = utils.load_pkls(
+        preprocessed_path_, 'imgs_test' + self.append_info)
 
     return x, y, imgs
 
@@ -149,10 +155,7 @@ class Test(object):
 
       inputs_ = loaded_graph.get_tensor_by_name('inputs:0')
       labels_ = loaded_graph.get_tensor_by_name('labels:0')
-      if self.tl_encode:
-        input_imgs_ = loaded_graph.get_tensor_by_name('input_imgs:0')
-      else:
-        input_imgs_ = inputs_
+      input_imgs_ = loaded_graph.get_tensor_by_name('input_imgs:0')
 
       if self.multi_gpu:
         accuracy_ = loaded_graph.get_tensor_by_name('total_acc:0')
@@ -423,10 +426,7 @@ class TestMultiObjects(Test):
 
       inputs_ = loaded_graph.get_tensor_by_name('inputs:0')
       labels_ = loaded_graph.get_tensor_by_name('labels:0')
-      if self.tl_encode:
-        input_imgs_ = loaded_graph.get_tensor_by_name('input_imgs:0')
-      else:
-        input_imgs_ = inputs_
+      input_imgs_ = loaded_graph.get_tensor_by_name('input_imgs:0')
 
       if self.multi_gpu:
         preds_ = loaded_graph.get_tensor_by_name('total_preds:0')
