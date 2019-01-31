@@ -187,12 +187,8 @@ class CapsNetDistribute(CapsNet):
           axis=0, num_or_size_splits=self.cfg.GPU_NUMBER, value=inputs)
       y_splits_tower = tf.split(
           axis=0, num_or_size_splits=self.cfg.GPU_NUMBER, value=labels)
-
-      if self.cfg.TRANSFER_LEARNING == 'encode':
-        imgs_splits_tower = tf.split(
-            axis=0, num_or_size_splits=self.cfg.GPU_NUMBER, value=input_imgs)
-      else:
-        imgs_splits_tower = None
+      imgs_splits_tower = tf.split(
+          axis=0, num_or_size_splits=self.cfg.GPU_NUMBER, value=input_imgs)
 
       # Calculate the gradients for each models tower.
       grads_all, loss_all, acc_all, clf_loss_all, \
@@ -201,12 +197,8 @@ class CapsNetDistribute(CapsNet):
       for i in range(self.cfg.GPU_NUMBER):
 
         # Dequeues one batch for the GPU
-        x_tower, y_tower = x_splits_tower[i], y_splits_tower[i]
-
-        if self.cfg.TRANSFER_LEARNING == 'encode':
-          imgs_tower = imgs_splits_tower[i]
-        else:
-          imgs_tower = x_tower
+        x_tower, y_tower, imgs_tower = \
+            x_splits_tower[i], y_splits_tower[i], imgs_splits_tower[i]
 
         with tf.variable_scope(tf.get_variable_scope(), reuse=bool(i != 0)):
           with tf.device('/gpu:%d' % i):

@@ -133,12 +133,8 @@ class CapsNetMultiTasks(CapsNetDistribute):
         axis=0, num_or_size_splits=self.cfg.TASK_NUMBER, value=x_tower)
     y_splits_task = tf.split(
         axis=0, num_or_size_splits=self.cfg.TASK_NUMBER, value=y_tower)
-
-    if self.cfg.TRANSFER_LEARNING == 'encode':
-      imgs_splits_task = tf.split(
-          axis=0, num_or_size_splits=self.cfg.GPU_NUMBER, value=imgs_tower)
-    else:
-      imgs_splits_task = None
+    imgs_splits_task = tf.split(
+        axis=0, num_or_size_splits=self.cfg.TASK_NUMBER, value=imgs_tower)
 
     loss_tower, acc_tower, preds_tower, clf_loss_tower, \
         rec_loss_tower, rec_images_tower = [], [], [], [], [], []
@@ -147,12 +143,8 @@ class CapsNetMultiTasks(CapsNetDistribute):
     for i in tqdm(range(self.cfg.TASK_NUMBER), ncols=100, unit=' task'):
 
       # Dequeues one task
-      x_task, y_task = x_splits_task[gpu_idx], y_splits_task[gpu_idx]
-
-      if self.cfg.TRANSFER_LEARNING == 'encode':
-        imgs_task = imgs_splits_task[i]
-      else:
-        imgs_task = x_tower
+      x_task, y_task, imgs_task = \
+          x_splits_task[gpu_idx], y_splits_task[gpu_idx], imgs_splits_task[i]
 
       with tf.variable_scope(tf.get_variable_scope(), reuse=bool(i != 0)):
         with tf.name_scope('task_%d' % i):
@@ -236,12 +228,8 @@ class CapsNetMultiTasks(CapsNetDistribute):
           axis=0, num_or_size_splits=self.cfg.GPU_NUMBER, value=inputs)
       y_splits_tower = tf.split(
           axis=0, num_or_size_splits=self.cfg.GPU_NUMBER, value=labels)
-
-      if self.cfg.TRANSFER_LEARNING == 'encode':
-        imgs_splits_tower = tf.split(
-            axis=0, num_or_size_splits=self.cfg.GPU_NUMBER, value=input_imgs)
-      else:
-        imgs_splits_tower = None
+      imgs_splits_tower = tf.split(
+          axis=0, num_or_size_splits=self.cfg.GPU_NUMBER, value=input_imgs)
 
       # Calculate the gradients for each models tower.
       grads_all, loss_all, acc_all, clf_loss_all, \
@@ -253,12 +241,8 @@ class CapsNetMultiTasks(CapsNetDistribute):
         print('Building tower: ', i)
 
         # Dequeues one batch for the GPU
-        x_tower, y_tower = x_splits_tower[i], y_splits_tower[i]
-
-        if self.cfg.TRANSFER_LEARNING == 'encode':
-          imgs_tower = imgs_splits_tower[i]
-        else:
-          imgs_tower = x_tower
+        x_tower, y_tower, imgs_tower = \
+            x_splits_tower[i], y_splits_tower[i], imgs_splits_tower[i]
 
         with tf.variable_scope(tf.get_variable_scope(), reuse=bool(i != 0)):
           with tf.device('/gpu:%d' % i):

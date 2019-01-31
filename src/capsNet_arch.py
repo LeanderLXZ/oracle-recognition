@@ -39,8 +39,6 @@ def conv_block(model, cfg, conv_size, conv_stride, conv_depth,
 
 def classifier(inputs, cfg, batch_size=None, is_training=None):
 
-  print('BBBBBBB--------BBBBBBB', batch_size)
-
   if cfg.DATABASE_NAME == 'radical':
     num_classes = cfg.NUM_RADICALS
   else:
@@ -135,8 +133,6 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
 
 def decoder(inputs, cfg, batch_size=None, is_training=None):
 
-  print('BBBBBBB--------BBBBBBB', batch_size)
-
   model = Sequential(inputs)
   act_fn_last = None if cfg.REC_LOSS == 'ce' else 'relu'
 
@@ -163,9 +159,6 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
           idx=2))
       model.add(BatchNorm(
           cfg, is_training, momentum=0.99, act_fn=act_fn_last, idx=2))
-      assert model.top_layer.get_shape() == (
-        batch_size, cfg.IMAGE_SIZE[0]*cfg.IMAGE_SIZE[1]
-      ), model.top_layer.get_shape()
 
     elif cfg.DECODER_TYPE == 'conv':
       model.add(Reshape(      # (b, 4, 4, 1)
@@ -211,8 +204,6 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
           idx=3))
       model.add(BatchNorm(
           cfg, is_training, momentum=0.99, act_fn=act_fn_last, idx=3))
-      assert model.top_layer.get_shape() == (
-        batch_size, *cfg.IMAGE_SIZE, 1), model.top_layer.get_shape()
 
     elif cfg.DECODER_TYPE == 'conv_t':
       model.add(Reshape(
@@ -269,8 +260,6 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
           output_shape=[batch_size, 28, 28, 1],
           act_fn=act_fn_last,
           idx=4))
-      assert model.top_layer.get_shape() == (
-        batch_size, *cfg.IMAGE_SIZE, 1), model.top_layer.get_shape()
 
     else:
       raise ValueError('Wrong decoder type!')
