@@ -429,7 +429,7 @@ class Main(object):
         cfg=self.cfg,
         multi_gpu=self.multi_gpu,
         version=self.cfg.VERSION,
-        during_trainin=during_training,
+        during_training=during_training,
         epoch_train=epoch,
         step_train=step,
         clf_arch_info=self.clf_arch_info,
