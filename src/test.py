@@ -261,11 +261,7 @@ class Test(object):
         self.y_test,
         self.cfg.TEST_BATCH_SIZE,
         imgs=self.imgs_test)
-
-    if len(self.x_test) % self.cfg.TEST_BATCH_SIZE == 0:
-      n_batch = (len(self.x_test) // self.cfg.TEST_BATCH_SIZE)
-    else:
-      n_batch = (len(self.x_test) // self.cfg.TEST_BATCH_SIZE) + 1
+    n_batch = (len(self.x_test) // self.cfg.TEST_BATCH_SIZE)
 
     if self.cfg.TEST_WITH_REC:
       for _ in tqdm(range(n_batch), total=n_batch,
