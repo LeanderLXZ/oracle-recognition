@@ -145,6 +145,14 @@ class Test(object):
     imgs = utils.load_pkls(
         preprocessed_path_, 'imgs_test' + self.append_info)
 
+    utils.thin_line()
+    print('Data info:')
+    utils.thin_line()
+    print('x_test: {}\ny_test: {}\nimgs_test: {}'.format(
+        x.shape,
+        y.shape,
+        imgs.shape))
+
     return x, y, imgs
 
   def _get_tensors(self, loaded_graph):
@@ -253,7 +261,11 @@ class Test(object):
         self.y_test,
         self.cfg.TEST_BATCH_SIZE,
         imgs=self.imgs_test)
-    n_batch = (len(self.x_test) // self.cfg.TEST_BATCH_SIZE) + 1
+
+    if len(self.x_test) % self.cfg.TEST_BATCH_SIZE == 0:
+      n_batch = (len(self.x_test) // self.cfg.TEST_BATCH_SIZE)
+    else:
+      n_batch = (len(self.x_test) // self.cfg.TEST_BATCH_SIZE) + 1
 
     if self.cfg.TEST_WITH_REC:
       for _ in tqdm(range(n_batch), total=n_batch,
@@ -466,7 +478,11 @@ class TestMultiObjects(Test):
     pred_all = []
     _batch_generator = utils.get_batches_all_x(
         self.x_test, self.cfg.TEST_BATCH_SIZE)
-    n_batch = (len(self.x_test) // self.cfg.TEST_BATCH_SIZE) + 1
+
+    if len(self.x_test) % self.cfg.TEST_BATCH_SIZE == 0:
+      n_batch = (len(self.x_test) // self.cfg.TEST_BATCH_SIZE)
+    else:
+      n_batch = (len(self.x_test) // self.cfg.TEST_BATCH_SIZE) + 1
 
     for _ in tqdm(range(n_batch), total=n_batch,
                   ncols=100, unit=' batch'):
