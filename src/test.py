@@ -26,7 +26,7 @@ class Test(object):
                multi_gpu=False,
                version=None,
                load_last_ckp=True,
-               is_training=False,
+               during_training=False,
                epoch_train=None,
                step_train=None,
                clf_arch_info=None,
@@ -37,7 +37,7 @@ class Test(object):
     self.multi_gpu = multi_gpu
     self.version = version
     self.load_last_ckp = load_last_ckp
-    self.is_training = is_training
+    self.during_training = during_training
     self.epoch_train = epoch_train
     self.step_train = step_train
     self.append_info = self.info[0]
@@ -78,7 +78,7 @@ class Test(object):
 
   def _get_paths(self):
     """Get paths for testing."""
-    if self.is_training:
+    if self.during_training:
       # Get log path
       test_log_path_ = join(
           self.cfg.TEST_LOG_PATH, self.version) + self.append_info
@@ -157,6 +157,7 @@ class Test(object):
       inputs_ = loaded_graph.get_tensor_by_name('inputs:0')
       labels_ = loaded_graph.get_tensor_by_name('labels:0')
       input_imgs_ = loaded_graph.get_tensor_by_name('input_imgs:0')
+      is_training = loaded_graph.get_tensor_by_name('is_training:0')
 
       if self.multi_gpu:
         accuracy_ = loaded_graph.get_tensor_by_name('total_acc:0')
@@ -166,10 +167,11 @@ class Test(object):
           clf_loss_ = loaded_graph.get_tensor_by_name('total_clf_loss:0')
           rec_loss_ = loaded_graph.get_tensor_by_name('total_rec_loss:0')
           rec_images_ = loaded_graph.get_tensor_by_name('total_rec_images:0')
-          return inputs_, labels_, input_imgs_, preds_, loss_, \
+          return inputs_, labels_, input_imgs_, is_training, preds_, loss_, \
               accuracy_, clf_loss_, rec_loss_, rec_images_
         else:
-          return inputs_, labels_, input_imgs_, preds_, loss_, accuracy_
+          return inputs_, labels_, input_imgs_, is_training, \
+              preds_, loss_, accuracy_
       else:
         accuracy_ = loaded_graph.get_tensor_by_name('accuracy:0')
         loss_ = loaded_graph.get_tensor_by_name('loss:0')
@@ -178,10 +180,11 @@ class Test(object):
           clf_loss_ = loaded_graph.get_tensor_by_name('clf_loss:0')
           rec_loss_ = loaded_graph.get_tensor_by_name('rec_loss:0')
           rec_images_ = loaded_graph.get_tensor_by_name('rec_images:0')
-          return inputs_, labels_, input_imgs_, preds_, loss_, \
+          return inputs_, labels_, input_imgs_, is_training, preds_, loss_, \
               accuracy_, clf_loss_, rec_loss_, rec_images_
         else:
-          return inputs_, labels_, input_imgs_, preds_, loss_, accuracy_
+          return inputs_, labels_, input_imgs_, is_training,\
+              preds_, loss_, accuracy_
 
   def _get_preds_int(self, preds_vec):
     """Get integer predictions."""
@@ -192,7 +195,7 @@ class Test(object):
 
     # Save preds
     if self.cfg.SAVE_TEST_PRED:
-      if self.is_training and (self.epoch_train != 'end'):
+      if self.during_training and (self.epoch_train != 'end'):
         utils.save_test_pred_is_training(
             self.test_log_path, self.epoch_train, self.step_train,
             self.y_test, preds, preds_vec, save_num=20, pred_is_int=True)
@@ -230,6 +233,7 @@ class Test(object):
                        inputs,
                        labels,
                        input_imgs,
+                       is_training,
                        preds,
                        loss,
                        acc,
@@ -262,7 +266,8 @@ class Test(object):
               sess.run([preds, loss, clf_loss, rec_loss, acc],
                        feed_dict={inputs: x_batch,
                                   labels: y_batch,
-                                  input_imgs: imgs_batch})
+                                  input_imgs: imgs_batch,
+                                  is_training: False})
           loss_all.append(loss_i)
           clf_loss_all.append(clf_loss_i)
           rec_loss_all.append(rec_loss_i)
@@ -298,7 +303,8 @@ class Test(object):
               sess.run([preds, loss, acc],
                        feed_dict={inputs: x_batch,
                                   labels: y_batch,
-                                  input_imgs: imgs_batch})
+                                  input_imgs: imgs_batch,
+                                  is_training: False})
           loss_all.append(loss_i)
           acc_all.append(acc_i)
         else:
@@ -322,8 +328,9 @@ class Test(object):
 
     return preds_vec, loss_, clf_loss_, rec_loss_, acc_
 
-  def tester(self, sess, inputs, labels, input_imgs, preds, rec_images,
-             start_time, loss=None, acc=None, clf_loss=None, rec_loss=None):
+  def tester(self, sess, inputs, labels, input_imgs, is_training,
+             preds, rec_images, start_time,
+             loss=None, acc=None, clf_loss=None, rec_loss=None):
 
     utils.thin_line()
     print('Calculating loss and accuracy of test set...')
@@ -331,7 +338,7 @@ class Test(object):
     # Get losses and accuracies
     preds_vec_test, loss_test, clf_loss_test, rec_loss_test, acc_test = \
         self._eval_on_batches(
-            sess, inputs, labels, input_imgs, preds,
+            sess, inputs, labels, input_imgs, is_training, preds,
             loss, acc, clf_loss, rec_loss, rec_images)
 
     # Get integer predictions
@@ -346,7 +353,7 @@ class Test(object):
     print('Test Accuracy: {:.2f}%'.format(acc_test * 100))
 
     # Save test log
-    if self.is_training and (self.epoch_train != 'end'):
+    if self.during_training and (self.epoch_train != 'end'):
       utils.save_test_log_is_training(
           self.test_log_path, self.epoch_train, self.step_train,
           loss_test, acc_test, clf_loss_test, rec_loss_test,
@@ -378,15 +385,15 @@ class Test(object):
 
       # Get Tensors from loaded models
       if self.cfg.TEST_WITH_REC:
-        inputs, labels, input_imgs, preds, \
+        inputs, labels, input_imgs, is_training, preds, \
             loss, acc, clf_loss, rec_loss, rec_images = \
             self._get_tensors(loaded_graph)
       else:
-        inputs, labels, input_imgs, preds, loss, acc = \
+        inputs, labels, input_imgs, is_training, preds, loss, acc = \
             self._get_tensors(loaded_graph)
         clf_loss, rec_loss, rec_images = None, None, None
 
-      self.tester(sess, inputs, labels, input_imgs, preds,
+      self.tester(sess, inputs, labels, input_imgs, is_training, preds,
                   rec_images, start_time, loss=loss, acc=acc,
                   clf_loss=clf_loss, rec_loss=rec_loss)
 
@@ -398,7 +405,7 @@ class TestMultiObjects(Test):
                multi_gpu=False,
                version=None,
                load_last_ckp=True,
-               is_training=False,
+               during_training=False,
                epoch_train=None,
                step_train=None,
                clf_arch_info=None,
@@ -407,7 +414,7 @@ class TestMultiObjects(Test):
                                            multi_gpu=multi_gpu,
                                            version=version,
                                            load_last_ckp=load_last_ckp,
-                                           is_training=is_training,
+                                           during_training=during_training,
                                            epoch_train=epoch_train,
                                            step_train=step_train,
                                            clf_arch_info=clf_arch_info,
@@ -428,26 +435,28 @@ class TestMultiObjects(Test):
       inputs_ = loaded_graph.get_tensor_by_name('inputs:0')
       labels_ = loaded_graph.get_tensor_by_name('labels:0')
       input_imgs_ = loaded_graph.get_tensor_by_name('input_imgs:0')
+      is_training = loaded_graph.get_tensor_by_name('is_training:0')
 
       if self.multi_gpu:
         preds_ = loaded_graph.get_tensor_by_name('total_preds:0')
         if self.cfg.TEST_WITH_REC:
           rec_images_ = loaded_graph.get_tensor_by_name('total_rec_images:0')
-          return inputs_, labels_, input_imgs_, preds_, rec_images_
+          return inputs_, labels_, input_imgs_, is_training, preds_, rec_images_
         else:
-          return inputs_, labels_, input_imgs_, preds_
+          return inputs_, labels_, input_imgs_, is_training, preds_
       else:
         preds_ = loaded_graph.get_tensor_by_name('preds:0')
         if self.cfg.TEST_WITH_REC:
           rec_images_ = loaded_graph.get_tensor_by_name('rec_images:0')
-          return inputs_, labels_, input_imgs_, preds_, rec_images_
+          return inputs_, labels_, input_imgs_, is_training, preds_, rec_images_
         else:
-          return inputs_, labels_, input_imgs_, preds_
+          return inputs_, labels_, input_imgs_, is_training, preds_
 
   def _get_preds_vector(self,
                         sess,
                         inputs,
-                        preds):
+                        preds,
+                        is_training):
     """Get prediction vectors of full train set."""
     utils.thin_line()
     print('Getting prediction vectors...')
@@ -468,7 +477,7 @@ class TestMultiObjects(Test):
               np.zeros_like(x_batch[0]), axis=0), axis=0)
         assert len(x_batch) == self.cfg.TEST_BATCH_SIZE
 
-      pred_i = sess.run(preds, feed_dict={inputs: x_batch})
+      pred_i = sess.run(preds, feed_dict={inputs: x_batch, is_training: False})
       if len_batch != self.cfg.TEST_BATCH_SIZE:
         pred_i = pred_i[:len_batch]
       pred_all.extend(list(pred_i))
@@ -506,7 +515,7 @@ class TestMultiObjects(Test):
           'Wrong Mode Name! Find {}!'.format(self.cfg.MOD_PRED_MODE))
 
     if self.cfg.SAVE_TEST_PRED:
-      if self.is_training and (self.epoch_train != 'end'):
+      if self.during_training and (self.epoch_train != 'end'):
         utils.save_test_pred_is_training(
             self.test_log_path, self.epoch_train, self.step_train,
             self.y_test, preds, preds_vec, save_num=20)
@@ -583,7 +592,7 @@ class TestMultiObjects(Test):
         precision, recall, accuracy, f1score, f05score, f2score)
 
     # Save evaluation scores of multi-objects detection.
-    if self.is_training and (self.epoch_train != 'end'):
+    if self.during_training and (self.epoch_train != 'end'):
       utils.save_multi_obj_scores_is_training(
           self.test_log_path, self.epoch_train, self.step_train,
           precision, recall, accuracy, f1score, f05score, f2score)
@@ -712,14 +721,15 @@ class TestMultiObjects(Test):
         append_info='_no_overlap'
     )
 
-  def tester(self, sess, inputs, labels, input_imgs, preds, rec_images,
-             start_time, loss=None, acc=None, clf_loss=None, rec_loss=None):
+  def tester(self, sess, inputs, labels, input_imgs,
+             is_training, preds, rec_images, start_time,
+             loss=None, acc=None, clf_loss=None, rec_loss=None):
 
     utils.thin_line()
     print('Calculating loss and accuracy of test set...')
 
     # Get losses and accuracies
-    preds_vec_test = self._get_preds_vector(sess, inputs, preds)
+    preds_vec_test = self._get_preds_vector(sess, inputs, preds, is_training)
 
     # Get binary predictions
     preds_binary = self._get_preds_binary(preds_vec=preds_vec_test)
@@ -754,13 +764,14 @@ class TestMultiObjects(Test):
 
       # Get Tensors from loaded models
       if self.cfg.TEST_WITH_REC:
-        inputs, labels, input_imgs, preds, rec_images = \
+        inputs, labels, input_imgs, is_training, preds, rec_images = \
             self._get_tensors(loaded_graph)
       else:
-        inputs, labels, input_imgs, preds = self._get_tensors(loaded_graph)
+        inputs, labels, input_imgs, is_training, preds = \
+            self._get_tensors(loaded_graph)
         rec_images = None
 
-      self.tester(sess, inputs, labels, input_imgs,
+      self.tester(sess, inputs, labels, input_imgs, is_training,
                   preds, rec_images, start_time)
 
 
@@ -771,7 +782,7 @@ class TestOracle(TestMultiObjects):
                multi_gpu=False,
                version=None,
                load_last_ckp=True,
-               is_training=False,
+               during_training=False,
                epoch_train=None,
                step_train=None,
                clf_arch_info=None,
@@ -780,7 +791,7 @@ class TestOracle(TestMultiObjects):
                                            multi_gpu=multi_gpu,
                                            version=version,
                                            load_last_ckp=load_last_ckp,
-                                           is_training=is_training,
+                                           during_training=during_training,
                                            epoch_train=epoch_train,
                                            step_train=step_train,
                                            clf_arch_info=clf_arch_info,

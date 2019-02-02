@@ -417,7 +417,7 @@ class Main(object):
 
   def _test(self,
             sess,
-            is_training=False,
+            during_training=False,
             epoch=None,
             step=None,
             mode='single'):
@@ -429,7 +429,7 @@ class Main(object):
         cfg=self.cfg,
         multi_gpu=self.multi_gpu,
         version=self.cfg.VERSION,
-        is_training=is_training,
+        during_trainin=during_training,
         epoch_train=epoch,
         step_train=step,
         clf_arch_info=self.clf_arch_info,
@@ -450,7 +450,7 @@ class Main(object):
 
     tester_(**test_params).tester(
         sess, self.inputs, self.labels, self.input_imgs,
-        self.preds, self.rec_images, start_time_test,
+        self.is_training, self.preds, self.rec_images, start_time_test,
         self.loss, self.accuracy, self.clf_loss, self.rec_loss)
 
   def _trainer(self, sess):
@@ -544,18 +544,18 @@ class Main(object):
 
       # Evaluate on test set per epoch
       if self.cfg.TEST_SO_MODE == 'per_epoch':
-        self._test(sess, is_training=True,
+        self._test(sess, during_training=True,
                    epoch=epoch_i, step=step, mode='single')
 
       # Evaluate on multi-objects test set per epoch
       if self.cfg.TEST_MO_MODE == 'per_epoch':
-        self._test(sess, is_training=True,
+        self._test(sess, during_training=True,
                    epoch=epoch_i, step=step, mode='multi_obj')
 
       # Evaluate on Oracles test set per epoch
       if self.cfg.DATABASE_NAME == 'radical':
         if self.cfg.TEST_ORACLE_MODE == 'per_epoch':
-          self._test(sess, is_training=True,
+          self._test(sess, during_training=True,
                      epoch=epoch_i, step=step, mode='oracle')
 
       utils.thin_line()
@@ -570,16 +570,16 @@ class Main(object):
 
     # Evaluate on test set after training
     if self.cfg.TEST_SO_MODE == 'after_training':
-      self._test(sess, is_training=True, epoch='end', mode='single')
+      self._test(sess, during_training=True, epoch='end', mode='single')
 
     # Evaluate on multi-objects test set after training
     if self.cfg.TEST_MO_MODE == 'after_training':
-      self._test(sess, is_training=True, epoch='end', mode='multi_obj')
+      self._test(sess, during_training=True, epoch='end', mode='multi_obj')
 
     # Evaluate on Oracles test set after training
     if self.cfg.DATABASE_NAME == 'radical':
       if self.cfg.TEST_ORACLE_MODE == 'after_training':
-        self._test(sess, is_training=True, epoch='end', mode='oracle')
+        self._test(sess, during_training=True, epoch='end', mode='oracle')
 
     utils.thick_line()
     print('All task finished! Total time: {:.2f}'
