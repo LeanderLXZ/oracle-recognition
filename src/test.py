@@ -213,10 +213,11 @@ class Test(object):
                    x,
                    y,
                    imgs,
+                   is_training,
                    step=None):
     """Save reconstructed images."""
     rec_images_ = sess.run(
-        rec_images, feed_dict={inputs: x, labels: y})
+        rec_images, feed_dict={inputs: x, labels: y, is_training: False})
 
     utils.save_imgs(
         real_imgs=imgs,
@@ -277,14 +278,15 @@ class Test(object):
           if self.cfg.TEST_SAVE_IMAGE_STEP:
             if step % self.cfg.TEST_SAVE_IMAGE_STEP == 0:
               self._save_images(sess, rec_images, inputs, labels,
-                                x_batch, y_batch, step)
+                                x_batch, y_batch, is_training, step)
         else:
           # The last batch which has less examples
           for i in range(self.cfg.TEST_BATCH_SIZE - len_batch):
             x_batch = np.append(x_batch, np.expand_dims(
                 np.zeros_like(x_batch[0]), axis=0), axis=0)
           assert len(x_batch) == self.cfg.TEST_BATCH_SIZE
-          pred_i = sess.run(preds, feed_dict={inputs: x_batch})
+          pred_i = sess.run(preds, feed_dict={inputs: x_batch,
+                                              is_training: False})
           pred_i = pred_i[:len_batch]
 
         pred_all.extend(list(pred_i))
@@ -313,7 +315,8 @@ class Test(object):
             x_batch = np.append(x_batch, np.expand_dims(
                 np.zeros_like(x_batch[0]), axis=0), axis=0)
           assert len(x_batch) == self.cfg.TEST_BATCH_SIZE
-          pred_i = sess.run(preds, feed_dict={inputs: x_batch})
+          pred_i = sess.run(preds, feed_dict={inputs: x_batch,
+                                              is_training: False})
           pred_i = pred_i[:len_batch]
 
         pred_all.extend(list(pred_i))
@@ -607,7 +610,8 @@ class TestMultiObjects(Test):
                       inputs,
                       labels,
                       preds_binary,
-                      preds_vector):
+                      preds_vector,
+                      is_training):
     """Save reconstructed images."""
     utils.thin_line()
     print('Getting reconstruction images...')
@@ -670,7 +674,9 @@ class TestMultiObjects(Test):
       # Get remake images which contain different objects
       # y_rec_imgs_ shape: [128, 28, 28, 1] for mnist
       y_rec_imgs_ = sess.run(
-          rec_images, feed_dict={inputs: x_new, labels: y_hat_new})
+          rec_images, feed_dict={inputs: x_new,
+                                 labels: y_hat_new,
+                                 is_training: False})
       rec_images_.append(y_rec_imgs_[:n_y])
 
     # Get colorful overlapped images
@@ -739,8 +745,8 @@ class TestMultiObjects(Test):
 
     # Save reconstruction images of multi-objects detection
     if self.cfg.TEST_WITH_REC:
-      self._save_images_mo(sess, rec_images, inputs,
-                           labels, preds_binary, preds_vec_test)
+      self._save_images_mo(sess, rec_images, inputs, labels,
+                           preds_binary, preds_vec_test, is_training)
 
     utils.thin_line()
     print('Testing finished! Using time: {:.2f}'
