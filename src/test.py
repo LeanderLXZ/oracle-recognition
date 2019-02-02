@@ -210,10 +210,10 @@ class Test(object):
                    rec_images,
                    inputs,
                    labels,
+                   is_training,
                    x,
                    y,
                    imgs,
-                   is_training,
                    step=None):
     """Save reconstructed images."""
     rec_images_ = sess.run(
@@ -277,8 +277,8 @@ class Test(object):
           # Save reconstruct images
           if self.cfg.TEST_SAVE_IMAGE_STEP:
             if step % self.cfg.TEST_SAVE_IMAGE_STEP == 0:
-              self._save_images(sess, rec_images, inputs, labels,
-                                x_batch, y_batch, is_training, step)
+              self._save_images(sess, rec_images, inputs, labels, is_training,
+                                x_batch, y_batch, imgs_batch, step=step)
         else:
           # The last batch which has less examples
           for i in range(self.cfg.TEST_BATCH_SIZE - len_batch):
@@ -609,9 +609,9 @@ class TestMultiObjects(Test):
                       rec_images,
                       inputs,
                       labels,
+                      is_training,
                       preds_binary,
-                      preds_vector,
-                      is_training):
+                      preds_vector):
     """Save reconstructed images."""
     utils.thin_line()
     print('Getting reconstruction images...')
@@ -746,7 +746,7 @@ class TestMultiObjects(Test):
     # Save reconstruction images of multi-objects detection
     if self.cfg.TEST_WITH_REC:
       self._save_images_mo(sess, rec_images, inputs, labels,
-                           preds_binary, preds_vec_test, is_training)
+                           is_training, preds_binary, preds_vec_test)
 
     utils.thin_line()
     print('Testing finished! Using time: {:.2f}'
