@@ -602,6 +602,8 @@ class Main(object):
 
 if __name__ == '__main__':
 
+  environ["TF_CPP_MIN_LOG_LEVEL"] = '3'
+
   parser = argparse.ArgumentParser(
     description="Training the model."
   )
