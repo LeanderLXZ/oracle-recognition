@@ -92,7 +92,7 @@ __C.DATA_AUG_PARAM = dict(
 # Keep original images if use data augment
 __C.DATA_AUG_KEEP_SOURCE = True
 # The max number of images of a class if use data augment
-__C.MAX_IMAGE_NUM = 10000
+__C.MAX_IMAGE_NUM = 2000
 
 # Oracle Parameters
 # Number of radicals to use for training
