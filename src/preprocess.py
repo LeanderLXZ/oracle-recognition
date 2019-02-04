@@ -571,7 +571,8 @@ class DataPreProcess(object):
     _save_data(self.x_test, self.preprocessed_path, 'x_test_cache')
 
     if self.cfg.NUM_MULTI_OBJECT:
-      _save_data(self.x_test_mul, self.preprocessed_path, 'x_test_mul_cache')
+      _save_data(self.x_test_mul, self.preprocessed_path,
+                 'x_test_multi_obj_cache')
     if self.data_base_name == 'radical':
       _save_data(
           self.x_test_oracle, self.preprocessed_path, 'x_test_oracle_cache')
@@ -725,9 +726,13 @@ def save_bottleneck_features(config,
   get_and_save_bf(config, dir_path, 'x_test_cache', 'x_test')
 
   if mul_imgs:
-    get_and_save_bf(config, dir_path, 'x_test_mul_cache', 'x_test_mul')
+    get_and_save_bf(config, dir_path,
+                    'x_test_multi_obj_cache',
+                    'x_test_multi_obj')
   if oracle:
-    get_and_save_bf(config, dir_path, 'x_test_oracle_cache', 'x_test_oracle')
+    get_and_save_bf(config, dir_path,
+                    'x_test_oracle_cache',
+                    'x_test_oracle')
 
   utils.thick_line()
   print('Done! Using {:.4}s'.format(time.time() - start_time))
