@@ -279,7 +279,11 @@ class Main(object):
     clf_loss_all = []
     rec_loss_all = []
 
-    batch_generator = utils.get_batches(x, y, self.cfg.BATCH_SIZE, imgs=imgs)
+    batch_generator = utils.get_batches(
+        x=x,
+        y=y,
+        imgs=imgs,
+        batch_size=self.cfg.BATCH_SIZE)
 
     if not silent:
       utils.thin_line()
@@ -479,7 +483,10 @@ class Main(object):
 
       utils.thin_line()
       train_batch_generator = utils.get_batches(
-          self.x_train, self.y_train, self.cfg.BATCH_SIZE, imgs=self.imgs_train)
+          x=self.x_train,
+          y=self.y_train,
+          imgs=self.imgs_train,
+          batch_size=self.cfg.BATCH_SIZE)
 
       if self.cfg.DISPLAY_STEP:
         iterator = range(self.n_batch_train)

@@ -226,20 +226,6 @@ def get_batches(x, y=None, imgs=None, batch_size=None, keep_last=False):
         yield x[start:end]
 
 
-def get_batches_all(x, y, batch_size):
-  """Split features and labels into batches."""
-  for start in range(0, len(x), batch_size):
-    end = start + batch_size
-    yield x[start:end], y[start:end]
-
-
-def get_batches_all_x(x, batch_size):
-  """Split features into batches."""
-  for start in range(0, len(x), batch_size):
-    end = start + batch_size
-    yield x[start:end]
-
-
 def print_status(epoch_i, epochs, step, start_time, loss_train,
                  clf_loss_train, rec_loss_train, acc_train, loss_valid,
                  clf_loss_valid, rec_loss_valid, acc_valid, with_rec):
