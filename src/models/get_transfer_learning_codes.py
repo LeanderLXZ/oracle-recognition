@@ -80,7 +80,8 @@ class GetBottleneckFeatures(object):
 
     # Scale to 0-255 and extract features
     if batch_size:
-      batch_generator = utils.get_batches_all_x(inputs, batch_size)
+      batch_generator = utils.get_batches(
+          inputs, batch_size=batch_size, keep_last=True)
       n_batch = len(inputs) // batch_size + 1
       bottleneck_features = []
       for _ in tqdm(range(n_batch), total=n_batch, ncols=100, unit='batch'):
@@ -127,7 +128,8 @@ class GetBottleneckFeatures(object):
 
       if batch_size:
 
-        batch_generator = utils.get_batches_all_x(inputs, batch_size)
+        batch_generator = utils.get_batches(
+            inputs, batch_size=batch_size, keep_last=True)
         if len(inputs) % batch_size == 0:
           n_batch = len(inputs) // batch_size
         else:

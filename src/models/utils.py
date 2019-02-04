@@ -204,14 +204,26 @@ def thick_line():
   print('=' * 55)
 
 
-def get_batches(x, y, batch_size, imgs=None):
+def get_batches(x, y=None, imgs=None, batch_size=None, keep_last=False):
   """Split features and labels into batches."""
-  for start in range(0, len(x) - batch_size + 1, batch_size):
-    end = start + batch_size
-    if imgs is not None:
-      yield x[start:end], y[start:end], imgs[start:end]
-    else:
-      yield x[start:end], y[start:end]
+  if keep_last:
+    for start in range(0, len(x), batch_size):
+      end = start + batch_size
+      if (y is not None) and (imgs is not None):
+        yield x[start:end], y[start:end], imgs[start:end]
+      elif (y is not None) and (imgs is None):
+        yield x[start:end], y[start:end]
+      else:
+        yield x[start:end]
+  else:
+    for start in range(0, len(x) - batch_size + 1, batch_size):
+      end = start + batch_size
+      if (y is not None) and (imgs is not None):
+        yield x[start:end], y[start:end], imgs[start:end]
+      elif (y is not None) and (imgs is None):
+        yield x[start:end], y[start:end]
+      else:
+        yield x[start:end]
 
 
 def get_batches_all(x, y, batch_size):

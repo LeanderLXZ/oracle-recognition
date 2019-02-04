@@ -257,11 +257,16 @@ class Test(object):
     rec_loss_all = []
     step = 0
     batch_generator = utils.get_batches(
-        self.x_test,
-        self.y_test,
-        self.cfg.TEST_BATCH_SIZE,
-        imgs=self.imgs_test)
-    n_batch = (len(self.x_test) // self.cfg.TEST_BATCH_SIZE)
+        x=self.x_test,
+        y=self.y_test,
+        imgs=self.imgs_test,
+        batch_size=self.cfg.TEST_BATCH_SIZE,
+        keep_last=True)
+
+    if len(self.x_test) % self.cfg.TEST_BATCH_SIZE == 0:
+      n_batch = (len(self.x_test) // self.cfg.TEST_BATCH_SIZE)
+    else:
+      n_batch = (len(self.x_test) // self.cfg.TEST_BATCH_SIZE) + 1
 
     if self.cfg.TEST_WITH_REC:
       for _ in tqdm(range(n_batch), total=n_batch,
@@ -339,8 +344,8 @@ class Test(object):
 
     return preds_vec, loss_, clf_loss_, rec_loss_, acc_
 
-  def tester(self, sess, inputs, labels, input_imgs, is_training,
-             preds, rec_images, start_time,
+  def tester(self, sess, inputs, labels, input_imgs,
+             is_training, preds, rec_images, start_time,
              loss=None, acc=None, clf_loss=None, rec_loss=None):
 
     utils.thin_line()
@@ -472,8 +477,8 @@ class TestMultiObjects(Test):
     utils.thin_line()
     print('Getting prediction vectors...')
     pred_all = []
-    _batch_generator = utils.get_batches_all_x(
-        self.x_test, self.cfg.TEST_BATCH_SIZE)
+    _batch_generator = utils. get_batches(
+        self.x_test, batch_size=self.cfg.TEST_BATCH_SIZE, keep_last=True)
 
     if len(self.x_test) % self.cfg.TEST_BATCH_SIZE == 0:
       n_batch = (len(self.x_test) // self.cfg.TEST_BATCH_SIZE)
