@@ -548,7 +548,8 @@ class TestMultiObjects(Test):
   def _get_multi_obj_scores(self, preds):
     """Get evaluation scores for multi-objects detection."""
     utils.thin_line()
-    print('Calculating evaluation scores for multi-objects detection...')
+    print('Calculating evaluation scores for {} detection...'.format(
+        self.info[1]))
 
     def _f_beta_score(p, r, beta):
       if p + r == 0:
