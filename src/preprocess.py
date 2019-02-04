@@ -649,10 +649,10 @@ class DataPreProcess(object):
     self._train_valid_split()
 
     # Save images
-    # self._save_images()
+    self._save_images()
 
     # Resize images and inputs
-    # self._resize_inputs()
+    self._resize_inputs()
 
     # Check data format
     self._check_data()
@@ -720,7 +720,7 @@ def save_bottleneck_features(config,
   print('Start calculating bottleneck features...')
   start_time = time.time()
 
-  pooling=self.cfg.BF_POOLING
+  pooling = config.BF_POOLING
   dir_path = join(config.DPP_DATA_PATH, data_base_name)
   get_and_save_bf(config, dir_path, 'x_train_cache',
                   'x_train', pooling=pooling)
