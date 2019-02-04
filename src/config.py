@@ -11,7 +11,7 @@ def _auto_version(c):
   if c['WITH_REC']:
     _version += '_{}_{}'.format(c['DECODER_TYPE'], c['REC_LOSS'])
   else:
-    _version += '_no_rec'
+   _version += '_no_rec'
   if c['DPP_TEST_AS_VALID']:
     _version += '_tav'
   return _version
@@ -30,7 +30,7 @@ __C = EasyDict()
 # 'cifar10' CIFAR-10
 __C.DATABASE_NAME = 'radical'
 # __C.DATABASE_NAME = 'mnist'
-__C.DATABASE_MODE = 'small'
+__C.DATABASE_MODE = 'large'
 
 # Training version
 # Set None to auto generate version
@@ -111,9 +111,6 @@ __C.OVERLAP = False
 # If Repeat, repetitive labels will appear in a image.
 __C.REPEAT = False
 
-# Number of parts for saving large pickle files
-__C.LARGE_DATA_PART_NUM = 1
-
 
 # ===========================================
 # #            Model Architecture           #
@@ -188,6 +185,9 @@ __C.TRANSFER_LEARNING = 'encode'  # None
 # Transfer learning model
 # 'vgg16', 'vgg19', 'resnet50', 'inceptionv3', 'xception'
 __C.TL_MODEL = 'xception'
+
+# Pooling method: 'avg', None
+__C.BF_POOLING = None
 
 
 # ===========================================

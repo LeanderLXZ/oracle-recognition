@@ -110,9 +110,6 @@ __C.OVERLAP = False
 # If Repeat, repetitive labels will appear in a image.
 __C.REPEAT = False
 
-# Number of parts for saving large pickle files
-__C.LARGE_DATA_PART_NUM = 1
-
 
 # ===========================================
 # #            Model Architecture           #
@@ -187,6 +184,9 @@ __C.TRANSFER_LEARNING = 'encode'  # None
 # Transfer learning model
 # 'vgg16', 'vgg19', 'resnet50', 'inceptionv3', 'xception'
 __C.TL_MODEL = 'xception'
+
+# Pooling method: 'avg', None
+__C.BF_POOLING = None
 
 
 # ===========================================

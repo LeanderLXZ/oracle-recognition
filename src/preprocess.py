@@ -272,7 +272,7 @@ class DataPreProcess(object):
     """Scaling input images to (0, 1)."""
     utils.thin_line()
     print('Scaling features...')
-    
+
     self.x = np.divide(self.x, 255.).astype(self.data_type)
     self.x_test = np.divide(self.x_test, 255.).astype(self.data_type)
 
@@ -280,7 +280,7 @@ class DataPreProcess(object):
     """One-hot-encoding labels."""
     utils.thin_line()
     print('One-hot-encoding labels...')
-    
+
     encoder = LabelBinarizer()
     encoder.fit(self.y)
     self.y = encoder.transform(self.y)
@@ -720,19 +720,25 @@ def save_bottleneck_features(config,
   print('Start calculating bottleneck features...')
   start_time = time.time()
 
+  pooling=self.cfg.BF_POOLING
   dir_path = join(config.DPP_DATA_PATH, data_base_name)
-  get_and_save_bf(config, dir_path, 'x_train_cache', 'x_train')
-  get_and_save_bf(config, dir_path, 'x_valid_cache', 'x_valid')
-  get_and_save_bf(config, dir_path, 'x_test_cache', 'x_test')
+  get_and_save_bf(config, dir_path, 'x_train_cache',
+                  'x_train', pooling=pooling)
+  get_and_save_bf(config, dir_path, 'x_valid_cache',
+                  'x_valid', pooling=pooling)
+  get_and_save_bf(config, dir_path, 'x_test_cache',
+                  'x_test', pooling=pooling)
 
   if mul_imgs:
     get_and_save_bf(config, dir_path,
                     'x_test_multi_obj_cache',
-                    'x_test_multi_obj')
+                    'x_test_multi_obj',
+                    pooling=pooling)
   if oracle:
     get_and_save_bf(config, dir_path,
                     'x_test_oracle_cache',
-                    'x_test_oracle')
+                    'x_test_oracle',
+                    pooling=pooling)
 
   utils.thick_line()
   print('Done! Using {:.4}s'.format(time.time() - start_time))

@@ -131,13 +131,13 @@ def load_large_data_from_pkl(data_path,
     print('Loading {}.p from {} parts...'.format(data_path, n_parts))
   data = []
   for i in range(n_parts):
-    data_path = data_path + '_{}.p'.format(i)
-    with open(data_path, 'rb') as f:
+    data_path_i = data_path + '_{}.p'.format(i)
+    with open(data_path_i, 'rb') as f:
       if verbose:
         print('Loading {}...'.format(f.name))
       if tl:
         data.append(load_data_tl(
-            data_path, size_batch, verbose=verbose, add_n_batch=add_n_batch))
+            data_path_i, size_batch, verbose=verbose, add_n_batch=add_n_batch))
       else:
         data.append(pickle.load(f))
   concat = np.concatenate(data, axis=0)
