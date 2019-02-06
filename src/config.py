@@ -30,7 +30,7 @@ __C = EasyDict()
 # 'cifar10' CIFAR-10
 __C.DATABASE_NAME = 'radical'
 # __C.DATABASE_NAME = 'mnist'
-__C.DATABASE_MODE = 'large'
+__C.DATABASE_MODE = 'small'
 
 # Training version
 # Set None to auto generate version
@@ -166,7 +166,7 @@ __C.WITH_REC = True
 # 'fc': full_connected layers
 # 'conv': convolution layers
 # 'conv_t': transpose convolution layers
-__C.DECODER_TYPE = 'fc'
+__C.DECODER_TYPE = 'conv_t'
 
 # Reconstruction loss
 # 'mse': Mean Square Error
