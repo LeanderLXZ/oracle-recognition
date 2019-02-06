@@ -258,6 +258,7 @@ def decoder(inputs, cfg, batch_size=None, is_training=None):
           stride=1,
           n_kernel=1,
           output_shape=[batch_size, 28, 28, 1],
+          padding='SAME',
           act_fn=act_fn_last,
           idx=4))
 

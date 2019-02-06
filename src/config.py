@@ -171,7 +171,7 @@ __C.DECODER_TYPE = 'conv_t'
 # Reconstruction loss
 # 'mse': Mean Square Error
 # 'ce' : sigmoid_cross_entropy_with_logits
-__C.REC_LOSS = 'mse'
+__C.REC_LOSS = 'ce'
 
 # Scaling for reconstruction loss
 __C.REC_LOSS_SCALE = 0.392  # 0.0005*32*32=0.512  # 0.0005*784=0.392
