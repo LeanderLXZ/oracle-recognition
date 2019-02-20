@@ -276,7 +276,8 @@ def print_full_set_eval(epoch_i, epochs, step, start_time,
 
 
 def print_multi_obj_eval(precision, recall, accuracy,
-                         f1score, f05score, f2score):
+                         f1score, f05score, f2score,
+                         top_n_list, precision_top_n_list):
   """Print information of multi-objects detection evaluation."""
   thin_line()
   print('Precision: {:.4f} \n'.format(precision),
@@ -286,6 +287,11 @@ def print_multi_obj_eval(precision, recall, accuracy,
         'F_0.5 Score: {:.4f} \n'.format(f05score),
         'F_2 Score: {:.4f} \n'.format(f2score),
         )
+  if top_n_list is not None:
+    thin_line()
+    for i, top_n in enumerate(top_n_list):
+      print('Top_{} Precision: {:.4f} \n'.format(
+          top_n, precision_top_n_list[i]))
 
 
 def save_config_log(file_path, cfg, clf_arch_info=None, rec_arch_info=None):
@@ -418,7 +424,8 @@ def save_test_log_is_training(file_path, epoch, step, loss_test, acc_test,
 
 
 def save_multi_obj_scores(file_path, precision, recall,
-                          accuracy, f1score, f05score, f2score):
+                          accuracy, f1score, f05score, f2score,
+                          top_n_list, precision_top_n_list):
   """Save evaluation scores of multi-objects detection."""
   file_path = os.path.join(file_path, 'multi_obj_scores.csv')
   thin_line()
@@ -435,11 +442,20 @@ def save_multi_obj_scores(file_path, precision, recall,
     f.write('F_1 Score: {:.4f} \n'.format(f1score))
     f.write('F_0.5 Score: {:.4f} \n'.format(f05score))
     f.write('F_2 Score: {:.4f} \n'.format(f2score))
+
+    if top_n_list is not None:
+      f.write('-' * 55 + '\n')
+      for i, top_n in enumerate(top_n_list):
+        f.write('Top_{} Precision: {:.4f} \n'.format(
+            top_n, precision_top_n_list[i]))
+
     f.write('=' * 55)
 
 
+
 def save_multi_obj_scores_is_training(file_path, epoch, step, precision, recall,
-                                      accuracy, f1score, f05score, f2score):
+                                      accuracy, f1score, f05score, f2score,
+                                      top_n_list, precision_top_n_list):
   """Save evaluation scores of multi-objects detection."""
   file_path = os.path.join(file_path, 'multi_obj_scores.csv')
 
@@ -447,14 +463,25 @@ def save_multi_obj_scores_is_training(file_path, epoch, step, precision, recall,
     with open(file_path, 'w') as f:
       header = ['Local_Time', 'Epoch', 'Batch', 'Precision', 'Recall',
                 'Accuracy', 'F_1 Score', 'F_0.5 Score', 'F_2 Score']
+      if top_n_list is not None:
+        for top_n in top_n_list:
+          header.append('Top_{}_Precision'.format(top_n))
       writer = csv.writer(f)
       writer.writerow(header)
+
+      if top_n_list is not None:
+        for i, top_n in enumerate(top_n_list):
+          header.append('Top_{}_Precision: {:.4f} \n'.format(
+              top_n, precision_top_n_list[i]))
 
   with open(file_path, 'a') as f:
     local_time = time.strftime(
         '%Y/%m/%d-%H:%M:%S', time.localtime(time.time()))
     log = [local_time, epoch, step, precision, recall,
            accuracy, f1score, f05score, f2score]
+    if top_n_list is not None:
+      for i in range(len(top_n_list)):
+        log.append(precision_top_n_list[i])
     writer = csv.writer(f)
     writer.writerow(log)
 

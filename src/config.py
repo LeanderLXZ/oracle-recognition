@@ -270,6 +270,10 @@ __C.TEST_SAVE_IMAGE_STEP = 5  # batches
 # should be same as training batch_size
 __C.TEST_BATCH_SIZE = __C.BATCH_SIZE
 
+# Top_N precision and accuracy
+# If None, do not calculate Top_N.
+__C.TOP_N_LIST = [5, 10, 20]
+
 # -------------------------------------------
 # Multi-objects detection
 

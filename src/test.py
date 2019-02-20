@@ -545,7 +545,7 @@ class TestMultiObjects(Test):
 
     return np.array(preds, dtype=int)
 
-  def _get_multi_obj_scores(self, preds):
+  def _get_multi_obj_scores(self, preds, preds_vec):
     """Get evaluation scores for multi-objects detection."""
     utils.thin_line()
     print('Calculating evaluation scores for {} detection...'.format(
@@ -564,15 +564,17 @@ class TestMultiObjects(Test):
     f1score = []
     f05score = []
     f2score = []
-    for y_pred, y_true in zip(preds, self.y_test):
+    for pred_vec, y_true in zip(preds, self.y_test):
+
       # true positive
-      tp = np.sum(np.multiply(y_true, y_pred))
+      tp = np.sum(np.multiply(y_true, pred_vec))
       # false positive
-      fp = np.sum(np.logical_and(np.equal(y_true, 0), np.equal(y_pred, 1)))
+      fp = np.sum(np.logical_and(np.equal(y_true, 0), np.equal(pred_vec, 1)))
       # false negative
-      fn = np.sum(np.logical_and(np.equal(y_true, 1), np.equal(y_pred, 0)))
+      fn = np.sum(np.logical_and(np.equal(y_true, 1), np.equal(pred_vec, 0)))
       # true negative
-      tn = np.sum(np.logical_and(np.equal(y_true, 0), np.equal(y_pred, 0)))
+      tn = np.sum(np.logical_and(np.equal(y_true, 0), np.equal(pred_vec, 0)))
+
       precision_ = tp / (tp + fp)
       accuracy_ = (tp + tn) / (tp + fp + tn + fn)
       recall_ = tp / (tp + fn)
@@ -582,6 +584,7 @@ class TestMultiObjects(Test):
       f1score.append(_f_beta_score(precision_, recall_, 1.))
       f05score.append(_f_beta_score(precision_, recall_, 0.5))
       f2score.append(_f_beta_score(precision_, recall_, 2.))
+
     precision = np.mean(precision)
     recall = np.mean(recall)
     accuracy = np.mean(accuracy)
@@ -608,19 +611,48 @@ class TestMultiObjects(Test):
     # accuracy = accuracy_score(self.y_test, preds)
     # f1score = f1_score(self.y_test, preds, average='samples')
 
+    # Top_N
+    precision_top_n_list = []
+    if self.cfg.TOP_N_LIST is not None:
+      for top_n in self.cfg.TOP_N_LIST:
+        precision_top_n = []
+        for pred_vec, y_true in zip(preds_vec, self.y_test):
+          y_pred_idx_top_n = np.argsort(pred_vec)[-top_n:]
+          y_true_idx = []
+          for i_, y_i in enumerate(y_true):
+            if y_i == 1:
+              y_true_idx.append(i_)
+          tp_top_n = 0
+          fp_top_n = 0
+          for y_idx in y_true_idx:
+            if y_idx in y_pred_idx_top_n:
+              tp_top_n += 1
+            else:
+              fp_top_n += 1
+          assert tp_top_n + fp_top_n == len(y_true_idx)
+          precision_top_n_ = tp_top_n / (tp_top_n + fp_top_n)
+          precision_top_n.append(precision_top_n_)
+        precision_top_n = np.mean(precision_top_n)
+        precision_top_n_list.append(precision_top_n)
+      assert len(precision_top_n_list) == len(self.cfg.TOP_N_LIST)
+
     # Print evaluation information
     utils.print_multi_obj_eval(
-        precision, recall, accuracy, f1score, f05score, f2score)
+        precision, recall, accuracy,
+        f1score, f05score, f2score,
+        self.cfg.TOP_N_LIST, precision_top_n_list)
 
     # Save evaluation scores of multi-objects detection.
     if self.during_training and (self.epoch_train != 'end'):
       utils.save_multi_obj_scores_is_training(
           self.test_log_path, self.epoch_train, self.step_train,
-          precision, recall, accuracy, f1score, f05score, f2score)
+          precision, recall, accuracy, f1score, f05score, f2score,
+          self.cfg.TOP_N_LIST, precision_top_n_list)
     else:
       utils.save_multi_obj_scores(
           self.test_log_path, precision, recall,
-          accuracy, f1score, f05score, f2score)
+          accuracy, f1score, f05score, f2score,
+          self.cfg.TOP_N_LIST, precision_top_n_list)
 
   def _save_images_mo(self,
                       sess,
@@ -759,7 +791,7 @@ class TestMultiObjects(Test):
     preds_binary = self._get_preds_binary(preds_vec=preds_vec_test)
 
     # Get evaluation scores for multi-objects detection.
-    self._get_multi_obj_scores(preds_binary)
+    self._get_multi_obj_scores(preds_binary, preds_vec_test)
 
     # Save reconstruction images of multi-objects detection
     if self.cfg.TEST_WITH_REC:
