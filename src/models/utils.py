@@ -368,7 +368,8 @@ def save_log(file_path, epoch_i, step, using_time,
 
 
 def save_test_log(file_path, loss_test, acc_test,
-                  clf_loss_test, rec_loss_test, with_rec):
+                  clf_loss_test, rec_loss_test, with_rec,
+                  top_n_list, acc_top_n_list):
   """Save losses and accuracies of testing."""
   file_path = os.path.join(file_path, 'test_log.csv')
   thin_line()
@@ -384,11 +385,19 @@ def save_test_log(file_path, loss_test, acc_test,
     if with_rec:
       f.write('Test Classifier Loss: {:.4f}\n'.format(clf_loss_test))
       f.write('Test Reconstruction Loss: {:.4f}\n'.format(rec_loss_test))
+
+    if top_n_list is not None:
+      f.write('-' * 55 + '\n')
+      for i, top_n in enumerate(top_n_list):
+        f.write('Top_{} Test Accuracy: {:.4f} \n'.format(
+            top_n, acc_top_n_list[i]))
+
     f.write('=' * 55)
 
 
 def save_test_log_is_training(file_path, epoch, step, loss_test, acc_test,
-                              clf_loss_test, rec_loss_test, with_rec):
+                              clf_loss_test, rec_loss_test, with_rec,
+                              top_n_list, acc_top_n_list):
   """Save losses and accuracies of testing."""
   file_path = os.path.join(file_path, 'test_log.csv')
 
@@ -396,6 +405,9 @@ def save_test_log_is_training(file_path, epoch, step, loss_test, acc_test,
     if not os.path.isfile(file_path):
       with open(file_path, 'w') as f:
         header = ['Local_Time', 'Epoch', 'Batch', 'Test_Loss', 'Test_Accuracy']
+        if top_n_list is not None:
+          for top_n in top_n_list:
+            header.append('Top_{}_Accuracy'.format(top_n))
         writer = csv.writer(f)
         writer.writerow(header)
 
@@ -403,6 +415,9 @@ def save_test_log_is_training(file_path, epoch, step, loss_test, acc_test,
       local_time = time.strftime(
           '%Y/%m/%d-%H:%M:%S', time.localtime(time.time()))
       log = [local_time, epoch, step, loss_test, acc_test]
+      if top_n_list is not None:
+        for i in range(len(top_n_list)):
+          log.append(acc_top_n_list[i])
       writer = csv.writer(f)
       writer.writerow(log)
   else:
@@ -411,6 +426,9 @@ def save_test_log_is_training(file_path, epoch, step, loss_test, acc_test,
         header = ['Local_Time', 'Epoch', 'Batch', 'Test_Loss',
                   'Test_Classifier_Loss', 'Test_Reconstruction_Loss',
                   'Test_Accuracy']
+        if top_n_list is not None:
+          for top_n in top_n_list:
+            header.append('Top_{}_Accuracy'.format(top_n))
         writer = csv.writer(f)
         writer.writerow(header)
 
@@ -419,6 +437,9 @@ def save_test_log_is_training(file_path, epoch, step, loss_test, acc_test,
           '%Y/%m/%d-%H:%M:%S', time.localtime(time.time()))
       log = [local_time, epoch, step, loss_test,
              clf_loss_test, rec_loss_test, acc_test]
+      if top_n_list is not None:
+        for i in range(len(top_n_list)):
+          log.append(acc_top_n_list[i])
       writer = csv.writer(f)
       writer.writerow(log)
 
@@ -450,7 +471,6 @@ def save_multi_obj_scores(file_path, precision, recall,
             top_n, precision_top_n_list[i]))
 
     f.write('=' * 55)
-
 
 
 def save_multi_obj_scores_is_training(file_path, epoch, step, precision, recall,

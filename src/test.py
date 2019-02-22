@@ -194,6 +194,24 @@ class Test(object):
           return inputs_, labels_, input_imgs_, is_training,\
               preds_, loss_, accuracy_
 
+  def _get_top_n_accuracy(self, preds_vec):
+    """Get top N accuracy."""
+    accuracy_top_n_list = []
+    for top_n in self.cfg.TOP_N_LIST:
+      accuracy_top_n = []
+      for pred_vec, y_true in zip(preds_vec, self.y_test):
+        y_pred_idx_top_n = np.argsort(pred_vec)[-top_n:]
+        y_true_idx = np.np.argmax(pred_vec)
+        if y_true_idx in y_pred_idx_top_n:
+          accuracy_top_n.append(1)
+        else:
+          accuracy_top_n.append(0)
+          accuracy_top_n = np.mean(accuracy_top_n)
+      accuracy_top_n_list.append(accuracy_top_n)
+    assert len(accuracy_top_n_list) == len(self.cfg.TOP_N_LIST)
+
+    return accuracy_top_n_list
+
   def _get_preds_int(self, preds_vec):
     """Get integer predictions."""
     utils.thin_line()
@@ -360,6 +378,12 @@ class Test(object):
     # Get integer predictions
     _ = self._get_preds_int(preds_vec=preds_vec_test)
 
+    # Get top N accuracy
+    if self.cfg.TOP_N_LIST is not None:
+      acc_top_n_list = self._get_top_n_accuracy(preds_vec_test)
+    else:
+      acc_top_n_list = None
+
     # Print losses and accuracy
     utils.thin_line()
     print('Test Loss: {:.4f}'.format(loss_test))
@@ -367,17 +391,23 @@ class Test(object):
       print('Test Classifier Loss: {:.4f}\n'.format(clf_loss_test),
             'Test Reconstruction Loss: {:.4f}'.format(rec_loss_test))
     print('Test Accuracy: {:.2f}%'.format(acc_test * 100))
+    if self.cfg.TOP_N_LIST is not None:
+      utils.thin_line()
+      for i, top_n in enumerate(self.cfg.TOP_N_LIST):
+        print('Top_{} Test Accuracy: {:.4f} \n'.format(
+            top_n, acc_top_n_list[i]))
 
     # Save test log
     if self.during_training and (self.epoch_train != 'end'):
       utils.save_test_log_is_training(
           self.test_log_path, self.epoch_train, self.step_train,
           loss_test, acc_test, clf_loss_test, rec_loss_test,
-          self.cfg.TEST_WITH_REC)
+          self.cfg.TEST_WITH_REC, self.cfg.TOP_N_LIST, acc_top_n_list)
     else:
       utils.save_test_log(
           self.test_log_path, loss_test, acc_test, clf_loss_test,
-          rec_loss_test, self.cfg.TEST_WITH_REC)
+          rec_loss_test, self.cfg.TEST_WITH_REC,
+          self.cfg.TOP_N_LIST, acc_top_n_list)
 
     utils.thin_line()
     print('Testing finished! Using time: {:.2f}'
