@@ -206,7 +206,7 @@ class Test(object):
           accuracy_top_n.append(1)
         else:
           accuracy_top_n.append(0)
-          accuracy_top_n = np.mean(accuracy_top_n)
+      accuracy_top_n = np.mean(accuracy_top_n)
       accuracy_top_n_list.append(accuracy_top_n)
     assert len(accuracy_top_n_list) == len(self.cfg.TOP_N_LIST)
 
