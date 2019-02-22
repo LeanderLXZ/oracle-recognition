@@ -201,7 +201,7 @@ class Test(object):
       accuracy_top_n = []
       for pred_vec, y_true in zip(preds_vec, self.y_test):
         y_pred_idx_top_n = np.argsort(pred_vec)[-top_n:]
-        y_true_idx = np.np.argmax(pred_vec)
+        y_true_idx = np.argmax(pred_vec)
         if y_true_idx in y_pred_idx_top_n:
           accuracy_top_n.append(1)
         else:
