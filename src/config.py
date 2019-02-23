@@ -117,6 +117,12 @@ __C.REPEAT = False
 # ===========================================
 
 # -------------------------------------------
+# Architecture
+
+# Share weights between capsules
+__C.CAPS_SHARE_WEIGHTS = True
+
+# -------------------------------------------
 # Classification
 
 # Classification loss

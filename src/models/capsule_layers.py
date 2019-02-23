@@ -96,7 +96,10 @@ class CapsLayer(object):
         batch_size, num_caps_i, num_caps_j, vec_dim_i, 1)
 
     # Initializing weights
-    weights_shape = [1, num_caps_i, num_caps_j, vec_dim_j, vec_dim_i]
+    if self.cfg.CAPS_SHARE_WEIGHTS:
+      weights_shape = [1, 1, num_caps_j, vec_dim_j, vec_dim_i]
+    else:
+      weights_shape = [1, num_caps_i, num_caps_j, vec_dim_j, vec_dim_i]
     # Reuse weights
     if self.cfg.VAR_ON_CPU:
       weights = variable_on_cpu(
@@ -113,6 +116,8 @@ class CapsLayer(object):
               stddev=self.cfg.WEIGHTS_STDDEV, dtype=tf.float32),
           dtype=tf.float32)
     weights = tf.tile(weights, [batch_size, 1, 1, 1, 1])
+    if self.cfg.CAPS_SHARE_WEIGHTS:
+      weights = tf.tile(weights, [1, num_caps_i, 1, 1, 1])
     # weights shape: (batch_size, num_caps_i, num_caps_j, vec_dim_j, vec_dim_i)
     assert weights.get_shape() == (
         batch_size, num_caps_i, num_caps_j, vec_dim_j, vec_dim_i)
