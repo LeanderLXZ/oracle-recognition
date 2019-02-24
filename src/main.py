@@ -86,10 +86,9 @@ class Main(object):
     summary_path_ = join(self.cfg.SUMMARY_PATH, self.cfg.VERSION)
     checkpoint_path_ = join(self.cfg.CHECKPOINT_PATH, self.cfg.VERSION)
 
-    if self.cfg.DATABASE_MODE == 'small':
-      preprocessed_path = join('../data/small', self.cfg.DATABASE_NAME)
-    elif self.cfg.DATABASE_MODE == 'large':
-      preprocessed_path = join('../data/large', self.cfg.DATABASE_NAME)
+    if self.cfg.DATABASE_MODE is not None:
+      preprocessed_path = join(
+          '../data/{}'.format(self.cfg.DATABASE_MODE), self.cfg.DATABASE_NAME)
     else:
       preprocessed_path = join(self.cfg.DPP_DATA_PATH, self.cfg.DATABASE_NAME)
 
