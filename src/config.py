@@ -120,7 +120,7 @@ __C.REPEAT = False
 # Architecture
 
 # Share weights between capsules
-__C.CAPS_SHARE_WEIGHTS = True
+__C.CAPS_SHARE_WEIGHTS = False
 
 # -------------------------------------------
 # Classification
