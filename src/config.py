@@ -30,7 +30,7 @@ __C = EasyDict()
 # 'cifar10' CIFAR-10
 __C.DATABASE_NAME = 'radical'
 # __C.DATABASE_NAME = 'mnist'
-__C.DATABASE_MODE = 'small'
+__C.DATABASE_MODE = 'small_no_pool_56_56'
 
 # Training version
 # Set None to auto generate version

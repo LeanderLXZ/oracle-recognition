@@ -514,3 +514,69 @@ class Dense2CapsLayer(object):
 
       self.tensor_shape = caps_activated.get_shape().as_list()
       return caps_activated
+
+
+class Code2CapsLayer(object):
+
+  def __init__(self,
+               cfg,
+               vec_dim=8,
+               batch_size=None):
+    """Generate a Capsule layer densely.
+
+    Args:
+      cfg: configuration
+      vec_dim: dimensions of vectors of capsule
+      batch_size: number of samples per batch
+    """
+    self.cfg = cfg
+    self.vec_dim = vec_dim
+    self.batch_size = batch_size
+    self.tensor_shape = None
+
+  @property
+  def params(self):
+    """Parameters of this layer."""
+    return {
+      'vec_dim': self.vec_dim,
+      'batch_size': self.batch_size,
+    }
+
+  def __call__(self, inputs):
+    """Convert inputs to capsule layer densely.
+
+    Args:
+      inputs: input tensor
+        - shape: (batch_size, height, width, depth)
+
+    Returns:
+      tensor of capsules
+        - shape: (batch_size, num_caps_j, vec_dim_j, 1)
+    """
+    with tf.variable_scope('code2caps'):
+
+      inputs_shape = inputs.get_shape().as_list()
+
+      if inputs_shape[-1] % self.vec_dim != 0:
+        raise ValueError
+
+      if len(inputs_shape) != 2:
+        num_caps_j = inputs_shape[1] * inputs_shape[2] * \
+                     (inputs_shape[3] // self.vec_dim)
+      else:
+        num_caps_j = inputs_shape[1] // self.vec_dim
+
+      caps = tf.reshape(inputs, [self.batch_size, -1, self.vec_dim, 1])
+      # caps shape: (batch_size, num_caps_j, vec_dim_j, 1)
+      assert caps.get_shape() == (
+        self.batch_size, num_caps_j, self.vec_dim, 1)
+
+      # Applying activation function
+      caps_activated = ActivationFunc.squash(
+          caps, self.batch_size, self.cfg.EPSILON)
+      # caps_activated shape: (batch_size, num_caps_j, vec_dim_j, 1)
+      assert caps_activated.get_shape() == (
+        self.batch_size, num_caps_j, self.vec_dim, 1)
+
+      self.tensor_shape = caps_activated.get_shape().as_list()
+      return caps_activated

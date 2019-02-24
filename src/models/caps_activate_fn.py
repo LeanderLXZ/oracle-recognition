@@ -27,7 +27,8 @@ class ActivationFunc(object):
     vec_squared_norm = tf.reduce_sum(tf.square(x), -2, keep_dims=True)
     assert vec_squared_norm.get_shape() == (batch_size, num_caps, 1, 1)
 
-    scalar_factor = tf.div(vec_squared_norm, 1 + vec_squared_norm)
+    # scalar_factor = tf.div(vec_squared_norm, 1 + vec_squared_norm)
+    scalar_factor = tf.div(vec_squared_norm, 0.5 + vec_squared_norm)
     assert scalar_factor.get_shape() == (batch_size, num_caps, 1, 1)
 
     unit_vec = tf.div(x, tf.sqrt(vec_squared_norm + epsilon))

@@ -102,11 +102,16 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
   #     is_training=is_training,
   #     idx=2
   # )                               # (b, 4, 4, 32)
-  model.add(Dense2CapsLayer(
+  # model.add(Dense2CapsLayer(
+  #     cfg,
+  #     identity_map=False,
+  #     num_caps=256,
+  #     act_fn='relu',
+  #     vec_dim=8,
+  #     batch_size=batch_size
+  # ))
+  model.add(Code2CapsLayer(
       cfg,
-      identity_map=False,
-      num_caps=256,
-      act_fn='relu',
       vec_dim=8,
       batch_size=batch_size
   ))
