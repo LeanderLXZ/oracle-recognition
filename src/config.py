@@ -168,7 +168,7 @@ __C.WITH_REC = True
 # 'fc': full_connected layers
 # 'conv': convolution layers
 # 'conv_t': transpose convolution layers
-__C.DECODER_TYPE = 'conv_t'
+__C.DECODER_TYPE = 'fc'
 
 # Reconstruction loss
 # 'mse': Mean Square Error
@@ -182,7 +182,8 @@ __C.REC_LOSS_SCALE = 0.392  # 0.0005*32*32=0.512  # 0.0005*784=0.392
 # Transfer Learning
 
 # Transfer learning mode
-__C.TRANSFER_LEARNING = 'encode'  # None
+# __C.TRANSFER_LEARNING = 'encode'  # None
+__C.TRANSFER_LEARNING = None
 
 # Transfer learning model
 # 'vgg16', 'vgg19', 'resnet50', 'inceptionv3', 'xception'
