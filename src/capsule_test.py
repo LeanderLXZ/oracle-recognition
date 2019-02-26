@@ -1,8 +1,6 @@
 #! -*- coding: utf-8 -*-
 
-from keras_version.Capsule_Keras import *
-from keras import utils
-from keras.datasets import mnist
+from Capsule_Keras import *
 from keras.models import Model
 from keras.layers import *
 from keras import backend as K
@@ -26,10 +24,15 @@ img_rows, img_cols = 28, 28
 # y_train = utils.to_categorical(y_train, num_classes)
 # y_test = utils.to_categorical(y_test, num_classes)
 
-x_train = mutils.load_pkls('../../data/preprocessed_data/mnist', 'x_train')
-x_test = mutils.load_pkls('../../data/preprocessed_data/mnist', 'x_test')
-y_train = mutils.load_pkls('../../data/preprocessed_data/mnist', 'y_train')
-y_test = mutils.load_pkls('../../data/preprocessed_data/mnist', 'y_test')
+# x_train = mutils.load_pkls('../data/preprocessed_data/mnist', 'x_train')
+# x_test = mutils.load_pkls('../data/preprocessed_data/mnist', 'x_test')
+# y_train = mutils.load_pkls('../data/preprocessed_data/mnist', 'y_train')
+# y_test = mutils.load_pkls('../data/preprocessed_data/mnist', 'y_test')
+
+x_train = mutils.load_pkls('../data/preprocessed_data/radical', 'x_train')
+x_test = mutils.load_pkls('../data/preprocessed_data/radical', 'x_test')
+y_train = mutils.load_pkls('../data/preprocessed_data/radical', 'y_train')
+y_test = mutils.load_pkls('../data/preprocessed_data/radical', 'y_test')
 
 
 #准备自定义的测试样本
@@ -43,39 +46,39 @@ Y_test = Y_test[Y_test[:,0] != Y_test[:,1]]
 Y_test.sort(axis=1) #排一下序，因为只比较集合，不比较顺序
 
 
-#搭建普通CNN分类模型
-input_image = Input(shape=(None,None,1))
-cnn = Conv2D(64, (3, 3), activation='relu')(input_image)
-cnn = Conv2D(64, (3, 3), activation='relu')(cnn)
-cnn = AveragePooling2D((2,2))(cnn)
-cnn = Conv2D(128, (3, 3), activation='relu')(cnn)
-cnn = Conv2D(128, (3, 3), activation='relu')(cnn)
-cnn = GlobalAveragePooling2D()(cnn)
-dense = Dense(128, activation='relu')(cnn)
-output = Dense(10, activation='sigmoid')(dense)
-
-model = Model(inputs=input_image, outputs=output)
-model.compile(loss=lambda y_true,y_pred: y_true*K.relu(0.9-y_pred)**2 + 0.25*(1-y_true)*K.relu(y_pred-0.1)**2,
-              optimizer='adam',
-              metrics=['accuracy'])
-
-model.summary()
-
-model.fit(x_train, y_train,
-          batch_size=batch_size,
-          epochs=20,
-          verbose=1,
-          validation_data=(x_test, y_test))
-
-Y_pred = model.predict(X_test) #用模型进行预测
-greater = np.sort(Y_pred, axis=1)[:,-2] > 0.5 #判断预测结果是否大于0.5
-Y_pred = Y_pred.argsort()[:,-2:] #取最高分数的两个类别
-Y_pred.sort(axis=1) #排序，因为只比较集合
-
-acc = 1.*(np.prod(Y_pred == Y_test, axis=1)).sum()/len(X_test)
-print(u'CNN+Pooling，不考虑置信度的准确率为：%s'%acc)
-acc = 1.*(np.prod(Y_pred == Y_test, axis=1)*greater).sum()/len(X_test)
-print(u'CNN+Pooling，考虑置信度的准确率为：%s'%acc)
+# #搭建普通CNN分类模型
+# input_image = Input(shape=(None,None,1))
+# cnn = Conv2D(64, (3, 3), activation='relu')(input_image)
+# cnn = Conv2D(64, (3, 3), activation='relu')(cnn)
+# cnn = AveragePooling2D((2,2))(cnn)
+# cnn = Conv2D(128, (3, 3), activation='relu')(cnn)
+# cnn = Conv2D(128, (3, 3), activation='relu')(cnn)
+# cnn = GlobalAveragePooling2D()(cnn)
+# dense = Dense(128, activation='relu')(cnn)
+# output = Dense(10, activation='sigmoid')(dense)
+#
+# model = Model(inputs=input_image, outputs=output)
+# model.compile(loss=lambda y_true,y_pred: y_true*K.relu(0.9-y_pred)**2 + 0.25*(1-y_true)*K.relu(y_pred-0.1)**2,
+#               optimizer='adam',
+#               metrics=['accuracy'])
+#
+# model.summary()
+#
+# model.fit(x_train, y_train,
+#           batch_size=batch_size,
+#           epochs=20,
+#           verbose=1,
+#           validation_data=(x_test, y_test))
+#
+# Y_pred = model.predict(X_test) #用模型进行预测
+# greater = np.sort(Y_pred, axis=1)[:,-2] > 0.5 #判断预测结果是否大于0.5
+# Y_pred = Y_pred.argsort()[:,-2:] #取最高分数的两个类别
+# Y_pred.sort(axis=1) #排序，因为只比较集合
+#
+# acc = 1.*(np.prod(Y_pred == Y_test, axis=1)).sum()/len(X_test)
+# print(u'CNN+Pooling，不考虑置信度的准确率为：%s'%acc)
+# acc = 1.*(np.prod(Y_pred == Y_test, axis=1)*greater).sum()/len(X_test)
+# print(u'CNN+Pooling，考虑置信度的准确率为：%s'%acc)
 
 
 

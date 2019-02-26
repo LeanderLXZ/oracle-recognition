@@ -69,7 +69,7 @@ class Capsule(Layer):
             if K.backend() == 'theano':
                 o = K.sum(o, axis=1)
             if i < self.routings - 1:
-                o = K.l2_normalize(o, -1)
+                # o = K.l2_normalize(o, -1)
                 b = K.batch_dot(o, u_hat_vecs, [2, 3])
                 if K.backend() == 'theano':
                     b = K.sum(b, axis=1)
