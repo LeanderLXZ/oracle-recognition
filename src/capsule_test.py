@@ -10,7 +10,7 @@ from models import utils as mutils
 
 #准备训练数据
 batch_size = 128
-num_classes = 10
+num_classes = 148
 img_rows, img_cols = 28, 28
 
 # (x_train, y_train), (x_test, y_test) = mnist.load_data()
@@ -90,8 +90,8 @@ cnn = AveragePooling2D((2,2))(cnn)
 cnn = Conv2D(128, (3, 3), activation='relu')(cnn)
 cnn = Conv2D(128, (3, 3), activation='relu')(cnn)
 cnn = Reshape((-1, 128))(cnn)
-capsule = Capsule(10, 16, 3, True)(cnn)
-output = Lambda(lambda x: K.sqrt(K.sum(K.square(x), 2)), output_shape=(10,))(capsule)
+capsule = Capsule(num_classes, 16, 3, True)(cnn)
+output = Lambda(lambda x: K.sqrt(K.sum(K.square(x), 2)), output_shape=(num_classes,))(capsule)
 
 model = Model(inputs=input_image, outputs=output)
 model.compile(loss=lambda y_true,y_pred: y_true*K.relu(0.9-y_pred)**2 + 0.25*(1-y_true)*K.relu(y_pred-0.1)**2,
@@ -102,7 +102,7 @@ model.summary()
 
 model.fit(x_train, y_train,
           batch_size=batch_size,
-          epochs=10,
+          epochs=20,
           verbose=1,
           validation_data=(x_test, y_test))
 
