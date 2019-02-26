@@ -28,10 +28,11 @@ __C = EasyDict()
 # 'radical': Oracle Radicals
 # 'mnist': MNIST
 # 'cifar10' CIFAR-10
-__C.DATABASE_NAME = 'radical'
-# __C.DATABASE_NAME = 'mnist'
+# __C.DATABASE_NAME = 'radical'
+__C.DATABASE_NAME = 'mnist'
 # __C.DATABASE_MODE = 'small_no_pool_56_56'
-__C.DATABASE_MODE = 'small'
+# __C.DATABASE_MODE = 'small'
+__C.DATABASE_MODE = None
 
 # Training version
 # Set None to auto generate version
@@ -116,12 +117,6 @@ __C.REPEAT = False
 # ===========================================
 # #            Model Architecture           #
 # ===========================================
-
-# -------------------------------------------
-# Architecture
-
-# Share weights between capsules
-__C.CAPS_SHARE_WEIGHTS = False
 
 # -------------------------------------------
 # Classification

@@ -7,7 +7,8 @@ from models.capsule_layers import *
 
 
 def conv_block(model, cfg, conv_size, conv_stride, conv_depth,
-               conv_padding='VALID', act_fn='relu', use_max_pool=False,
+               conv_padding='VALID', act_fn='relu',
+               use_max_pool=False, use_avg_pool=False,
                pool_size=None, pool_strides=None, pool_padding='VALID',
                use_batch_norm=False, is_training=None, idx=0):
 
@@ -22,6 +23,14 @@ def conv_block(model, cfg, conv_size, conv_stride, conv_depth,
   ))
   if use_max_pool:
     model.add(MaxPool(
+        cfg,
+        pool_size=pool_size,
+        strides=pool_strides,
+        padding=pool_padding,
+        idx=idx
+    ))
+  if use_avg_pool:
+    model.add(AveragePool(
         cfg,
         pool_size=pool_size,
         strides=pool_strides,
@@ -44,40 +53,47 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
   else:
     num_classes = 10
 
-  model = Sequential(inputs)      # (b, 32, 32, 1)
-  # conv_block(
-  #     model,
-  #     cfg,
-  #     conv_size=3,
-  #     conv_stride=1,
-  #     conv_depth=16,
-  #     conv_padding='SAME',
-  #     act_fn='relu',
-  #     use_batch_norm=True,
-  #     is_training=is_training,
-  #     use_max_pool=True,
-  #     pool_size=2,
-  #     pool_strides=(2, 2),
-  #     pool_padding='VALID',
-  #     idx=0
-  # )                               # (b, 16, 16, 8)
-  # conv_block(
-  #     model,
-  #     cfg,
-  #     conv_size=3,
-  #     conv_stride=1,
-  #     conv_depth=32,
-  #     conv_padding='SAME',
-  #     act_fn='relu',
-  #     use_batch_norm=True,
-  #     is_training=is_training,
-  #     use_max_pool=True,
-  #     pool_size=2,
-  #     pool_strides=(2, 2),
-  #     pool_padding='VALID',
-  #     idx=1
-  # )                               # (b, 8, 8, 16)
-  # conv_block(
+  model = Sequential(inputs)      # (b, 28, 28, 1)
+  conv_block(
+      model,
+      cfg,
+      conv_size=3,
+      conv_stride=1,
+      conv_depth=64,
+      conv_padding='VALID',
+      act_fn='relu',
+      use_batch_norm=True,
+      is_training=is_training,
+      idx=0
+  )                               # (b, 26, 26, 64)
+  conv_block(
+      model,
+      cfg,
+      conv_size=3,
+      conv_stride=1,
+      conv_depth=64,
+      conv_padding='VALID',
+      act_fn='relu',
+      use_batch_norm=True,
+      is_training=is_training,
+      use_avg_pool=True,
+      pool_size=2,
+      pool_strides=(2, 2),
+      pool_padding='VALID',
+      idx=1
+  )                               # (b, 12, 12, 64)
+  conv_block(
+      model,
+      cfg,
+      conv_size=3,
+      conv_stride=1,
+      conv_depth=128,
+      conv_padding='VALID',
+      act_fn='relu',
+      use_batch_norm=True,
+      is_training=is_training,
+      idx=2
+  )                               # (b, 10, 10, 128)
   #     model,
   #     cfg,
   #     conv_size=3,
@@ -110,26 +126,27 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
   #     vec_dim=8,
   #     batch_size=batch_size
   # ))
-  model.add(Code2CapsLayer(
-      cfg,
-      vec_dim=8,
-      batch_size=batch_size
-  ))
-  # model.add(Conv2CapsLayer(
+  # model.add(Code2CapsLayer(
   #     cfg,
-  #     kernel_size=3,
-  #     stride=1,
-  #     n_kernel=48,
   #     vec_dim=8,
-  #     padding='VALID',
   #     batch_size=batch_size
-  # ))                               # (b, 4, 4, 32) -> (b, 216, 148, 16, 8)
+  # ))
+  model.add(Conv2CapsLayer(
+      cfg,
+      kernel_size=3,
+      stride=1,
+      n_kernel=1,
+      vec_dim=128,
+      padding='VALID',
+      batch_size=batch_size
+  ))                               # (b, 8, 8, 128) -> (b, 64, 148, 128, 16)
   model.add(CapsLayer(
       cfg,
       num_caps=num_classes,
       vec_dim=16,
       route_epoch=3,
       batch_size=batch_size,
+      share_weights=True,
       idx=0
   ))
 

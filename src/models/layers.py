@@ -418,7 +418,7 @@ class MaxPool(object):
     }
 
   def __call__(self, inputs):
-    """Batch normalization layer.
+    """Max Pooling layer.
 
     Args:
       inputs: input tensor
@@ -427,15 +427,70 @@ class MaxPool(object):
       max pooling tensor
     """
     with tf.variable_scope('max_pool_{}'.format(self.idx)):
-      mp = tf.layers.max_pooling2d(
+      maxp = tf.layers.max_pooling2d(
           inputs=inputs,
           pool_size=self.pool_size,
           strides=self.strides,
           padding=self.padding
       )
 
-    self.tensor_shape = mp.get_shape().as_list()
-    return mp
+    self.tensor_shape = maxp.get_shape().as_list()
+    return maxp
+
+
+class AveragePool(object):
+
+  def __init__(self,
+               cfg,
+               pool_size=None,
+               strides=None,
+               padding='valid',
+               idx=None):
+    """Average Pooling layer.
+
+    Args:
+      cfg: configuration
+      pool_size: specifying the size of the pooling window
+      strides: specifying the strides of the pooling operation
+      padding: the padding method, either 'valid' or 'same'
+      idx: index of layer
+    """
+    self.cfg = cfg
+    self.pool_size = pool_size
+    self.strides = strides
+    self.padding = padding
+    self.idx = idx
+    self.tensor_shape = None
+
+  @property
+  def params(self):
+    """Parameters of this layer."""
+    return {
+      'pool_size': self.pool_size,
+      'strides': self.strides,
+      'padding': self.padding,
+      'idx': self.idx
+    }
+
+  def __call__(self, inputs):
+    """Average Pooling layer.
+
+    Args:
+      inputs: input tensor
+
+    Returns:
+      average pooling tensor
+    """
+    with tf.variable_scope('average_pool_{}'.format(self.idx)):
+      avgp = tf.layers.average_pooling2d(
+          inputs=inputs,
+          pool_size=self.pool_size,
+          strides=self.strides,
+          padding=self.padding
+      )
+
+    self.tensor_shape = avgp.get_shape().as_list()
+    return avgp
 
 
 class BatchNorm(object):

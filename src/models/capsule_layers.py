@@ -17,6 +17,7 @@ class CapsLayer(object):
                vec_dim=None,
                route_epoch=None,
                batch_size=None,
+               share_weights=False,
                idx=0):
     """Initialize capsule layer.
 
@@ -35,6 +36,7 @@ class CapsLayer(object):
     self.batch_size = batch_size
     self.idx = idx
     self.tensor_shape = None
+    self.share_weights = share_weights
 
   @property
   def params(self):
@@ -44,6 +46,7 @@ class CapsLayer(object):
       'vec_dim': self.vec_dim,
       'route_epoch': self.route_epoch,
       'batch_size': self.batch_size,
+      'share_weights': self.share_weights,
       'idx': self.idx
     }
 
@@ -96,7 +99,7 @@ class CapsLayer(object):
         batch_size, num_caps_i, num_caps_j, vec_dim_i, 1)
 
     # Initializing weights
-    if self.cfg.CAPS_SHARE_WEIGHTS:
+    if self.share_weights:
       weights_shape = [1, 1, num_caps_j, vec_dim_j, vec_dim_i]
     else:
       weights_shape = [1, num_caps_i, num_caps_j, vec_dim_j, vec_dim_i]
@@ -116,7 +119,7 @@ class CapsLayer(object):
               stddev=self.cfg.WEIGHTS_STDDEV, dtype=tf.float32),
           dtype=tf.float32)
     weights = tf.tile(weights, [batch_size, 1, 1, 1, 1])
-    if self.cfg.CAPS_SHARE_WEIGHTS:
+    if self.share_weights:
       weights = tf.tile(weights, [1, num_caps_i, 1, 1, 1])
     # weights shape: (batch_size, num_caps_i, num_caps_j, vec_dim_j, vec_dim_i)
     assert weights.get_shape() == (
@@ -521,7 +524,8 @@ class Code2CapsLayer(object):
   def __init__(self,
                cfg,
                vec_dim=8,
-               batch_size=None):
+               batch_size=None,
+               share_weights=False):
     """Generate a Capsule layer densely.
 
     Args:
@@ -533,6 +537,7 @@ class Code2CapsLayer(object):
     self.vec_dim = vec_dim
     self.batch_size = batch_size
     self.tensor_shape = None
+    self.share_weights = share_weights
 
   @property
   def params(self):
@@ -540,6 +545,7 @@ class Code2CapsLayer(object):
     return {
       'vec_dim': self.vec_dim,
       'batch_size': self.batch_size,
+      'share_weights': self.share_weights,
     }
 
   def __call__(self, inputs):
