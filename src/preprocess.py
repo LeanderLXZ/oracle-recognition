@@ -151,7 +151,7 @@ class DataPreProcess(object):
       self.x, self.y = self._change_pose(
               self.x, self.y, num_imgs=4, grid_size=4)
       self.x_test_changed, self.y_test_changed = self._change_pose(
-              self.x_test, self.y, num_imgs=4, grid_size=4)
+              self.x_test, self.y_test, num_imgs=4, grid_size=4)
 
     if self.show_img:
       self._grid_show_imgs(self.x, self.y, 25, mode='L')

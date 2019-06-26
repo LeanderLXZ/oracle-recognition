@@ -53,7 +53,7 @@ __C.LR_DECAY_RATE = 0.96
 __C.EPOCHS = 20
 
 # Batch size
-__C.BATCH_SIZE = 512
+__C.BATCH_SIZE = 2048
 
 
 # ===========================================
