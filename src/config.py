@@ -72,12 +72,12 @@ __C.VALID_SIZE = 0.1
 # Resize images
 __C.RESIZE_INPUTS = False
 # Input size
-__C.INPUT_SIZE = (56, 56)
+__C.INPUT_SIZE = (28, 28)
 
 # Resize images
-__C.RESIZE_IMAGES = True
+__C.RESIZE_IMAGES = False
 # Image size
-__C.IMAGE_SIZE = (56, 56)
+__C.IMAGE_SIZE = (28, 28)
 
 # Using data augment
 __C.USE_DATA_AUG = False
@@ -95,6 +95,8 @@ __C.DATA_AUG_PARAM = dict(
 __C.DATA_AUG_KEEP_SOURCE = True
 # The max number of images of a class if use data augment
 __C.MAX_IMAGE_NUM = 2000
+# Change poses of images
+__C.CHANGE_DATA_POSE = True
 
 # Oracle Parameters
 # Number of radicals to use for training

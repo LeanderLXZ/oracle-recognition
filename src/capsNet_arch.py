@@ -53,100 +53,54 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
   else:
     num_classes = 10
 
-  model = Sequential(inputs)      # (b, 28, 28, 1)
-  conv_block(
-      model,
-      cfg,
-      conv_size=3,
-      conv_stride=1,
-      conv_depth=64,
-      conv_padding='VALID',
-      act_fn='relu',
-      use_batch_norm=True,
-      is_training=is_training,
-      idx=0
-  )                               # (b, 26, 26, 64)
-  conv_block(
-      model,
-      cfg,
-      conv_size=3,
-      conv_stride=1,
-      conv_depth=64,
-      conv_padding='VALID',
-      act_fn='relu',
-      use_batch_norm=True,
-      is_training=is_training,
-      use_avg_pool=True,
-      pool_size=2,
-      pool_strides=(2, 2),
-      pool_padding='VALID',
-      idx=1
-  )                               # (b, 12, 12, 64)
-  conv_block(
-      model,
-      cfg,
-      conv_size=3,
-      conv_stride=1,
-      conv_depth=128,
-      conv_padding='VALID',
-      act_fn='relu',
-      use_batch_norm=True,
-      is_training=is_training,
-      idx=2
-  )                               # (b, 10, 10, 128)
-  #     model,
-  #     cfg,
-  #     conv_size=3,
-  #     conv_stride=1,
-  #     conv_depth=32,
-  #     conv_padding='VALID',
-  #     act_fn='relu',
-  #     use_batch_norm=True,
-  #     is_training=is_training,
-  #     idx=2
-  # )                               # (b, 6, 6, 16)
-  # conv_block(
-  #     model,
-  #     cfg,
-  #     conv_size=3,
-  #     conv_stride=2,
-  #     conv_depth=32,
-  #     conv_padding='VALID',
-  #     act_fn='relu',
-  #     use_batch_norm=True,
-  #     route_epoch=10,
-  #     is_training=is_training,
-  #     idx=2
-  # )                               # (b, 4, 4, 32)
-  # model.add(Dense2CapsLayer(
-  #     cfg,
-  #     identity_map=False,
-  #     num_caps=256,
-  #     act_fn='relu',
-  #     vec_dim=8,
-  #     batch_size=batch_size
-  # ))
-  # model.add(Code2CapsLayer(
-  #     cfg,
-  #     vec_dim=8,
-  #     batch_size=batch_size
-  # ))
+  model = Sequential(inputs)
+  conv_block(model, cfg, 3, 1, 128,
+             conv_padding='SAME',
+             act_fn='relu',
+             use_max_pool=True,
+             pool_size=2,
+             pool_strides=2,
+             pool_padding='VALID',
+             use_batch_norm=True,
+             is_training=is_training,
+             idx=0)
+  conv_block(model, cfg, 3, 1, 128,
+             conv_padding='SAME',
+             act_fn='relu',
+             use_batch_norm=True,
+             is_training=is_training,
+             idx=1)
+  conv_block(model, cfg, 3, 1, 128,
+             conv_padding='SAME',
+             act_fn='relu',
+             use_batch_norm=True,
+             is_training=is_training,
+             idx=2)
+  conv_block(model, cfg, 3, 1, 128,
+             conv_padding='SAME',
+             act_fn='relu',
+             use_max_pool=True,
+             pool_size=2,
+             pool_strides=2,
+             pool_padding='VALID',
+             use_batch_norm=True,
+             is_training=is_training,
+             idx=3)
   model.add(Conv2CapsLayer(
       cfg,
       kernel_size=3,
-      stride=1,
-      n_kernel=1,
-      vec_dim=128,
+      stride=2,
+      n_kernel=32,
+      vec_dim=8,
       padding='VALID',
       batch_size=batch_size
-  ))                               # (b, 8, 8, 128) -> (b, 64, 148, 128, 16)
+  ))
   model.add(CapsLayer(
       cfg,
       num_caps=num_classes,
       vec_dim=16,
       route_epoch=3,
       batch_size=batch_size,
-      share_weights=True,
       idx=0
   ))
 

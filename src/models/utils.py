@@ -754,7 +754,8 @@ def img_add_no_overlap(imgs,
                        num_mul_obj,
                        vec=None,
                        img_mode='L',
-                       resize_filter=None):
+                       resize_filter=None,
+                       resize=True):
   """Add images together without overlap."""
   img_shape = np.array(imgs).shape[1:]
   save_size = \
@@ -781,10 +782,10 @@ def img_add_no_overlap(imgs,
   if img_mode == 'L':
       new_img = np.squeeze(new_img, axis=-1)
   added = Image.fromarray(new_img.astype('uint8'), mode=img_mode)
-  added = np.expand_dims(
-      added.resize(img_shape[:2], resize_filter), axis=-1) / 255.
+  if resize:
+    added = added.resize(img_shape[:2], resize_filter)
 
-  return added
+  return np.expand_dims(added, axis=-1) / 255.
 
 
 def img_resize(imgs,

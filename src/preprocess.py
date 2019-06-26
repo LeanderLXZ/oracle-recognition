@@ -79,6 +79,26 @@ class DataPreProcess(object):
     if self.cfg.RESIZE_INPUTS:
       self.input_size = self.cfg.INPUT_SIZE
 
+  def _change_pose(self, tensor_x, tensor_y, num_imgs=1, grid_size=4):
+    """Change position of images."""
+    utils.thin_line()
+    print('Changing position of images...')
+    x_changed = []
+    y_changed = []
+    for x_, y_ in tqdm(zip(tensor_x, tensor_y), ncols=100, unit=' images'):
+      x_idx_ = np.random.choice(grid_size, num_imgs, replace=False)
+      for idx_ in x_idx_:
+        x_list = np.zeros((grid_size, *x_.shape))
+        x_list[idx_] = x_
+        mul_imgs = utils.img_add_no_overlap(
+                x_list, grid_size, img_mode=self.img_mode,
+                resize_filter=Image.ANTIALIAS)
+        x_changed.append(mul_imgs)
+        y_changed.append(y_)
+    x_changed = np.array(x_changed).astype(self.data_type)
+    y_changed = np.array(y_changed)
+    return x_changed, y_changed
+
   def _load_data(self):
     """Load data set from files."""
     utils.thin_line()
@@ -120,6 +140,13 @@ class DataPreProcess(object):
       self.x = np.array(
           x_new, dtype=self.data_type).reshape((-1, *self.x[0].shape))
       self.y = np.array(y_new, dtype=np.int)
+
+    # Change poses
+    if self.cfg.CHANGE_DATA_POSE:
+      utils.thin_line()
+      print('Changing poses of images...'.format(self.data_base_name))
+      self.x, self.y = self._change_pose(
+              self.x, self.y, num_imgs=4, grid_size=4)
 
     if self.show_img:
       self._grid_show_imgs(self.x, self.y, 25, mode='L')
@@ -849,5 +876,5 @@ if __name__ == '__main__':
     DataPreProcess(cfg,
                    global_seed,
                    'mnist',
-                   show_img=show_img_flag).pipeline()
+                   show_img=True).pipeline()
     # raise ValueError('Wrong argument!')
