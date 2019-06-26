@@ -54,8 +54,6 @@ def download_data(data_base_name):
     SOURCE_URL = 'https://www.cs.toronto.edu/~kriz/'
     FILE_NAME = 'cifar-10-python.tar.gz'
 
-    utils.check_dir([cfg.SOURCE_DATA_PATH])
-
     utils.download_and_extract_cifar10(
         url=SOURCE_URL + FILE_NAME,
         save_path=cfg.SOURCE_DATA_PATH,

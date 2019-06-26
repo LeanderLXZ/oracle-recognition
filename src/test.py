@@ -200,7 +200,7 @@ class Test(object):
       accuracy_top_n = []
       for pred_vec, y_true in zip(preds_vec, self.y_test):
         y_pred_idx_top_n = np.argsort(pred_vec)[-top_n:]
-        y_true_idx = np.argmax(pred_vec)
+        y_true_idx = np.argmax(y_true)
         if y_true_idx in y_pred_idx_top_n:
           accuracy_top_n.append(1)
         else:
@@ -506,7 +506,7 @@ class TestMultiObjects(Test):
     utils.thin_line()
     print('Getting prediction vectors...')
     pred_all = []
-    _batch_generator = utils. get_batches(
+    _batch_generator = utils.get_batches(
         self.x_test, batch_size=self.cfg.TEST_BATCH_SIZE, keep_last=True)
 
     if len(self.x_test) % self.cfg.TEST_BATCH_SIZE == 0:
@@ -574,7 +574,7 @@ class TestMultiObjects(Test):
 
     return np.array(preds, dtype=int)
 
-  def _get_multi_obj_scores(self, preds, preds_vec):
+  def _get_multi_obj_scores(self, preds_binary, preds_vec):
     """Get evaluation scores for multi-objects detection."""
     utils.thin_line()
     print('Calculating evaluation scores for {} detection...'.format(
@@ -593,7 +593,7 @@ class TestMultiObjects(Test):
     f1score = []
     f05score = []
     f2score = []
-    for pred_vec, y_true in zip(preds, self.y_test):
+    for pred_vec, y_true in zip(preds_binary, self.y_test):
 
       # true positive
       tp = np.sum(np.multiply(y_true, pred_vec))
@@ -622,16 +622,19 @@ class TestMultiObjects(Test):
     f2score = np.mean(f2score)
 
     # true positive
-    tp = np.sum(np.multiply(preds, self.y_test))
+    tp = np.sum(np.multiply(preds_binary, self.y_test))
     print('TRUE POSITIVE: ', tp)
     # false positive
-    fp = np.sum(np.logical_and(np.equal(self.y_test, 0), np.equal(preds, 1)))
+    fp = np.sum(np.logical_and(np.equal(self.y_test, 0),
+                               np.equal(preds_binary, 1)))
     print('FALSE POSITIVE: ', fp)
     # false negative
-    fn = np.sum(np.logical_and(np.equal(self.y_test, 1), np.equal(preds, 0)))
+    fn = np.sum(np.logical_and(np.equal(self.y_test, 1),
+                               np.equal(preds_binary, 0)))
     print('TRUE NEGATIVE: ', fn)
     # true negative
-    tn = np.sum(np.logical_and(np.equal(self.y_test, 0), np.equal(preds, 0)))
+    tn = np.sum(np.logical_and(np.equal(self.y_test, 0),
+                               np.equal(preds_binary, 0)))
     print('FALSE NEGATIVE: ', tn)
 
     # Calculate scores by using scikit-learn tools

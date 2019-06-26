@@ -80,7 +80,7 @@ __C.RESIZE_IMAGES = True
 __C.IMAGE_SIZE = (56, 56)
 
 # Using data augment
-__C.USE_DATA_AUG = True
+__C.USE_DATA_AUG = False
 # Parameters for data augment
 __C.DATA_AUG_PARAM = dict(
     rotation_range=40,
@@ -247,7 +247,7 @@ __C.TEST_SO_MODE = 'per_epoch'
 # Evaluate on multi-objects test set
 __C.TEST_MO_MODE = 'per_epoch'
 
-# Evaluate on Oracles test set after
+# Evaluate on Oracles test set
 __C.TEST_ORACLE_MODE = 'per_epoch'
 
 

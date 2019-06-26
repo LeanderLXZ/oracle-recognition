@@ -965,6 +965,13 @@ def square_grid_show_imgs(images, mode=None):
   plt.show()
 
 
+def is_radical_database(name):
+  if name in ['radical', 'small', 'large', 'small_no_pool_56_56']:
+    return True
+  else:
+    return False
+
+
 class DLProgress(tqdm):
   """Handle Progress Bar while Downloading."""
   last_block = 0

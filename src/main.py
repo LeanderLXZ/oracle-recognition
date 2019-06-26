@@ -559,7 +559,7 @@ class Main(object):
                    epoch=epoch_i, step=step, mode='multi_obj')
 
       # Evaluate on Oracles test set per epoch
-      if self.cfg.DATABASE_NAME == 'radical':
+      if utils.is_radical_database(self.cfg.DATABASE_NAME):
         if self.cfg.TEST_ORACLE_MODE == 'per_epoch':
           self._test(sess, during_training=True,
                      epoch=epoch_i, step=step, mode='oracle')
@@ -583,7 +583,7 @@ class Main(object):
       self._test(sess, during_training=True, epoch='end', mode='multi_obj')
 
     # Evaluate on Oracles test set after training
-    if self.cfg.DATABASE_NAME == 'radical':
+    if utils.is_radical_database(self.cfg.DATABASE_NAME):
       if self.cfg.TEST_ORACLE_MODE == 'after_training':
         self._test(sess, during_training=True, epoch='end', mode='oracle')
 
