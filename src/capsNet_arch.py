@@ -54,19 +54,19 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
     num_classes = 10
 
   model = Sequential(inputs)
-  conv_block(model, cfg, 3, 1, 128,
+  conv_block(model, cfg, 3, 1, 32,
+             conv_padding='SAME',
+             act_fn='relu',
+             use_batch_norm=True,
+             is_training=is_training,
+             idx=0)
+  conv_block(model, cfg, 3, 1, 64,
              conv_padding='SAME',
              act_fn='relu',
              use_max_pool=True,
              pool_size=2,
              pool_strides=2,
              pool_padding='VALID',
-             use_batch_norm=True,
-             is_training=is_training,
-             idx=0)
-  conv_block(model, cfg, 3, 1, 128,
-             conv_padding='SAME',
-             act_fn='relu',
              use_batch_norm=True,
              is_training=is_training,
              idx=1)
@@ -76,7 +76,7 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
              use_batch_norm=True,
              is_training=is_training,
              idx=2)
-  conv_block(model, cfg, 3, 1, 128,
+  conv_block(model, cfg, 3, 1, 256,
              conv_padding='SAME',
              act_fn='relu',
              use_max_pool=True,

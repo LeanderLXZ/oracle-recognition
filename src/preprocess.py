@@ -79,6 +79,9 @@ class DataPreProcess(object):
     if self.cfg.RESIZE_INPUTS:
       self.input_size = self.cfg.INPUT_SIZE
 
+    self.x_test = None
+    self.y_test = None
+
   def _change_pose(self, tensor_x, tensor_y, num_imgs=1, grid_size=4):
     """Change position of images."""
     utils.thin_line()
@@ -147,6 +150,8 @@ class DataPreProcess(object):
       print('Changing poses of images...'.format(self.data_base_name))
       self.x, self.y = self._change_pose(
               self.x, self.y, num_imgs=4, grid_size=4)
+      self.x_test_changed, self.y_test_changed = self._change_pose(
+              self.x_test, self.y, num_imgs=4, grid_size=4)
 
     if self.show_img:
       self._grid_show_imgs(self.x, self.y, 25, mode='L')
@@ -302,6 +307,9 @@ class DataPreProcess(object):
 
     self.x = np.divide(self.x, 255.).astype(self.data_type)
     self.x_test = np.divide(self.x_test, 255.).astype(self.data_type)
+    if self.cfg.CHANGE_DATA_POSE:
+      self.x_test_changed = \
+        np.divide(self.x_test_changed, 255.).astype(self.data_type)
 
   def _one_hot_encoding(self):
     """One-hot-encoding labels."""
@@ -312,6 +320,8 @@ class DataPreProcess(object):
     encoder.fit(self.y)
     self.y = encoder.transform(self.y)
     self.y_test = encoder.transform(self.y_test)
+    if self.cfg.CHANGE_DATA_POSE:
+      self.y_test_changed = encoder.transform(self.y_test_changed)
 
   def _shuffle(self):
     """Shuffle data sets."""
@@ -321,6 +331,9 @@ class DataPreProcess(object):
         self.x, self.y, random_state=self.seed)
     self.x_test, self.y_test = sklearn.utils.shuffle(
         self.x_test, self.y_test, random_state=self.seed)
+    if self.cfg.CHANGE_DATA_POSE:
+      self.x_test_changed, self.y_test_changed = sklearn.utils.shuffle(
+              self.x_test_changed, self.y_test_changed, random_state=self.seed)
 
   def _generate_multi_obj_img(self,
                               x_y_dict=None,
@@ -671,6 +684,9 @@ class DataPreProcess(object):
       x_y_dict = self._get_x_y_dict(self.x_test, self.y_test, y_encoded=True)
       self._generate_multi_obj_img(
           x_y_dict=x_y_dict, data_aug=False)
+
+    if self.cfg.CHANGE_DATA_POSE:
+      self.x_test, self.y_test = self.x_test_changed, self.y_test_changed
 
     # Split data set into train/valid
     self._train_valid_split()
