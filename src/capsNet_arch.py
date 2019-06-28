@@ -54,54 +54,31 @@ def classifier(inputs, cfg, batch_size=None, is_training=None):
     num_classes = 10
 
   model = Sequential(inputs)
-  conv_block(model, cfg, 3, 1, 32,
-             conv_padding='SAME',
-             act_fn='relu',
-             use_batch_norm=True,
-             is_training=is_training,
-             idx=0)
-  conv_block(model, cfg, 3, 1, 64,
-             conv_padding='SAME',
-             act_fn='relu',
-             use_max_pool=True,
-             pool_size=2,
-             pool_strides=2,
-             pool_padding='VALID',
-             use_batch_norm=True,
-             is_training=is_training,
-             idx=1)
-  conv_block(model, cfg, 3, 1, 128,
-             conv_padding='SAME',
-             act_fn='relu',
-             use_batch_norm=True,
-             is_training=is_training,
-             idx=2)
-  conv_block(model, cfg, 3, 1, 256,
-             conv_padding='SAME',
-             act_fn='relu',
-             use_max_pool=True,
-             pool_size=2,
-             pool_strides=2,
-             pool_padding='VALID',
-             use_batch_norm=True,
-             is_training=is_training,
-             idx=3)
+  model.add(ConvLayer(
+    cfg,
+    kernel_size=9,
+    stride=1,
+    n_kernel=256,
+    padding='VALID',
+    act_fn='relu',
+    idx=0
+  ))
   model.add(Conv2CapsLayer(
-      cfg,
-      kernel_size=3,
-      stride=2,
-      n_kernel=32,
-      vec_dim=8,
-      padding='VALID',
-      batch_size=batch_size
+    cfg,
+    kernel_size=9,
+    stride=2,
+    n_kernel=32,
+    vec_dim=8,
+    padding='VALID',
+    batch_size=batch_size
   ))
   model.add(CapsLayer(
-      cfg,
-      num_caps=num_classes,
-      vec_dim=16,
-      route_epoch=3,
-      batch_size=batch_size,
-      idx=0
+    cfg,
+    num_caps=num_classes,
+    vec_dim=16,
+    route_epoch=3,
+    batch_size=batch_size,
+    idx=0
   ))
 
   return model.top_layer, model.info

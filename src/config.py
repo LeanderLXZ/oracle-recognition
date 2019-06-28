@@ -53,7 +53,7 @@ __C.LR_DECAY_RATE = 0.96
 __C.EPOCHS = 20
 
 # Batch size
-__C.BATCH_SIZE = 2048
+__C.BATCH_SIZE = 512
 
 
 # ===========================================
@@ -96,7 +96,7 @@ __C.DATA_AUG_KEEP_SOURCE = True
 # The max number of images of a class if use data augment
 __C.MAX_IMAGE_NUM = 2000
 # Change poses of images
-__C.CHANGE_DATA_POSE = True
+__C.CHANGE_DATA_POSE = False
 
 # Oracle Parameters
 # Number of radicals to use for training
@@ -111,7 +111,7 @@ __C.NUM_MULTI_OBJECT = 2
 # The number of multi-objects images
 __C.NUM_MULTI_IMG = 10000
 # If overlap, the multi-objects will be overlapped in a image.
-__C.OVERLAP = False
+__C.OVERLAP = True
 # If Repeat, repetitive labels will appear in a image.
 __C.REPEAT = False
 # Shift pixels while merging images

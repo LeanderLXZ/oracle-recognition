@@ -735,15 +735,15 @@ def img_add_overlap(imgs,
                     gamma=0,
                     shift_pixels=None):
   """Add images together with overlap."""
+  img_shape = np.array(imgs).shape[1:]
   if shift_pixels:
-    img_shape = np.array(imgs).shape[1:]
     save_size = img_shape[0] + (len(imgs) - 1) * shift_pixels
     new_img_list = []
     for i, img in enumerate(imgs):
       new_img = \
-          np.zeros([save_size, save_size, img_shape[-1]]).astype('uint8')
-      new_img[shift_pixels*i:shift_pixels*i+save_size, \
-          shift_pixels*i:shift_pixels*i+save_size] = img
+          np.zeros([save_size, save_size, img_shape[-1]])
+      new_img[shift_pixels*i:shift_pixels*i+img_shape[0], \
+          shift_pixels*i:shift_pixels*i+img_shape[0]] = img
       new_img_list.append(new_img)
     imgs = np.array(new_img_list)
 
@@ -760,6 +760,12 @@ def img_add_overlap(imgs,
   added += gamma
   added[added > 1] = 1
   added[added < 0] = 0
+  if shift_pixels:
+    added = imgs_scale_to_255(added)
+    added = np.squeeze(added, axis=-1)
+    added = Image.fromarray(added.astype('uint8'), mode='L')
+    added = added.resize(img_shape[:2], Image.ANTIALIAS)
+    added = np.expand_dims(added, axis=-1) / 255.
   return added
 
 
