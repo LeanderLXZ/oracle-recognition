@@ -337,7 +337,8 @@ class DataPreProcess(object):
 
   def _generate_multi_obj_img(self,
                               x_y_dict=None,
-                              data_aug=False):
+                              data_aug=False,
+                              shift_pixels=4):
     """Generate images of superpositions of multi-objects"""
     utils.thin_line()
     print('Generating images of superpositions of multi-objects...')
@@ -377,7 +378,8 @@ class DataPreProcess(object):
 
       # Merge images
       if self.cfg.OVERLAP:
-        mul_imgs = utils.img_add_overlap(mul_imgs, merge=False, gamma=0)
+        mul_imgs = utils.img_add_overlap(
+                mul_imgs, merge=False, gamma=0, shift_pixels=shift_pixels)
       else:
         mul_imgs = utils.img_add_no_overlap(
             mul_imgs, self.cfg.NUM_MULTI_OBJECT,
@@ -683,7 +685,9 @@ class DataPreProcess(object):
     if self.cfg.NUM_MULTI_OBJECT:
       x_y_dict = self._get_x_y_dict(self.x_test, self.y_test, y_encoded=True)
       self._generate_multi_obj_img(
-          x_y_dict=x_y_dict, data_aug=False)
+          x_y_dict=x_y_dict,
+          data_aug=False,
+          shift_pixels=self.cfg.SHIFT_PIXELS)
 
     if self.cfg.CHANGE_DATA_POSE:
       self.x_test, self.y_test = self.x_test_changed, self.y_test_changed

@@ -732,8 +732,21 @@ def download_and_extract_cifar10(url, save_path, file_name, extract_path):
 def img_add_overlap(imgs,
                     merge=False,
                     vec=None,
-                    gamma=0):
+                    gamma=0,
+                    shift_pixels=None):
   """Add images together with overlap."""
+  if shift_pixels:
+    img_shape = np.array(imgs).shape[1:]
+    save_size = img_shape[0] + (len(imgs) - 1) * shift_pixels
+    new_img_list = []
+    for i, img in enumerate(imgs):
+      new_img = \
+          np.zeros([save_size, save_size, img_shape[-1]]).astype('uint8')
+      new_img[shift_pixels*i:shift_pixels*i+save_size, \
+          shift_pixels*i:shift_pixels*i+save_size] = img
+      new_img_list.append(new_img)
+    imgs = np.array(new_img_list)
+
   if merge:
     c = 1 / len(imgs)
   else:

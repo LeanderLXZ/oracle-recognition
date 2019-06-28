@@ -114,6 +114,8 @@ __C.NUM_MULTI_IMG = 10000
 __C.OVERLAP = False
 # If Repeat, repetitive labels will appear in a image.
 __C.REPEAT = False
+# Shift pixels while merging images
+__C.SHIFT_PIXELS = 4
 
 
 # ===========================================
