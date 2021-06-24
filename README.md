@@ -2,6 +2,7 @@
 # 甲骨文识别
 
 ## 目录
+```
 /oracle-recognition
 ├── /data | 数据目录
 │   ├── /raw_data | 原始采样数据（未生成数据集）
@@ -45,6 +46,7 @@
     ├── clear_all_logs.sh | bash命令文件，清除所有训练记录
     ├── remove_all_data.sh | bash命令文件，清除所有预处理的数据
     └── zip_logs.sh | bash命令文件，将所有训练log打包
+```
     
 ## 甲骨文数据   
     
